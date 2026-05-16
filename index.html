@@ -8,30 +8,30 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
     h3 { margin-bottom: 15px; color: #333; }
-    video { 
-      border: 3px solid #28a745; 
-      width: 100%; 
-      max-width: 480px; 
-      border-radius: 10px; 
+    video {
+      border: 3px solid #28a745;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 10px;
       background-color: #222;
     }
-    .btn { 
+    .btn {
       display: inline-block;
-      padding: 14px 28px; 
-      font-size: 16px; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
+      padding: 14px 28px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
       margin: 8px 4px;
       font-weight: bold;
     }
     .btn-hijau { background: #28a745; color: white; }
     .btn-biru { background: #007bff; color: white; }
     .btn:disabled { background: #aaa; cursor: not-allowed; }
-    #status { 
-      margin-top: 15px; 
-      font-weight: bold; 
-      color: #444; 
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #444;
       padding: 12px;
       background: white;
       border-radius: 8px;
@@ -39,21 +39,74 @@
       margin-left: auto;
       margin-right: auto;
     }
+    #login-screen {
+      max-width: 320px;
+      margin: 80px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #login-screen h2 { margin-bottom: 20px; color: #333; }
+    #login-screen input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    #login-screen button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #login-error { color: red; margin-top: 10px; font-size: 14px; }
+    #app { display: none; }
     canvas { display: none; }
   </style>
 </head>
 <body>
 
-  <h3>📦 Scan Label Kardus</h3>
-  <video id="webcam" autoplay playsinline muted></video>
-  <br>
-  <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera()">🎥 Aktifkan Kamera</button>
-  <button class="btn btn-biru" id="btn-scan" onclick="ambilFoto()" style="display:none;">📸 Ambil Foto & Scan</button>
-  <div id="status">Klik "Aktifkan Kamera" untuk memulai.</div>
-  <canvas id="canvas"></canvas>
+  <!-- Layar Login -->
+  <div id="login-screen">
+    <h2>🔒 Login</h2>
+    <input type="password" id="input-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') cekPassword()">
+    <button onclick="cekPassword()">Masuk</button>
+    <div id="login-error"></div>
+  </div>
+
+  <!-- Aplikasi (tersembunyi sampai login) -->
+  <div id="app">
+    <h3>📦 Scan Label Kardus</h3>
+    <video id="webcam" autoplay playsinline muted></video>
+    <br>
+    <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera()">🎥 Aktifkan Kamera</button>
+    <button class="btn btn-biru" id="btn-scan" onclick="ambilFoto()" style="display:none;">📸 Ambil Foto & Scan</button>
+    <div id="status">Klik "Aktifkan Kamera" untuk memulai.</div>
+    <canvas id="canvas"></canvas>
+  </div>
 
   <script>
+    const PASSWORD = "kodachi123"; // Ganti password di sini
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz_3-eoba2xh70FJPvFhxS1KfL2-HlRy6RSC2IvF4PIwq6gLq4pQFUCl5Pq8rn4oiBQ/exec";
+
+    function cekPassword() {
+      const input = document.getElementById('input-password').value;
+      if (input === PASSWORD) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+      } else {
+        document.getElementById('login-error').innerHTML = "❌ Password salah, coba lagi.";
+        document.getElementById('input-password').value = '';
+      }
+    }
 
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
@@ -65,14 +118,14 @@
       btnIzin.disabled = true;
       statusDiv.innerHTML = "⏳ Meminta izin kamera...";
 
-      navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 }
-        } 
+        }
       })
-      .then(function(stream) { 
+      .then(function(stream) {
         video.srcObject = stream;
         video.onloadedmetadata = function() {
           video.play();
@@ -113,11 +166,11 @@
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({ image: base64Data }),
-        headers: { "Content-Type": "text/plain" }
+        headers: { "Content-Type": "text/plain" },
+        mode: "no-cors"
       })
-      .then(r => r.text())
-      .then(res => {
-        statusDiv.innerHTML = "✅ Berhasil! " + res;
+      .then(() => {
+        statusDiv.innerHTML = "✅ Berhasil dikirim! Silakan cek spreadsheet.";
         btnScan.disabled = false;
       })
       .catch(err => {
