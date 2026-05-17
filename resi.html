@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scan Resi</title>
+  <title>Scan Resi Kontinu</title>
   <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,14 +52,19 @@
       margin-top: 15px;
       font-weight: bold;
       color: #444;
-      padding: 12px;
+      padding: 15px;
       background: white;
       border-radius: 8px;
       max-width: 480px;
       margin-left: auto;
       margin-right: auto;
-      min-height: 50px;
+      min-height: 70px;
+      font-size: 16px;
+      border: 2px solid transparent;
     }
+    .status-sukses { border-color: #28a745 !important; background: #e8f4e8 !important; }
+    .status-gagal { border-color: #dc3545 !important; background: #f8d7da !important; color: #721c24 !important; }
+    
     #hasil-scan {
       margin-top: 10px;
       padding: 10px;
@@ -115,7 +120,7 @@
 
   <!-- App -->
   <div id="app">
-    <h3>📦 Scan Barcode Resi</h3>
+    <h3>📦 Scan Mode Kontinu</h3>
 
     <div id="video-container">
       <video id="video" autoplay playsinline muted></video>
@@ -124,14 +129,15 @@
 
     <br>
     <button class="btn btn-hijau" id="btn-mulai" onclick="mulaiScan()">📷 Mulai Scan</button>
-    <button class="btn btn-merah" id="btn-stop" onclick="stopScan()">⏹ Stop</button>
+    <button class="btn btn-merah" id="btn-stop" onclick="stopScan()">⏹ Berhenti</button>
 
-    <div id="status">Klik "Mulai Scan" lalu arahkan ke barcode resi.</div>
+    <div id="status">Klik "Mulai Scan" untuk mulai membaca barcode.</div>
     <div id="hasil-scan"></div>
   </div>
 
   <script>
     const PASSWORD = "kodachi123";
+    // PASTIKAN INI ADALAH URL GOOGLE SCRIPT KAMU
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzK2WQG7ZYuE-3M3mjMg5X9A8R3QXxqFwTZfHrwXAUZcaeJcXDp_n_dwX0m51HTwRv1/exec";
 
     function cekPassword() {
@@ -139,6 +145,8 @@
       if (input === PASSWORD) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        // Inisialisasi Audio di sini agar diizinkan oleh browser setelah ada interaksi klik
+        inisialisasiAudio(); 
       } else {
         document.getElementById('login-error').innerHTML = "❌ Password salah.";
         document.getElementById('input-password').value = '';
@@ -153,48 +161,128 @@
 
     let codeReader = null;
     let scanning = false;
-    let resiTerakhir = null;
+    
+    // VARIABEL UNTUK MENCEGAH SCAN SPAM SANGAT CEPAT
+    let resiTerakhir = "";
+    let waktuTerakhirScan = 0;
+
+    let riwayatScan = JSON.parse(localStorage.getItem('riwayatResiLocal')) || [];
+    let audioCtx;
+
+    // FUNGSI UNTUK MENGHASILKAN SUARA "TIT" DAN "TOT"
+    function inisialisasiAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function mainkanSuara(tipe) {
+      if (!audioCtx) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      if (tipe === "sukses") {
+        // Suara "Tit" (Tinggi, pendek)
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+      } else if (tipe === "gagal") {
+        // Suara "Tot" (Rendah, agak panjang)
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.4);
+      }
+    }
+
+    // FUNGSI UNTUK MENGUBAH WARNA KOTAK STATUS SEMENTARA
+    function ubahTampilanStatus(pesan, status) {
+      statusDiv.innerHTML = pesan;
+      statusDiv.className = ""; // Reset class
+      
+      if (status === "sukses") {
+        statusDiv.classList.add("status-sukses");
+      } else if (status === "gagal") {
+        statusDiv.classList.add("status-gagal");
+      }
+
+      // Hapus warna background setelah 2.5 detik agar kembali normal
+      setTimeout(() => {
+        if(scanning) {
+          statusDiv.className = "";
+          statusDiv.innerHTML = "Menunggu barcode resi berikutnya...";
+        }
+      }, 2500);
+    }
 
     function mulaiScan() {
-      statusDiv.innerHTML = "⏳ Memulai kamera...";
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume(); // Memastikan audio aktif
+      }
+
+      statusDiv.innerHTML = "⏳ Kamera aktif. Silakan arahkan ke resi.";
+      statusDiv.className = "";
       btnMulai.style.display = 'none';
       btnStop.style.display = 'inline-block';
       garisScan.style.display = 'block';
       scanning = true;
-      resiTerakhir = null;
 
       codeReader = new ZXing.BrowserMultiFormatReader();
       codeReader.decodeFromVideoDevice(null, 'video', function(result, err) {
         if (result && scanning) {
           var nomorResi = result.getText().trim().toUpperCase();
+          var waktuSekarang = new Date().getTime();
 
-          // Hindari scan berulang resi yang sama
-          if (nomorResi === resiTerakhir) return;
+          // MENCEGAH KAMERA MEMBACA RESI YANG SAMA BERULANG KALI DALAM 3 DETIK (Cooldown)
+          if (nomorResi === resiTerakhir && (waktuSekarang - waktuTerakhirScan < 3000)) {
+            return; // Abaikan, jangan lakukan apa-apa
+          }
+          
           resiTerakhir = nomorResi;
+          waktuTerakhirScan = waktuSekarang;
 
-          statusDiv.innerHTML = "⏳ Resi ditemukan: <b>" + nomorResi + "</b><br>Mengirim ke server...";
+          // 1. CEK LOKAL BROWSER (HP INI)
+          if (riwayatScan.includes(nomorResi)) {
+            mainkanSuara("gagal"); // Bunyi TOT
+            ubahTampilanStatus("⚠️ DOUBLE!<br>Resi <b>" + nomorResi + "</b> sudah di-scan di HP ini.", "gagal");
+            return; // Kamera TETAP MENYALA, tidak dipanggil stopScan()
+          }
 
-          // Kirim ke GAS
+          ubahTampilanStatus("⏳ Memproses resi: <b>" + nomorResi + "</b>...", "");
+
+          // 2. KIRIM KE GOOGLE SCRIPT SERVER
           fetch(GAS_URL, {
             method: "POST",
             body: JSON.stringify({ resi: nomorResi }),
-            headers: { "Content-Type": "text/plain" },
-            mode: "no-cors"
+            headers: { "Content-Type": "text/plain" }
           })
-          .then(function() {
-            statusDiv.innerHTML = "✅ Resi <b>" + nomorResi + "</b> berhasil dikirim!<br>Cek spreadsheet.";
-            hasilDiv.style.display = 'block';
-            hasilDiv.innerHTML = "🕐 " + new Date().toLocaleTimeString() + " — " + nomorResi;
-
-            // Reset setelah 3 detik untuk scan berikutnya
-            setTimeout(function() {
-              resiTerakhir = null;
-              statusDiv.innerHTML = "✅ Siap scan resi berikutnya...";
-            }, 3000);
+          .then(response => response.text())
+          .then(pesanDariServer => {
+            if (pesanDariServer.includes("sudah pernah") || pesanDariServer.includes("❌")) {
+              // GAGAL KARENA HP LAIN / SERVER MENOLAK
+              mainkanSuara("gagal"); // Bunyi TOT
+              ubahTampilanStatus("⚠️ " + pesanDariServer, "gagal");
+            } else {
+              // SUKSES MENYIMPAN KE SPREADSHEET
+              mainkanSuara("sukses"); // Bunyi TIT
+              ubahTampilanStatus(pesanDariServer, "sukses");
+              
+              riwayatScan.push(nomorResi);
+              localStorage.setItem('riwayatResiLocal', JSON.stringify(riwayatScan));
+              
+              hasilDiv.style.display = 'block';
+              hasilDiv.innerHTML = "🕐 Terakhir diproses: " + nomorResi;
+            }
           })
           .catch(function(err) {
-            statusDiv.innerHTML = "❌ Gagal kirim: " + err.message;
-            resiTerakhir = null;
+            mainkanSuara("gagal");
+            ubahTampilanStatus("❌ Gagal terhubung ke internet!", "gagal");
           });
         }
       });
@@ -209,7 +297,9 @@
       garisScan.style.display = 'none';
       btnMulai.style.display = 'inline-block';
       btnStop.style.display = 'none';
-      statusDiv.innerHTML = "⏹ Scan dihentikan.";
+      
+      statusDiv.className = "";
+      statusDiv.innerHTML = "⏹ Kamera dihentikan.";
     }
   </script>
 </body>
