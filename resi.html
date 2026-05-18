@@ -116,7 +116,7 @@
 </head>
 <body>
 
-  <!-- Login -->
+  <!-- Layar Login -->
   <div id="login-screen">
     <h2>🔒 Scan Resi</h2>
     <input type="password" id="input-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') cekPassword()">
@@ -124,7 +124,7 @@
     <div id="login-error"></div>
   </div>
 
-  <!-- App -->
+  <!-- Layar Aplikasi Scanner -->
   <div id="app">
     <h3>📦 Scan Mode Kontinu</h3>
 
@@ -142,9 +142,11 @@
   </div>
 
   <script>
+    // Konfigurasi Utama
     const PASSWORD = "kodachi123";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzK2WQG7ZYuE-3M3mjMg5X9A8R3QXxqFwTZfHrwXAUZcaeJcXDp_n_dwX0m51HTwRv1/exec";
 
+    // Fungsi Login
     function cekPassword() {
       const input = document.getElementById('input-password').value;
       if (input === PASSWORD) {
@@ -157,18 +159,21 @@
       }
     }
 
+    // Variabel Elemen UI
     const statusDiv = document.getElementById('status');
     const hasilDiv = document.getElementById('hasil-scan');
     const btnMulai = document.getElementById('btn-mulai');
     const btnStop = document.getElementById('btn-stop');
     const garisScan = document.getElementById('garis-scan');
 
+    // Variabel Logika Scanner
     let codeReader = null;
     let scanning = false;
     let resiTerakhir = "";
     let waktuTerakhirScan = 0;
     let audioCtx;
 
+    // Fungsi Audio
     function inisialisasiAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -196,6 +201,7 @@
       }
     }
 
+    // Fungsi Tampilan
     function ubahTampilanStatus(pesan, status) {
       statusDiv.innerHTML = pesan;
       statusDiv.className = "";
@@ -207,29 +213,42 @@
       setTimeout(() => {
         if (scanning) {
           statusDiv.className = "";
-          statusDiv.innerHTML = "Menunggu barcode resi berikutnya...";
+          statusDiv.innerHTML = "Menunggu barcode/QR berikutnya...";
         }
       }, 2500);
     }
 
+    // Fungsi Utama Memulai Scan (Sudah Dioptimasi)
     function mulaiScan() {
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
-      statusDiv.innerHTML = "⏳ Kamera aktif. Silakan arahkan ke resi.";
+      statusDiv.innerHTML = "⏳ Kamera aktif. Silakan arahkan ke resi/QR.";
       statusDiv.className = "";
       btnMulai.style.display = 'none';
       btnStop.style.display = 'inline-block';
       garisScan.style.display = 'block';
       scanning = true;
 
-      codeReader = new ZXing.BrowserMultiFormatReader();
+      // Optimasi Kecepatan & Dukungan QR Code
+      const hints = new Map();
+      const formats = [
+        ZXing.BarcodeFormat.CODE_128, 
+        ZXing.BarcodeFormat.CODE_39, 
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.QR_CODE // Menambahkan dukungan QR Code
+      ];
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+
+      // Inisialisasi pembaca dengan pengaturan (hints) di atas
+      codeReader = new ZXing.BrowserMultiFormatReader(hints);
+      
       codeReader.decodeFromVideoDevice(null, 'video', function(result, err) {
         if (result && scanning) {
           var nomorResi = result.getText().trim().toUpperCase();
           var waktuSekarang = new Date().getTime();
 
-          // Cegah scan resi sama dalam 3 detik
+          // Mencegah pembacaan resi yang sama berulang kali dalam 3 detik
           if (nomorResi === resiTerakhir && (waktuSekarang - waktuTerakhirScan < 3000)) {
             return;
           }
@@ -237,9 +256,9 @@
           resiTerakhir = nomorResi;
           waktuTerakhirScan = waktuSekarang;
 
-          ubahTampilanStatus("⏳ Memproses resi: <b>" + nomorResi + "</b>...", "");
+          ubahTampilanStatus("🚀 Memproses: <b>" + nomorResi + "</b>...", "");
 
-          // Kirim ke GAS — GAS yang menentukan sudah scan atau belum
+          // Mengirim data ke Google Apps Script
           fetch(GAS_URL, {
             method: "POST",
             body: JSON.stringify({ resi: nomorResi }),
@@ -268,6 +287,7 @@
       });
     }
 
+    // Fungsi Berhenti Scan
     function stopScan() {
       scanning = false;
       if (codeReader) {
