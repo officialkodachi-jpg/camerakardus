@@ -9,27 +9,23 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
     h3 { margin-bottom: 15px; color: #333; }
-    
-    /* PERUBAHAN TAMPILAN KAMERA DI SINI */
     #video-container {
       position: relative;
       width: 100%;
       max-width: 480px;
-      height: 250px; /* Membatasi bukaan tinggi kamera agar tidak terlalu lebar/tinggi */
+      height: 250px;
       margin: 0 auto;
-      overflow: hidden; /* Memotong gambar kamera yang keluar dari kotak 250px */
+      overflow: hidden;
       border: 3px solid #007bff;
       border-radius: 10px;
       background: #222;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    
     video {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Menjaga proporsi video agar tidak gepeng meski dipotong */
+      object-fit: cover;
     }
-
     #garis-scan {
       position: absolute;
       top: 50%;
@@ -38,15 +34,13 @@
       height: 2px;
       background: red;
       animation: scan 2s linear infinite;
-      box-shadow: 0 0 10px red; /* Memberi efek menyala pada garis merah */
+      box-shadow: 0 0 10px red;
     }
-    
     @keyframes scan {
       0% { top: 20%; }
       50% { top: 80%; }
       100% { top: 20%; }
     }
-    
     .btn {
       display: inline-block;
       padding: 14px 28px;
@@ -60,7 +54,6 @@
     .btn-hijau { background: #28a745; color: white; }
     .btn-merah { background: #dc3545; color: white; display: none; }
     .btn:disabled { background: #aaa; cursor: not-allowed; }
-    
     #status {
       margin-top: 15px;
       font-weight: bold;
@@ -78,7 +71,6 @@
     }
     .status-sukses { border-color: #28a745 !important; background: #e8f4e8 !important; }
     .status-gagal { border-color: #dc3545 !important; background: #f8d7da !important; color: #721c24 !important; }
-    
     #hasil-scan {
       margin-top: 10px;
       padding: 10px;
@@ -90,7 +82,6 @@
       display: none;
       font-size: 14px;
     }
-    
     #login-screen {
       max-width: 320px;
       margin: 80px auto;
@@ -152,7 +143,6 @@
 
   <script>
     const PASSWORD = "kodachi123";
-    // PASTIKAN INI ADALAH URL GOOGLE SCRIPT KAMU
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzK2WQG7ZYuE-3M3mjMg5X9A8R3QXxqFwTZfHrwXAUZcaeJcXDp_n_dwX0m51HTwRv1/exec";
 
     function cekPassword() {
@@ -160,7 +150,7 @@
       if (input === PASSWORD) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        inisialisasiAudio(); 
+        inisialisasiAudio();
       } else {
         document.getElementById('login-error').innerHTML = "❌ Password salah.";
         document.getElementById('input-password').value = '';
@@ -175,11 +165,8 @@
 
     let codeReader = null;
     let scanning = false;
-    
     let resiTerakhir = "";
     let waktuTerakhirScan = 0;
-
-    let riwayatScan = JSON.parse(localStorage.getItem('riwayatResiLocal')) || [];
     let audioCtx;
 
     function inisialisasiAudio() {
@@ -192,10 +179,8 @@
       if (!audioCtx) return;
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
-      
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
-
       if (tipe === "sukses") {
         oscillator.type = "sine";
         oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
@@ -213,16 +198,14 @@
 
     function ubahTampilanStatus(pesan, status) {
       statusDiv.innerHTML = pesan;
-      statusDiv.className = ""; 
-      
+      statusDiv.className = "";
       if (status === "sukses") {
         statusDiv.classList.add("status-sukses");
       } else if (status === "gagal") {
         statusDiv.classList.add("status-gagal");
       }
-
       setTimeout(() => {
-        if(scanning) {
+        if (scanning) {
           statusDiv.className = "";
           statusDiv.innerHTML = "Menunggu barcode resi berikutnya...";
         }
@@ -233,7 +216,6 @@
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
-
       statusDiv.innerHTML = "⏳ Kamera aktif. Silakan arahkan ke resi.";
       statusDiv.className = "";
       btnMulai.style.display = 'none';
@@ -247,21 +229,17 @@
           var nomorResi = result.getText().trim().toUpperCase();
           var waktuSekarang = new Date().getTime();
 
+          // Cegah scan resi sama dalam 3 detik
           if (nomorResi === resiTerakhir && (waktuSekarang - waktuTerakhirScan < 3000)) {
-            return; 
+            return;
           }
-          
+
           resiTerakhir = nomorResi;
           waktuTerakhirScan = waktuSekarang;
 
-          if (riwayatScan.includes(nomorResi)) {
-            mainkanSuara("gagal");
-            ubahTampilanStatus("⚠️ DOUBLE!<br>Resi <b>" + nomorResi + "</b> sudah di-scan di HP ini.", "gagal");
-            return; 
-          }
-
           ubahTampilanStatus("⏳ Memproses resi: <b>" + nomorResi + "</b>...", "");
 
+          // Kirim ke GAS — GAS yang menentukan sudah scan atau belum
           fetch(GAS_URL, {
             method: "POST",
             body: JSON.stringify({ resi: nomorResi }),
@@ -269,18 +247,17 @@
           })
           .then(response => response.text())
           .then(pesanDariServer => {
-            if (pesanDariServer.includes("sudah pernah") || pesanDariServer.includes("❌")) {
-              mainkanSuara("gagal"); 
+            if (pesanDariServer.includes("sudah pernah") || pesanDariServer.includes("⚠️")) {
+              mainkanSuara("gagal");
               ubahTampilanStatus("⚠️ " + pesanDariServer, "gagal");
+            } else if (pesanDariServer.includes("❌")) {
+              mainkanSuara("gagal");
+              ubahTampilanStatus(pesanDariServer, "gagal");
             } else {
-              mainkanSuara("sukses"); 
+              mainkanSuara("sukses");
               ubahTampilanStatus(pesanDariServer, "sukses");
-              
-              riwayatScan.push(nomorResi);
-              localStorage.setItem('riwayatResiLocal', JSON.stringify(riwayatScan));
-              
               hasilDiv.style.display = 'block';
-              hasilDiv.innerHTML = "🕐 Terakhir diproses: " + nomorResi;
+              hasilDiv.innerHTML = "🕐 " + new Date().toLocaleTimeString() + " — " + nomorResi;
             }
           })
           .catch(function(err) {
@@ -300,7 +277,6 @@
       garisScan.style.display = 'none';
       btnMulai.style.display = 'inline-block';
       btnStop.style.display = 'none';
-      
       statusDiv.className = "";
       statusDiv.innerHTML = "⏹ Kamera dihentikan.";
     }
