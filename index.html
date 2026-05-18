@@ -10,14 +10,13 @@
     body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background: #f0f0f0; }
     h3 { margin-top: 10px; margin-bottom: 15px; color: #333; font-size: 18px; }
     
-    /* UKURAN KAMERA DIKUNCI JADI 1/3 LAYAR HP */
     #video-container {
       position: relative;
       width: 100%;
       max-width: 400px;
-      height: 160px; /* Tinggi diperkecil agar fokus dan tipis (± 1/3 layar HP) */
+      height: 160px; /* 1/3 Layar */
       margin: 0 auto;
-      overflow: hidden; /* Memotong gambar kamera yang keluar dari kotak */
+      overflow: hidden;
       border: 3px solid #28a745;
       border-radius: 12px;
       background: #222;
@@ -27,10 +26,9 @@
     video {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Memaksa kamera memenuhi kotak sempit secara pas */
+      object-fit: cover;
     }
     
-    /* Garis Laser Merah untuk Panduan Membidik */
     .garis-scan {
       display: none; 
       position: absolute; 
@@ -46,7 +44,6 @@
       0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; }
     }
     
-    /* Bingkai Target Pojok (Overlay) agar Tim Gudang Tahu Batas Batas Batas Batas Teks */
     .bingkai-target {
       position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
       border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 6px; pointer-events: none;
@@ -72,7 +69,7 @@
       <div class="bingkai-target"></div>
     </div>
     
-    <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera()">🎥 Nyalakan Kamera</button>
+    <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera(false)">🎥 Nyalakan Kamera</button>
     
     <div id="grup-tombol" style="display:none;">
       <button class="btn btn-biru" id="btn-scan-teks" onclick="ambilFotoTeks()">📸 Scan Teks Label</button>
@@ -85,7 +82,7 @@
 
   <script>
     // =========================================================
-    // TINGGAL PASTE LINK DEPLOYMENT EXEC APPS SCRIPT BAPAK DI SINI
+    // WAJIB GANTI: Paste URL Exec / Deployment Apps Script di sini
     // =========================================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyc3hxEoyPzhVN823BqEJcIzqax8t1DmHy53m3Qc352kbMLCW7ANHKRNzyjwT-H3a35/exec";
 
@@ -95,8 +92,10 @@
     const garisScan = document.getElementById('garis-scan');
     let codeReader;
 
-    function aktifkanKamera() {
-      statusDiv.innerHTML = "⏳ Meminta izin kamera...";
+    // FITUR BARU: silentRestart (Merestart kamera tanpa mengubah teks loading di layar)
+    function aktifkanKamera(silentRestart = false) {
+      if (!silentRestart) statusDiv.innerHTML = "⏳ Meminta izin kamera...";
+      
       navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } }
       })
@@ -104,43 +103,47 @@
         video.srcObject = stream;
         video.onloadedmetadata = function() {
           video.play();
-          statusDiv.innerHTML = "✅ Kamera aktif. Posisikan tulisan label tepat di dalam kotak hijau.";
+          if (!silentRestart) {
+            statusDiv.innerHTML = "✅ Kamera aktif. Posisikan tulisan label tepat di dalam kotak hijau.";
+          }
           document.getElementById('btn-izin').style.display = 'none';
           document.getElementById('grup-tombol').style.display = 'block';
         };
       })
       .catch(function(err) {
-        statusDiv.innerHTML = "❌ Gagal akses kamera: " + err.message;
+        if (!silentRestart) statusDiv.innerHTML = "❌ Gagal akses kamera: " + err.message;
       });
     }
 
     // =========================================================
-    // MODE 1: SCAN TEKS KARDUS + PROSES CROP OTOMATIS (1/3 TENGAH)
+    // MODE 1: SCAN TEKS LABEL
     // =========================================================
     function ambilFotoTeks() {
-      if (codeReader) { codeReader.reset(); codeReader = null; }
-      garisScan.style.display = 'none';
-      statusDiv.innerHTML = "⏳ Memotong foto & memproses teks... Mohon tunggu.";
-      
+      // 1. Tangkap gambar DULU selagi kamera masih menyala
       const ctx = canvas.getContext('2d');
-      
-      // Ukuran asli resolusi kamera HP
       const vWidth = video.videoWidth || 640;
       const vHeight = video.videoHeight || 480;
-      
-      // RUMUS CROP: Ambil tinggi sepertiga (1/3) tepat di bagian tengah kamera
       const tinggiPotongan = vHeight / 3; 
       const titikMulaiTop = (vHeight - tinggiPotongan) / 2;
       
-      // Set ukuran canvas hanya sebesar ukuran hasil potongan
       canvas.width = vWidth;
       canvas.height = tinggiPotongan;
-      
-      // Ambil gambar kamera dan potong (hanya rekam koordinat tengah)
       ctx.drawImage(video, 0, titikMulaiTop, vWidth, tinggiPotongan, 0, 0, vWidth, tinggiPotongan);
-
       const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
+      // 2. Sekarang baru matikan Mesin Barcode (Ini akan bikin kamera mati)
+      if (codeReader) { 
+        codeReader.reset(); 
+        codeReader = null; 
+      }
+      garisScan.style.display = 'none';
+      
+      // 3. Langsung nyalakan kamera lagi secara diam-diam (silent restart)
+      aktifkanKamera(true); 
+
+      // 4. Proses pengiriman data
+      statusDiv.innerHTML = "⏳ Mengirim gambar & memproses teks... Mohon tunggu.";
+      
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({ image: base64Data }),
@@ -148,7 +151,8 @@
         mode: "no-cors"
       })
       .then(() => { 
-        statusDiv.innerHTML = "✅ Sukses dikirim! Data potongan gambar berhasil diproses ke Sheets."; 
+        mainkanSuaraBeep(); // Bunyi Beep saat scan teks sukses
+        statusDiv.innerHTML = "✅ Teks berhasil di-scan & masuk ke Sheets!"; 
       })
       .catch(err => { 
         statusDiv.innerHTML = "❌ Gagal kirim teks: " + err.message; 
@@ -156,7 +160,7 @@
     }
 
     // =========================================================
-    // MODE 2: AUTO-SCAN BARCODE / QR RESI
+    // MODE 2: AUTO-SCAN BARCODE / QR
     // =========================================================
     function mulaiScanBarcode() {
       statusDiv.innerHTML = "🔍 Mode Barcode Aktif! Tempelkan Barcode resi di garis merah.";
@@ -168,8 +172,14 @@
 
       codeReader.decodeFromVideoDevice(null, 'webcam', (result, err) => {
         if (result) {
+          // Matikan mesin pencari agar tidak double-scan
           codeReader.reset();
+          codeReader = null;
           garisScan.style.display = 'none';
+          
+          // Nyalakan ulang kamera untuk standby
+          aktifkanKamera(true);
+
           statusDiv.innerHTML = "⏳ Barcode terbaca: " + result.text + ". Mencatat...";
           mainkanSuaraBeep();
 
@@ -189,14 +199,17 @@
       });
     }
 
+    // =========================================================
+    // EFEK SUARA BEEP
+    // =========================================================
     function mainkanSuaraBeep() {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       oscillator.type = 'square';
-      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Nada frekuensi tinggi
       oscillator.connect(audioCtx.destination);
       oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.1);
+      oscillator.stop(audioCtx.currentTime + 0.1); // Durasi Beep cepat (0.1 detik)
     }
   </script>
 </body>
