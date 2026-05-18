@@ -3,198 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scan Label Kardus</title>
+  <title>Sistem Scan Gudang Terpadu</title>
+  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
-    h3 { margin-bottom: 15px; color: #333; }
-    video {
-      border: 3px solid #28a745;
+    body { font-family: Arial, sans-serif; text-align: center; padding: 15px; background: #f0f0f0; }
+    h3 { margin-top: 10px; margin-bottom: 15px; color: #333; font-size: 18px; }
+    
+    /* UKURAN KAMERA DIKUNCI JADI 1/3 LAYAR HP */
+    #video-container {
+      position: relative;
       width: 100%;
-      max-width: 480px;
-      max-height: 280px;
-      object-fit: cover;
-      border-radius: 10px;
-      background-color: #222;
-      display: block;
+      max-width: 400px;
+      height: 160px; /* Tinggi diperkecil agar fokus dan tipis (± 1/3 layar HP) */
       margin: 0 auto;
-    }
-    .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 8px 4px;
-      font-weight: bold;
-    }
-    .btn-hijau { background: #28a745; color: white; }
-    .btn-biru { background: #007bff; color: white; }
-    .btn:disabled { background: #aaa; cursor: not-allowed; }
-    #status {
-      margin-top: 15px;
-      font-weight: bold;
-      color: #444;
-      padding: 12px;
-      background: white;
-      border-radius: 8px;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    #login-screen {
-      max-width: 320px;
-      margin: 80px auto;
-      background: white;
+      overflow: hidden; /* Memotong gambar kamera yang keluar dari kotak */
+      border: 3px solid #28a745;
       border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      background: #222;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
-    #login-screen h2 { margin-bottom: 20px; color: #333; }
-    #login-screen input {
+    
+    video {
       width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 12px;
+      height: 100%;
+      object-fit: cover; /* Memaksa kamera memenuhi kotak sempit secara pas */
     }
-    #login-screen button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
+    
+    /* Garis Laser Merah untuk Panduan Membidik */
+    .garis-scan {
+      display: none; 
+      position: absolute; 
+      top: 50%; 
+      left: 0; 
+      width: 100%; 
+      height: 3px;
+      background: #dc3545; 
+      box-shadow: 0 0 8px #dc3545; 
+      animation: naikTurun 1.5s infinite ease-in-out;
     }
-    #login-error { color: red; margin-top: 10px; font-size: 14px; }
-    #app { display: none; }
+    @keyframes naikTurun {
+      0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; }
+    }
+    
+    /* Bingkai Target Pojok (Overlay) agar Tim Gudang Tahu Batas Batas Batas Batas Teks */
+    .bingkai-target {
+      position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.4); border-radius: 6px; pointer-events: none;
+    }
+
+    .btn { display: inline-block; padding: 14px 10px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; margin: 8px 4px; font-weight: bold; width: 47%; }
+    .btn-hijau { background: #28a745; color: white; width: 95%; margin-top: 10px; }
+    .btn-biru { background: #007bff; color: white; }
+    .btn-merah { background: #dc3545; color: white; }
+    #grup-tombol { max-width: 400px; margin: 0 auto; }
+    #status { margin-top: 15px; font-weight: bold; color: #444; padding: 12px; background: white; border-radius: 8px; max-width: 400px; margin: 15px auto; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     canvas { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- Layar Login -->
-  <div id="login-screen">
-    <h2>🔒 Login</h2>
-    <input type="password" id="input-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') cekPassword()">
-    <button onclick="cekPassword()">Masuk</button>
-    <div id="login-error"></div>
-  </div>
-
-  <!-- Aplikasi -->
   <div id="app">
-    <h3>📦 Scan Label Kardus</h3>
-    <video id="webcam" autoplay playsinline muted></video>
-    <br>
-    <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera()">🎥 Aktifkan Kamera</button>
-    <button class="btn btn-biru" id="btn-scan" onclick="ambilFoto()" style="display:none;">📸 Ambil Foto & Scan</button>
-    <div id="status">Klik "Aktifkan Kamera" untuk memulai.</div>
+    <h3>📦 Sistem Scan Gudang Terpadu</h3>
+    
+    <div id="video-container">
+      <video id="webcam" autoplay playsinline muted></video>
+      <div class="garis-scan" id="garis-scan"></div>
+      <div class="bingkai-target"></div>
+    </div>
+    
+    <button class="btn btn-hijau" id="btn-izin" onclick="aktifkanKamera()">🎥 Nyalakan Kamera</button>
+    
+    <div id="grup-tombol" style="display:none;">
+      <button class="btn btn-biru" id="btn-scan-teks" onclick="ambilFotoTeks()">📸 Scan Teks Label</button>
+      <button class="btn btn-merah" id="btn-scan-barcode" onclick="mulaiScanBarcode()">🔍 Auto-Scan Barcode</button>
+    </div>
+
+    <div id="status">Klik "Nyalakan Kamera" untuk memulai.</div>
     <canvas id="canvas"></canvas>
   </div>
 
   <script>
-    const PASSWORD = "kodachi123";
+    // =========================================================
+    // TINGGAL PASTE LINK DEPLOYMENT EXEC APPS SCRIPT BAPAK DI SINI
+    // =========================================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyc3hxEoyPzhVN823BqEJcIzqax8t1DmHy53m3Qc352kbMLCW7ANHKRNzyjwT-H3a35/exec";
-
-    // Fungsi bunyi
-    let audioCtx;
-    function inisialisasiAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    function mainkanSuara(tipe) {
-      if (!audioCtx) return;
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      if (tipe === "sukses") {
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.15);
-      } else if (tipe === "gagal") {
-        oscillator.type = "square";
-        oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.5);
-      }
-    }
-
-    function cekPassword() {
-      const input = document.getElementById('input-password').value;
-      if (input === PASSWORD) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        inisialisasiAudio();
-      } else {
-        document.getElementById('login-error').innerHTML = "❌ Password salah, coba lagi.";
-        document.getElementById('input-password').value = '';
-      }
-    }
 
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
     const statusDiv = document.getElementById('status');
-    const btnIzin = document.getElementById('btn-izin');
-    const btnScan = document.getElementById('btn-scan');
+    const garisScan = document.getElementById('garis-scan');
+    let codeReader;
 
     function aktifkanKamera() {
-      btnIzin.disabled = true;
       statusDiv.innerHTML = "⏳ Meminta izin kamera...";
-
       navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
+        video: { facingMode: { ideal: "environment" } }
       })
       .then(function(stream) {
         video.srcObject = stream;
         video.onloadedmetadata = function() {
           video.play();
-          statusDiv.innerHTML = "✅ Kamera aktif. Arahkan ke label lalu klik Ambil Foto.";
-          btnIzin.style.display = 'none';
-          btnScan.style.display = 'inline-block';
+          statusDiv.innerHTML = "✅ Kamera aktif. Posisikan tulisan label tepat di dalam kotak hijau.";
+          document.getElementById('btn-izin').style.display = 'none';
+          document.getElementById('grup-tombol').style.display = 'block';
         };
       })
       .catch(function(err) {
-        btnIzin.disabled = false;
-        if (err.name === 'NotAllowedError') {
-          statusDiv.innerHTML = "❌ Izin kamera ditolak. Izinkan kamera di browser lalu refresh.";
-        } else if (err.name === 'NotFoundError') {
-          statusDiv.innerHTML = "❌ Kamera tidak ditemukan.";
-        } else {
-          statusDiv.innerHTML = "❌ Error: " + err.name + " - " + err.message;
-        }
+        statusDiv.innerHTML = "❌ Gagal akses kamera: " + err.message;
       });
     }
 
-    function ambilFoto() {
-      statusDiv.innerHTML = "⏳ Memproses gambar... Mohon tunggu.";
-      btnScan.disabled = true;
-
+    // =========================================================
+    // MODE 1: SCAN TEKS KARDUS + PROSES CROP OTOMATIS (1/3 TENGAH)
+    // =========================================================
+    function ambilFotoTeks() {
+      if (codeReader) { codeReader.reset(); codeReader = null; }
+      garisScan.style.display = 'none';
+      statusDiv.innerHTML = "⏳ Memotong foto & memproses teks... Mohon tunggu.";
+      
       const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Ukuran asli resolusi kamera HP
+      const vWidth = video.videoWidth || 640;
+      const vHeight = video.videoHeight || 480;
+      
+      // RUMUS CROP: Ambil tinggi sepertiga (1/3) tepat di bagian tengah kamera
+      const tinggiPotongan = vHeight / 3; 
+      const titikMulaiTop = (vHeight - tinggiPotongan) / 2;
+      
+      // Set ukuran canvas hanya sebesar ukuran hasil potongan
+      canvas.width = vWidth;
+      canvas.height = tinggiPotongan;
+      
+      // Ambil gambar kamera dan potong (hanya rekam koordinat tengah)
+      ctx.drawImage(video, 0, titikMulaiTop, vWidth, tinggiPotongan, 0, 0, vWidth, tinggiPotongan);
 
       const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-
-      if (!base64Data || base64Data.length < 100) {
-        mainkanSuara("gagal");
-        statusDiv.innerHTML = "❌ Gambar kosong. Coba refresh halaman.";
-        btnScan.disabled = false;
-        return;
-      }
 
       fetch(GAS_URL, {
         method: "POST",
@@ -202,16 +147,56 @@
         headers: { "Content-Type": "text/plain" },
         mode: "no-cors"
       })
-      .then(() => {
-        mainkanSuara("sukses");
-        statusDiv.innerHTML = "✅ Berhasil dikirim! Silakan cek spreadsheet.";
-        btnScan.disabled = false;
+      .then(() => { 
+        statusDiv.innerHTML = "✅ Sukses dikirim! Data potongan gambar berhasil diproses ke Sheets."; 
       })
-      .catch(err => {
-        mainkanSuara("gagal");
-        statusDiv.innerHTML = "❌ Gagal kirim! Coba cek koneksi internet lalu ulangi.";
-        btnScan.disabled = false;
+      .catch(err => { 
+        statusDiv.innerHTML = "❌ Gagal kirim teks: " + err.message; 
       });
+    }
+
+    // =========================================================
+    // MODE 2: AUTO-SCAN BARCODE / QR RESI
+    // =========================================================
+    function mulaiScanBarcode() {
+      statusDiv.innerHTML = "🔍 Mode Barcode Aktif! Tempelkan Barcode resi di garis merah.";
+      garisScan.style.display = 'block';
+
+      if (!codeReader) {
+        codeReader = new ZXing.BrowserMultiFormatReader();
+      }
+
+      codeReader.decodeFromVideoDevice(null, 'webcam', (result, err) => {
+        if (result) {
+          codeReader.reset();
+          garisScan.style.display = 'none';
+          statusDiv.innerHTML = "⏳ Barcode terbaca: " + result.text + ". Mencatat...";
+          mainkanSuaraBeep();
+
+          fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ barcode: result.text }),
+            headers: { "Content-Type": "text/plain" },
+            mode: "no-cors"
+          })
+          .then(() => { 
+            statusDiv.innerHTML = "✅ Barcode [" + result.text + "] sukses masuk spreadsheet!"; 
+          })
+          .catch(error => { 
+            statusDiv.innerHTML = "❌ Gagal catat barcode: " + error.message; 
+          });
+        }
+      });
+    }
+
+    function mainkanSuaraBeep() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+      oscillator.connect(audioCtx.destination);
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
     }
   </script>
 </body>
