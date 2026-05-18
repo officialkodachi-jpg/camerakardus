@@ -12,8 +12,12 @@
       border: 3px solid #28a745;
       width: 100%;
       max-width: 480px;
+      max-height: 280px;
+      object-fit: cover;
       border-radius: 10px;
       background-color: #222;
+      display: block;
+      margin: 0 auto;
     }
     .btn {
       display: inline-block;
@@ -82,7 +86,7 @@
     <div id="login-error"></div>
   </div>
 
-  <!-- Aplikasi (tersembunyi sampai login) -->
+  <!-- Aplikasi -->
   <div id="app">
     <h3>📦 Scan Label Kardus</h3>
     <video id="webcam" autoplay playsinline muted></video>
@@ -94,14 +98,42 @@
   </div>
 
   <script>
-    const PASSWORD = "kodachi123"; // Ganti password di sini
+    const PASSWORD = "kodachi123";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyc3hxEoyPzhVN823BqEJcIzqax8t1DmHy53m3Qc352kbMLCW7ANHKRNzyjwT-H3a35/exec";
+
+    // Fungsi bunyi
+    let audioCtx;
+    function inisialisasiAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function mainkanSuara(tipe) {
+      if (!audioCtx) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      if (tipe === "sukses") {
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.15);
+      } else if (tipe === "gagal") {
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      }
+    }
 
     function cekPassword() {
       const input = document.getElementById('input-password').value;
       if (input === PASSWORD) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
+        inisialisasiAudio();
       } else {
         document.getElementById('login-error').innerHTML = "❌ Password salah, coba lagi.";
         document.getElementById('input-password').value = '';
@@ -158,6 +190,7 @@
       const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
       if (!base64Data || base64Data.length < 100) {
+        mainkanSuara("gagal");
         statusDiv.innerHTML = "❌ Gambar kosong. Coba refresh halaman.";
         btnScan.disabled = false;
         return;
@@ -170,11 +203,13 @@
         mode: "no-cors"
       })
       .then(() => {
+        mainkanSuara("sukses");
         statusDiv.innerHTML = "✅ Berhasil dikirim! Silakan cek spreadsheet.";
         btnScan.disabled = false;
       })
       .catch(err => {
-        statusDiv.innerHTML = "❌ Gagal kirim: " + err.message;
+        mainkanSuara("gagal");
+        statusDiv.innerHTML = "❌ Gagal kirim! Coba cek koneksi internet lalu ulangi.";
         btnScan.disabled = false;
       });
     }
