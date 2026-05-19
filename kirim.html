@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Kirim</title>
+  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 16px; background: #f0f0f0; }
+    h3 { margin-bottom: 10px; color: #333; font-size: 18px; }
+    #video-container {
+      position: relative; width: 100%; max-width: 480px;
+      height: 220px; margin: 0 auto; overflow: hidden;
+      border: 3px solid #28a745; border-radius: 10px; background: #222;
+    }
+    video { width: 100%; height: 100%; object-fit: cover; }
+    #garis-scan {
+      position: absolute; left: 5%; width: 90%; height: 3px;
+      background: lime; box-shadow: 0 0 8px lime;
+      animation: scan 1.5s linear infinite; display: none;
+    }
+    @keyframes scan { 0%{top:10%} 50%{top:90%} 100%{top:10%} }
+    .btn {
+      padding: 12px 22px; font-size: 15px; border: none;
+      border-radius: 8px; cursor: pointer; margin: 6px 4px; font-weight: bold;
+    }
+    .btn-hijau { background: #28a745; color: white; }
+    .btn-merah { background: #dc3545; color: white; display: none; }
+    #status {
+      margin-top: 10px; font-weight: bold; padding: 12px;
+      background: white; border-radius: 8px; max-width: 480px;
+      margin-left: auto; margin-right: auto; min-height: 60px;
+      font-size: 15px; border: 2px solid transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .sukses { border-color: #28a745 !important; background: #e8f4e8 !important; color: #155724 !important; }
+    .gagal  { border-color: #dc3545 !important; background: #f8d7da !important; color: #721c24 !important; }
+    .proses { border-color: #ffc107 !important; background: #fff8e1 !important; color: #856404 !important; }
+    #riwayat {
+      margin-top: 8px; max-width: 480px; margin-left: auto;
+      margin-right: auto; text-align: left; font-size: 13px;
+      max-height: 160px; overflow-y: auto;
+    }
+    .item { padding: 6px 10px; background: white; border-radius: 6px; margin-bottom: 4px; border-left: 4px solid #28a745; }
+    .item.gagal { border-left-color: #dc3545; }
+    #login-screen {
+      max-width: 320px; margin: 80px auto; background: white;
+      border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #login-screen h2 { margin-bottom: 20px; color: #333; }
+    #login-screen input {
+      width: 100%; padding: 12px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px;
+    }
+    #login-screen button {
+      width: 100%; padding: 12px; font-size: 16px;
+      background: #28a745; color: white; border: none;
+      border-radius: 8px; cursor: pointer; font-weight: bold;
+    }
+    #login-error { color: red; margin-top: 10px; font-size: 14px; }
+    #app { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="login-screen">
+    <h2>🔒 Scan Kirim</h2>
+    <input type="password" id="input-password" placeholder="Password"
+           onkeydown="if(event.key==='Enter') cekPassword()">
+    <button onclick="cekPassword()">Masuk</button>
+    <div id="login-error"></div>
+  </div>
+
+  <div id="app">
+    <h3>🚚 Scan Resi — Kirim</h3>
+    <div id="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="garis-scan"></div>
+    </div>
+    <br>
+    <button class="btn btn-hijau" id="btn-mulai" onclick="mulaiScan()">📷 Mulai Scan</button>
+    <button class="btn btn-merah" id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
+    <div id="status">Klik Mulai Scan.</div>
+    <div id="riwayat"></div>
+  </div>
+
+  <script>
+    const PASSWORD = "kodachi123";
+    const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
+    const MODE     = "kirim"; // isi kolom L
+
+    fetch(GAS_URL + "?ping=1").catch(() => {});
+
+    function cekPassword() {
+      if (document.getElementById('input-password').value === PASSWORD) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        inisialisasiAudio();
+      } else {
+        document.getElementById('login-error').innerHTML = "❌ Password salah.";
+        document.getElementById('input-password').value = '';
+      }
+    }
+
+    let audioCtx;
+    function inisialisasiAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    function bunyi(tipe) {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      if (tipe === "sukses") {
+        o.type = "sine"; o.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime + 0.12);
+      } else {
+        o.type = "square"; o.frequency.setValueAtTime(250, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime + 0.4);
+      }
+    }
+
+    const statusDiv  = document.getElementById('status');
+    const riwayatDiv = document.getElementById('riwayat');
+    let resetTimer   = null;
+
+    function setStatus(pesan, kelas) {
+      statusDiv.innerHTML = pesan;
+      statusDiv.className = kelas || "";
+      clearTimeout(resetTimer);
+      if (kelas) {
+        resetTimer = setTimeout(() => {
+          statusDiv.className = "";
+          statusDiv.innerHTML = "Siap scan berikutnya...";
+        }, 2000);
+      }
+    }
+
+    function tambahRiwayat(resi, sukses) {
+      const d = document.createElement('div');
+      d.className = 'item' + (sukses ? '' : ' gagal');
+      d.innerHTML = (sukses ? '✅' : '❌') + ' ' + new Date().toLocaleTimeString() + ' — ' + resi;
+      riwayatDiv.insertBefore(d, riwayatDiv.firstChild);
+      while (riwayatDiv.children.length > 10) riwayatDiv.removeChild(riwayatDiv.lastChild);
+    }
+
+    let codeReader    = null;
+    let scanning      = false;
+    let resiTerakhir  = "";
+    let waktuTerakhir = 0;
+    let sedangKirim   = false;
+
+    function mulaiScan() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      setStatus("⏳ Kamera aktif...", "proses");
+      document.getElementById('btn-mulai').style.display = 'none';
+      document.getElementById('btn-stop').style.display  = 'inline-block';
+      document.getElementById('garis-scan').style.display = 'block';
+      scanning = true;
+
+      codeReader = new ZXing.BrowserMultiFormatReader();
+
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.QR_CODE
+      ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      codeReader.hints = hints;
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 }, height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        }
+      };
+
+      codeReader.decodeFromConstraints(constraints, 'video', function(result, err) {
+        if (!result || !scanning || sedangKirim) return;
+
+        var resi = result.getText().trim().toUpperCase();
+        var now  = Date.now();
+
+        if (resi === resiTerakhir && now - waktuTerakhir < 3000) return;
+        resiTerakhir  = resi;
+        waktuTerakhir = now;
+        sedangKirim   = true;
+
+        setStatus("⏳ <b>" + resi + "</b>", "proses");
+
+        fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ resi: resi, mode: MODE }),
+          headers: { "Content-Type": "text/plain" }
+        })
+        .then(r => r.text())
+        .then(pesan => {
+          var ok = pesan.includes("✅");
+          bunyi(ok ? "sukses" : "gagal");
+          setStatus(pesan, ok ? "sukses" : "gagal");
+          tambahRiwayat(resi, ok);
+          sedangKirim = false;
+        })
+        .catch(() => {
+          bunyi("gagal");
+          setStatus("❌ Gagal konek internet!", "gagal");
+          tambahRiwayat(resi, false);
+          sedangKirim = false;
+        });
+      });
+    }
+
+    function stopScan() {
+      scanning = false; sedangKirim = false;
+      if (codeReader) { codeReader.reset(); codeReader = null; }
+      document.getElementById('garis-scan').style.display = 'none';
+      document.getElementById('btn-mulai').style.display  = 'inline-block';
+      document.getElementById('btn-stop').style.display   = 'none';
+      setStatus("⏹ Dihentikan.");
+    }
+  </script>
+</body>
+</html>
