@@ -261,6 +261,7 @@
             method: "POST",
             body: JSON.stringify({ resi: nomorResi, tipe: "bungkus" }),
             headers: { "Content-Type": "text/plain" }
+            redirect: "follow" // <--- TAMBAHKAN BARIS INI
           })
           .then(response => response.text())
           .then(pesanDariServer => {
