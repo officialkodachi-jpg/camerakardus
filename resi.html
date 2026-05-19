@@ -144,7 +144,7 @@
   <script>
     // Konfigurasi Utama
     const PASSWORD = "kodachi123";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
+    const GAS_URL = "https://script.google.com/macros/library/d/1jU7EMH2KBoBw6dq_tiDb10rFxR7kb78GzRBmdVGDPIWZWB5Zg4QV6w2i/10";
 
     // Fungsi Login
     function cekPassword() {
@@ -261,7 +261,7 @@
           // Mengirim data ke Google Apps Script
           fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ resi: nomorResi }),
+            body: JSON.stringify({ resi: result.text, tipe: "bungkus" }),
             headers: { "Content-Type": "text/plain" }
           })
           .then(response => response.text())
