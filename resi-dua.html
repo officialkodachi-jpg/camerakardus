@@ -1,122 +1,589 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scan Packing</title>
+  <link rel="manifest" href="#" id="manifest-link">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; text-align: center; padding: 16px; background: #f0f0f0; }
-    h3 { margin-bottom: 10px; color: #333; font-size: 18px; }
-    #video-container {
-      position: relative; width: 100%; max-width: 480px;
-      height: 220px; margin: 0 auto; overflow: hidden;
-      border: 3px solid #007bff; border-radius: 10px; background: #222;
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface2: #232342;
+      --accent: #4f8aff;
+      --accent-dim: #1e3a6e;
+      --green: #22c55e;
+      --green-dim: #14532d;
+      --red: #ef4444;
+      --red-dim: #7f1d1d;
+      --yellow: #eab308;
+      --yellow-dim: #713f12;
+      --text: #e8e8f0;
+      --muted: #8888aa;
+      --border: #2a2a4a;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
     }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    #garis-scan {
-      position: absolute; left: 5%; width: 90%; height: 3px;
-      background: red; box-shadow: 0 0 8px red;
-      animation: scan 1.5s linear infinite; display: none;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
     }
-    @keyframes scan { 0%{top:10%} 50%{top:90%} 100%{top:10%} }
-    .btn {
-      padding: 12px 22px; font-size: 15px; border: none;
-      border-radius: 8px; cursor: pointer; margin: 6px 4px; font-weight: bold;
-    }
-    .btn-hijau { background: #28a745; color: white; }
-    .btn-merah { background: #dc3545; color: white; display: none; }
-    #status {
-      margin-top: 10px; font-weight: bold; padding: 12px;
-      background: white; border-radius: 8px; max-width: 480px;
-      margin-left: auto; margin-right: auto; min-height: 60px;
-      font-size: 15px; border: 2px solid transparent;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .sukses { border-color: #28a745 !important; background: #e8f4e8 !important; color: #155724 !important; }
-    .gagal  { border-color: #dc3545 !important; background: #f8d7da !important; color: #721c24 !important; }
-    .proses { border-color: #ffc107 !important; background: #fff8e1 !important; color: #856404 !important; }
-    #riwayat {
-      margin-top: 8px; max-width: 480px; margin-left: auto;
-      margin-right: auto; text-align: left; font-size: 13px;
-      max-height: 160px; overflow-y: auto;
-    }
-    .item { padding: 6px 10px; background: white; border-radius: 6px; margin-bottom: 4px; border-left: 4px solid #28a745; }
-    .item.gagal { border-left-color: #dc3545; }
+
+    /* LOGIN */
     #login-screen {
-      max-width: 320px; margin: 80px auto; background: white;
-      border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px;
+      background: var(--bg);
     }
-    #login-screen h2 { margin-bottom: 20px; color: #333; }
-    #login-screen input {
-      width: 100%; padding: 12px; font-size: 16px;
-      border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px;
+    .login-card {
+      width: 100%; max-width: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px;
     }
-    #login-screen button {
-      width: 100%; padding: 12px; font-size: 16px;
-      background: #007bff; color: white; border: none;
-      border-radius: 8px; cursor: pointer; font-weight: bold;
+    .login-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 8px;
     }
-    #login-error { color: red; margin-top: 10px; font-size: 14px; }
+    .login-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 28px;
+      color: var(--text);
+    }
+    .login-card input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 16px;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 12px;
+      font-family: var(--sans);
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus { border-color: var(--accent); }
+    .login-card input::placeholder { color: var(--muted); }
+    .login-btn {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: opacity 0.2s;
+    }
+    .login-btn:active { opacity: 0.8; }
+    .login-error {
+      margin-top: 12px;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    /* APP */
     #app { display: none; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .topbar-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 2px;
+    }
+    .counter-badge {
+      text-align: right;
+    }
+    .counter-num {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .counter-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .content { padding: 16px 20px; }
+
+    /* VIDEO */
+    .scanner-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border);
+      aspect-ratio: 4/3;
+      max-height: 260px;
+    }
+    #video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .scan-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .scan-frame {
+      width: 180px; height: 140px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      position: relative;
+    }
+    .scan-frame::before, .scan-frame::after {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      border-color: var(--accent);
+      border-style: solid;
+    }
+    .scan-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .scan-frame::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    #scan-line {
+      position: absolute; left: 0; width: 100%; height: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: scanline 1.8s ease-in-out infinite;
+      display: none;
+    }
+    @keyframes scanline { 0%,100%{top:10%} 50%{top:88%} }
+
+    .scanner-idle {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6);
+    }
+    .scanner-idle-icon { font-size: 40px; margin-bottom: 8px; }
+    .scanner-idle-text { color: var(--muted); font-size: 13px; }
+
+    /* BUTTONS */
+    .btn-row {
+      display: flex; gap: 10px; margin-top: 14px;
+    }
+    .btn {
+      flex: 1; padding: 13px; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: var(--sans);
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:active { opacity: 0.75; transform: scale(0.97); }
+    .btn-start { background: var(--accent); color: white; }
+    .btn-stop  { background: var(--red); color: white; display: none; }
+    .btn-reset {
+      flex: 0 0 auto; width: 50px;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-reset:hover { color: var(--red); border-color: var(--red); }
+
+    /* STATUS */
+    .status-box {
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      min-height: 64px;
+      display: flex; align-items: center;
+      font-size: 14px;
+      line-height: 1.5;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .status-box.sukses { border-color: var(--green); background: var(--green-dim); color: #86efac; }
+    .status-box.gagal  { border-color: var(--red);   background: var(--red-dim);   color: #fca5a5; }
+    .status-box.proses { border-color: var(--yellow); background: var(--yellow-dim); color: #fde68a; }
+
+    /* HISTORY */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 20px 0 10px;
+    }
+    .section-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .clear-btn {
+      font-size: 11px; color: var(--muted);
+      background: none; border: none; cursor: pointer;
+      font-family: var(--sans); padding: 4px 8px;
+    }
+    .clear-btn:hover { color: var(--red); }
+
+    #riwayat { display: flex; flex-direction: column; gap: 6px; }
+
+    .item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    .item.gagal { border-left-color: var(--red); }
+    .item-icon { font-size: 16px; flex-shrink: 0; }
+    .item-resi {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .item-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+    /* MODAL RESET */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      display: flex; align-items: flex-end; justify-content: center;
+      display: none;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      padding: 24px 24px 36px;
+      width: 100%; max-width: 480px;
+    }
+    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-cancel {
+      flex: 1; padding: 13px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: var(--sans);
+    }
+    .modal-confirm {
+      flex: 1; padding: 13px; background: var(--red);
+      border: none; border-radius: 10px;
+      color: white; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: var(--sans);
+    }
+
+    .stats-row {
+      display: flex; gap: 10px; margin-top: 14px;
+    }
+    .stat-card {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .stat-num.green { color: var(--green); }
+    .stat-num.red   { color: var(--red); }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
 
+  <!-- LOGIN -->
   <div id="login-screen">
-    <h2>🔒 Scan Packing</h2>
-    <input type="password" id="input-password" placeholder="Password"
-           onkeydown="if(event.key==='Enter') cekPassword()">
-    <button onclick="cekPassword()">Masuk</button>
-    <div id="login-error"></div>
+    <div class="login-card">
+      <div class="login-logo">Scan System</div>
+      <div class="login-title">📦 Packing</div>
+      <input type="password" id="input-password" placeholder="Masukkan password"
+             onkeydown="if(event.key==='Enter') cekPassword()">
+      <button class="login-btn" onclick="cekPassword()">Masuk</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
   </div>
 
+  <!-- APP -->
   <div id="app">
-    <h3>📦 Scan Resi — Packing</h3>
-    <div id="video-container">
-      <video id="video" autoplay playsinline muted></video>
-      <div id="garis-scan"></div>
+    <div class="topbar">
+      <div>
+        <div class="topbar-label">Scan Mode</div>
+        <div class="topbar-title">📦 Packing</div>
+      </div>
+      <div class="counter-badge">
+        <div class="counter-num" id="total-count">0</div>
+        <div class="counter-label">Total Scan</div>
+      </div>
     </div>
-    <br>
-    <button class="btn btn-hijau" id="btn-mulai" onclick="mulaiScan()">📷 Mulai Scan</button>
-    <button class="btn btn-merah" id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
-    <div id="status">Klik Mulai Scan.</div>
-    <div id="riwayat"></div>
+
+    <div class="content">
+      <!-- Scanner -->
+      <div class="scanner-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="scan-line"></div>
+        <div class="scan-overlay">
+          <div class="scan-frame"></div>
+        </div>
+        <div class="scanner-idle" id="scanner-idle">
+          <div class="scanner-idle-icon">📷</div>
+          <div class="scanner-idle-text">Kamera belum aktif</div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button class="btn btn-start" id="btn-mulai" onclick="mulaiScan()">▶ Mulai Scan</button>
+        <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
+        <button class="btn btn-reset" onclick="showResetModal()" title="Reset hitungan">↺</button>
+      </div>
+
+      <!-- Status -->
+      <div class="status-box" id="status">Siap — tekan Mulai Scan.</div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num green" id="count-sukses">0</div>
+          <div class="stat-label">Berhasil</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num red" id="count-gagal">0</div>
+          <div class="stat-label">Gagal</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="count-duplikat">0</div>
+          <div class="stat-label">Duplikat</div>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="section-header">
+        <div class="section-title">Riwayat</div>
+        <button class="clear-btn" onclick="clearRiwayat()">Hapus riwayat</button>
+      </div>
+      <div id="riwayat"></div>
+    </div>
+  </div>
+
+  <!-- Modal Reset -->
+  <div class="modal-bg" id="modal-reset">
+    <div class="modal">
+      <h3>Reset Hitungan?</h3>
+      <p>Semua hitungan (berhasil, gagal, duplikat) akan dikembalikan ke nol. Riwayat scan di database tidak dihapus.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="hideResetModal()">Batal</button>
+        <button class="modal-confirm" onclick="resetHitungan()">Reset</button>
+      </div>
+    </div>
   </div>
 
   <script>
     const PASSWORD = "kodachi123";
     const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
-    const MODE     = "packing"; // isi kolom J dan K
+    const MODE     = "packing";
+    const DB_NAME  = "ScanPackingDB";
+    const DB_VER   = 1;
 
-    // Warmup GAS saat halaman dibuka agar tidak cold start
     fetch(GAS_URL + "?ping=1").catch(() => {});
 
+    /* ===== IndexedDB ===== */
+    let db;
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = e => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains("scans")) {
+            const store = d.createObjectStore("scans", { keyPath: "id", autoIncrement: true });
+            store.createIndex("resi", "resi", { unique: false });
+            store.createIndex("ts",   "ts",   { unique: false });
+          }
+          if (!d.objectStoreNames.contains("stats")) {
+            d.createObjectStore("stats", { keyPath: "key" });
+          }
+        };
+        req.onsuccess = e => { db = e.target.result; resolve(); };
+        req.onerror   = () => reject(req.error);
+      });
+    }
+
+    function dbPut(store, data) {
+      return new Promise((resolve, reject) => {
+        const tx  = db.transaction(store, "readwrite");
+        const req = tx.objectStore(store).put(data);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+      });
+    }
+
+    function dbGet(store, key) {
+      return new Promise((resolve, reject) => {
+        const tx  = db.transaction(store, "readonly");
+        const req = tx.objectStore(store).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+      });
+    }
+
+    function dbGetAll(store) {
+      return new Promise((resolve, reject) => {
+        const tx  = db.transaction(store, "readonly");
+        const req = tx.objectStore(store).getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+      });
+    }
+
+    async function getStat(key) {
+      const r = await dbGet("stats", key);
+      return r ? r.val : 0;
+    }
+    async function incStat(key) {
+      const v = await getStat(key);
+      await dbPut("stats", { key, val: v + 1 });
+      return v + 1;
+    }
+    async function resetStats() {
+      await dbPut("stats", { key: "sukses",   val: 0 });
+      await dbPut("stats", { key: "gagal",    val: 0 });
+      await dbPut("stats", { key: "duplikat", val: 0 });
+    }
+
+    async function loadStats() {
+      const s = await getStat("sukses");
+      const g = await getStat("gagal");
+      const d = await getStat("duplikat");
+      document.getElementById("count-sukses").textContent  = s;
+      document.getElementById("count-gagal").textContent   = g;
+      document.getElementById("count-duplikat").textContent = d;
+      document.getElementById("total-count").textContent   = s + g + d;
+    }
+
+    async function tambahScan(resi, status, pesan) {
+      const ts = Date.now();
+      await dbPut("scans", { resi, status, pesan, ts, mode: MODE });
+      let cnt;
+      if (status === "sukses")   cnt = await incStat("sukses");
+      else if (status === "duplikat") cnt = await incStat("duplikat");
+      else                        cnt = await incStat("gagal");
+      await loadStats();
+      tambahRiwayatDOM(resi, status, ts);
+    }
+
+    async function loadRiwayat() {
+      const all = await dbGetAll("scans");
+      const sorted = all.sort((a, b) => b.ts - a.ts).slice(0, 15);
+      document.getElementById("riwayat").innerHTML = "";
+      sorted.forEach(s => tambahRiwayatDOM(s.resi, s.status, s.ts));
+    }
+
+    function tambahRiwayatDOM(resi, status, ts) {
+      const div = document.getElementById("riwayat");
+      const el  = document.createElement("div");
+      el.className = "item" + (status === "gagal" ? " gagal" : "");
+      const icon = status === "sukses" ? "✅" : status === "duplikat" ? "⚠️" : "❌";
+      const t    = new Date(ts).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      el.innerHTML = `<span class="item-icon">${icon}</span>
+                      <span class="item-resi">${resi}</span>
+                      <span class="item-time">${t}</span>`;
+      div.insertBefore(el, div.firstChild);
+      while (div.children.length > 15) div.removeChild(div.lastChild);
+    }
+
+    async function clearRiwayat() {
+      if (!confirm("Hapus tampilan riwayat?")) return;
+      document.getElementById("riwayat").innerHTML = "";
+    }
+
+    /* ===== Login ===== */
     function cekPassword() {
-      if (document.getElementById('input-password').value === PASSWORD) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
+      if (document.getElementById("input-password").value === PASSWORD) {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app").style.display = "block";
         inisialisasiAudio();
+        initDB().then(() => { loadStats(); loadRiwayat(); });
       } else {
-        document.getElementById('login-error').innerHTML = "❌ Password salah.";
-        document.getElementById('input-password').value = '';
+        document.getElementById("login-error").textContent = "❌ Password salah.";
+        document.getElementById("input-password").value = "";
       }
     }
 
+    /* ===== Audio ===== */
     let audioCtx;
     function inisialisasiAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     function bunyi(tipe) {
       if (!audioCtx) return;
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
       o.connect(g); g.connect(audioCtx.destination);
       if (tipe === "sukses") {
         o.type = "sine"; o.frequency.setValueAtTime(1200, audioCtx.currentTime);
         g.gain.setValueAtTime(0.3, audioCtx.currentTime);
         o.start(); o.stop(audioCtx.currentTime + 0.12);
+      } else if (tipe === "duplikat") {
+        o.type = "triangle"; o.frequency.setValueAtTime(600, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        o.start(); o.stop(audioCtx.currentTime + 0.25);
       } else {
         o.type = "square"; o.frequency.setValueAtTime(250, audioCtx.currentTime);
         g.gain.setValueAtTime(0.15, audioCtx.currentTime);
@@ -124,105 +591,109 @@
       }
     }
 
-    const statusDiv  = document.getElementById('status');
-    const riwayatDiv = document.getElementById('riwayat');
-    let resetTimer   = null;
-
+    /* ===== Status ===== */
+    const statusDiv = document.getElementById("status");
+    let resetTimer  = null;
     function setStatus(pesan, kelas) {
       statusDiv.innerHTML = pesan;
-      statusDiv.className = kelas || "";
+      statusDiv.className = "status-box " + (kelas || "");
       clearTimeout(resetTimer);
-      if (kelas) {
-        resetTimer = setTimeout(() => {
-          statusDiv.className = "";
-          statusDiv.innerHTML = "Siap scan berikutnya...";
-        }, 2000);
-      }
+      if (kelas) resetTimer = setTimeout(() => {
+        statusDiv.className = "status-box";
+        statusDiv.innerHTML = "Siap scan berikutnya…";
+      }, 2500);
     }
 
-    function tambahRiwayat(resi, sukses) {
-      const d = document.createElement('div');
-      d.className = 'item' + (sukses ? '' : ' gagal');
-      d.innerHTML = (sukses ? '✅' : '❌') + ' ' + new Date().toLocaleTimeString() + ' — ' + resi;
-      riwayatDiv.insertBefore(d, riwayatDiv.firstChild);
-      while (riwayatDiv.children.length > 10) riwayatDiv.removeChild(riwayatDiv.lastChild);
-    }
-
-    let codeReader   = null;
-    let scanning     = false;
-    let resiTerakhir = "";
-    let waktuTerakhir = 0;
-    let sedangKirim  = false;
+    /* ===== Scanner ===== */
+    let codeReader = null, scanning = false, resiTerakhir = "", waktuTerakhir = 0, sedangKirim = false;
 
     function mulaiScan() {
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      setStatus("⏳ Kamera aktif...", "proses");
-      document.getElementById('btn-mulai').style.display = 'none';
-      document.getElementById('btn-stop').style.display  = 'inline-block';
-      document.getElementById('garis-scan').style.display = 'block';
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      setStatus("⏳ Kamera aktif…", "proses");
+      document.getElementById("btn-mulai").style.display = "none";
+      document.getElementById("btn-stop").style.display  = "inline-flex";
+      document.getElementById("scan-line").style.display = "block";
+      document.getElementById("scanner-idle").style.display = "none";
       scanning = true;
 
       codeReader = new ZXing.BrowserMultiFormatReader();
-
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.CODE_39,
-        ZXing.BarcodeFormat.QR_CODE
+        ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39, ZXing.BarcodeFormat.QR_CODE
       ]);
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
       codeReader.hints = hints;
 
-      const constraints = {
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 }, height: { ideal: 720 },
-          frameRate: { ideal: 30 }
-        }
-      };
-
-      codeReader.decodeFromConstraints(constraints, 'video', function(result, err) {
+      codeReader.decodeFromConstraints({
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      }, "video", async (result, err) => {
         if (!result || !scanning || sedangKirim) return;
-
-        var resi = result.getText().trim().toUpperCase();
-        var now  = Date.now();
-
+        const resi = result.getText().trim().toUpperCase();
+        const now  = Date.now();
         if (resi === resiTerakhir && now - waktuTerakhir < 3000) return;
-        resiTerakhir  = resi;
-        waktuTerakhir = now;
-        sedangKirim   = true;
+        resiTerakhir = resi; waktuTerakhir = now; sedangKirim = true;
+        setStatus("⏳ <b>" + resi + "</b> — mengirim…", "proses");
 
-        setStatus("⏳ <b>" + resi + "</b>", "proses");
-
-        fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ resi: resi, mode: MODE }),
-          headers: { "Content-Type": "text/plain" }
-        })
-        .then(r => r.text())
-        .then(pesan => {
-          var ok = pesan.includes("✅");
-          bunyi(ok ? "sukses" : "gagal");
-          setStatus(pesan, ok ? "sukses" : "gagal");
-          tambahRiwayat(resi, ok);
-          sedangKirim = false;
-        })
-        .catch(() => {
+        try {
+          const r    = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({ resi, mode: MODE }),
+            headers: { "Content-Type": "text/plain" }
+          });
+          const pesan = await r.text();
+          const ok    = pesan.includes("✅");
+          const dup   = pesan.includes("⚠️");
+          const stat  = ok ? "sukses" : dup ? "duplikat" : "gagal";
+          bunyi(stat);
+          setStatus(pesan, ok ? "sukses" : dup ? "proses" : "gagal");
+          await tambahScan(resi, stat, pesan);
+        } catch {
           bunyi("gagal");
           setStatus("❌ Gagal konek internet!", "gagal");
-          tambahRiwayat(resi, false);
-          sedangKirim = false;
-        });
+          await tambahScan(resi, "gagal", "Gagal konek");
+        }
+        sedangKirim = false;
       });
     }
 
     function stopScan() {
       scanning = false; sedangKirim = false;
       if (codeReader) { codeReader.reset(); codeReader = null; }
-      document.getElementById('garis-scan').style.display = 'none';
-      document.getElementById('btn-mulai').style.display  = 'inline-block';
-      document.getElementById('btn-stop').style.display   = 'none';
+      document.getElementById("scan-line").style.display  = "none";
+      document.getElementById("btn-mulai").style.display  = "inline-flex";
+      document.getElementById("btn-stop").style.display   = "none";
+      document.getElementById("scanner-idle").style.display = "flex";
       setStatus("⏹ Dihentikan.");
+    }
+
+    /* ===== Reset Modal ===== */
+    function showResetModal() { document.getElementById("modal-reset").classList.add("open"); }
+    function hideResetModal() { document.getElementById("modal-reset").classList.remove("open"); }
+    async function resetHitungan() {
+      await resetStats();
+      await loadStats();
+      hideResetModal();
+    }
+
+    /* PWA Manifest inline */
+    const manifest = {
+      name: "Scan Packing", short_name: "Packing", start_url: "./scan-packing.html",
+      display: "standalone", background_color: "#0f0f1a", theme_color: "#1a1a2e",
+      icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>", sizes: "any", type: "image/svg+xml" }]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+    document.getElementById("manifest-link").href = URL.createObjectURL(blob);
+
+    /* Service Worker */
+    if ("serviceWorker" in navigator) {
+      const sw = `
+        const CACHE = "scan-packing-v1";
+        const PRECACHE = [location.href];
+        self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE))));
+        self.addEventListener("fetch", e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+      `;
+      const swBlob = new Blob([sw], { type: "application/javascript" });
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
     }
   </script>
 </body>
