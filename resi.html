@@ -116,7 +116,6 @@
 </head>
 <body>
 
-  <!-- Layar Login -->
   <div id="login-screen">
     <h2>🔒 Scan Resi</h2>
     <input type="password" id="input-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter') cekPassword()">
@@ -124,9 +123,8 @@
     <div id="login-error"></div>
   </div>
 
-  <!-- Layar Aplikasi Scanner -->
   <div id="app">
-    <h3>📦 Scan Mode Kontinu</h3>
+    <h3>📦 Scan Mode Kontinu (Bungkus)</h3>
 
     <div id="video-container">
       <video id="video" autoplay playsinline muted></video>
@@ -142,9 +140,12 @@
   </div>
 
   <script>
-    // Konfigurasi Utama
+    // =========================================================
+    // WAJIB DIGANTI: Masukkan URL Deployment yang berakhiran /exec
+    // =========================================================
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec"; 
+    
     const PASSWORD = "kodachi123";
-    const GAS_URL = "https://script.google.com/macros/library/d/1jU7EMH2KBoBw6dq_tiDb10rFxR7kb78GzRBmdVGDPIWZWB5Zg4QV6w2i/10";
 
     // Fungsi Login
     function cekPassword() {
@@ -218,7 +219,7 @@
       }, 2500);
     }
 
-    // Fungsi Utama Memulai Scan (Sudah Dioptimasi)
+    // Fungsi Utama Memulai Scan
     function mulaiScan() {
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -230,17 +231,15 @@
       garisScan.style.display = 'block';
       scanning = true;
 
-      // Optimasi Kecepatan & Dukungan QR Code
       const hints = new Map();
       const formats = [
         ZXing.BarcodeFormat.CODE_128, 
         ZXing.BarcodeFormat.CODE_39, 
         ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.QR_CODE // Menambahkan dukungan QR Code
+        ZXing.BarcodeFormat.QR_CODE
       ];
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
 
-      // Inisialisasi pembaca dengan pengaturan (hints) di atas
       codeReader = new ZXing.BrowserMultiFormatReader(hints);
       
       codeReader.decodeFromVideoDevice(null, 'video', function(result, err) {
@@ -248,7 +247,6 @@
           var nomorResi = result.getText().trim().toUpperCase();
           var waktuSekarang = new Date().getTime();
 
-          // Mencegah pembacaan resi yang sama berulang kali dalam 3 detik
           if (nomorResi === resiTerakhir && (waktuSekarang - waktuTerakhirScan < 3000)) {
             return;
           }
@@ -258,10 +256,10 @@
 
           ubahTampilanStatus("🚀 Memproses: <b>" + nomorResi + "</b>...", "");
 
-          // Mengirim data ke Google Apps Script
+          // Sandi "bungkus" sudah terpasang agar masuk ke fungsi J dan K
           fetch(GAS_URL, {
             method: "POST",
-            body: JSON.stringify({ resi: result.text, tipe: "bungkus" }),
+            body: JSON.stringify({ resi: nomorResi, tipe: "bungkus" }),
             headers: { "Content-Type": "text/plain" }
           })
           .then(response => response.text())
