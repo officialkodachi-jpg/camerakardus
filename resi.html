@@ -167,16 +167,13 @@
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
         ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.CODE_39,
-        ZXing.BarcodeFormat.QR_CODE
       ]);
-      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-      codeReader.hints = hints;
 
       const constraints = {
         video: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1280 }, height: { ideal: 720 },
+        width: { ideal: 640 },   // turunkan dari 1280
+    height: { ideal: 480 },  // turunkan dari 720
           frameRate: { ideal: 30 }
         }
       };
