@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Scan Packing</title>
+  <title>Scan Kirim</title>
   <link rel="manifest" href="#" id="manifest-link">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#1a2e1a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap');
     :root {
-      --bg:#0f0f1a;--surface:#1a1a2e;--surface2:#232342;
-      --accent:#4f8aff;--green:#22c55e;--green-dim:#14532d;
+      --bg:#0f1a0f;--surface:#1a2e1a;--surface2:#223022;
+      --accent:#22c55e;--green:#22c55e;--green-dim:#14532d;
       --red:#ef4444;--orange:#f97316;--orange-dim:#7c2d12;
       --yellow:#eab308;--yellow-dim:#713f12;
-      --text:#e8e8f0;--muted:#8888aa;--border:#2a2a4a;
+      --text:#e8e8f0;--muted:#88aa88;--border:#2a4a2a;
       --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -28,7 +28,7 @@
     .login-card input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:16px;color:var(--text);outline:none;margin-bottom:12px;font-family:var(--sans);transition:border-color .2s}
     .login-card input:focus{border-color:var(--accent)}
     .login-card input::placeholder{color:var(--muted)}
-    .login-btn{width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+    .login-btn{width:100%;background:var(--accent);color:#0f1a0f;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--sans)}
     .login-btn:active{opacity:.8}
     .login-error{margin-top:12px;color:var(--red);font-size:13px;text-align:center}
     #app{display:none}
@@ -36,7 +36,7 @@
     .topbar-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
     .topbar-title{font-size:16px;font-weight:600;margin-top:2px}
     .counter-badge{text-align:right}
-    .counter-num{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--accent);line-height:1}
+    .counter-num{font-family:var(--mono);font-size:28px;font-weight:600;color:#0f1a0f;line-height:1}
     .counter-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
     .content{padding:16px 20px}
     .scanner-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--border);aspect-ratio:4/3;max-height:260px}
@@ -54,8 +54,8 @@
     .btn-row{display:flex;gap:10px;margin-top:14px}
     .btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:6px}
     .btn:active{opacity:.75;transform:scale(.97)}
-    .btn-start{background:var(--accent);color:white}
-    .btn-stop{background:var(--red);color:white;display:none}
+    .btn-start{background:var(--accent);color:#0f1a0f}
+    .btn-stop{background:var(--red);color:#0f1a0f;display:none}
     .btn-reset{flex:0 0 auto;width:50px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-size:18px}
     .status-box{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px;display:flex;align-items:center;font-size:14px;line-height:1.5;transition:border-color .15s,background .15s}
     .status-box.sukses{border-color:var(--green);background:var(--green-dim);color:#86efac}
@@ -87,7 +87,7 @@
     .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5}
     .modal-actions{display:flex;gap:10px}
     .modal-cancel{flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-    .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+    .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;color:#0f1a0f;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
     #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e1e;border:1px solid var(--red);color:#fca5a5;font-size:13px;padding:12px 20px;border-radius:12px;z-index:200;opacity:0;transition:all .25s;max-width:90vw;text-align:center}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   </style>
@@ -97,7 +97,7 @@
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">Scan System</div>
-    <div class="login-title">📦 Packing</div>
+    <div class="login-title">🚚 Kirim</div>
     <input type="password" id="input-password" placeholder="Masukkan password"
            onkeydown="if(event.key==='Enter') cekPassword()">
     <button class="login-btn" onclick="cekPassword()">Masuk</button>
@@ -109,7 +109,7 @@
   <div class="topbar">
     <div>
       <div class="topbar-label">Scan Mode</div>
-      <div class="topbar-title">📦 Packing</div>
+      <div class="topbar-title">🚚 Kirim</div>
     </div>
     <div class="counter-badge">
       <div class="counter-num" id="total-count">0</div>
@@ -160,8 +160,8 @@
 <script>
   const PASSWORD = "kodachi123";
   const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
-  const MODE     = "packing";
-  const DB_NAME  = "ScanPackingDB";
+  const MODE     = "kirim";
+  const DB_NAME  = "ScanKirimDB";
 
   // Warmup GAS
   fetch(GAS_URL + "?ping=1").catch(() => {});
@@ -445,10 +445,10 @@
   }
 
   // ── PWA ──
-  const mf = { name:"Scan Packing", short_name:"Packing", start_url:"./scan-packing.html", display:"standalone", background_color:"#0f0f1a", theme_color:"#1a1a2e", icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}] };
+  const mf = { name:"Scan Kirim", short_name:"Kirim", start_url:"./scan-kirim.html", display:"standalone", background_color:"#0f1a0f", theme_color:"#1a2e1a", icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}] };
   document.getElementById("manifest-link").href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
   if ("serviceWorker" in navigator) {
-    const sw = `const C="sp-v3";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+    const sw = `const C="sk-v3";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
   }
 </script>
