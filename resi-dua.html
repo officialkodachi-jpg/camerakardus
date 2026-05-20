@@ -14,8 +14,7 @@
     :root {
       --bg:#0f0f1a;--surface:#1a1a2e;--surface2:#232342;
       --accent:#4f8aff;--green:#22c55e;--green-dim:#14532d;
-      --red:#ef4444;--red-dim:#7f1d1d;
-      --orange:#f97316;--orange-dim:#7c2d12;
+      --red:#ef4444;--orange:#f97316;--orange-dim:#7c2d12;
       --yellow:#eab308;--yellow-dim:#713f12;
       --text:#e8e8f0;--muted:#8888aa;--border:#2a2a4a;
       --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
@@ -58,7 +57,7 @@
     .btn-start{background:var(--accent);color:white}
     .btn-stop{background:var(--red);color:white;display:none}
     .btn-reset{flex:0 0 auto;width:50px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-size:18px}
-    .status-box{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px;display:flex;align-items:center;font-size:14px;line-height:1.5;transition:border-color .2s,background .2s}
+    .status-box{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px;display:flex;align-items:center;font-size:14px;line-height:1.5;transition:border-color .15s,background .15s}
     .status-box.sukses{border-color:var(--green);background:var(--green-dim);color:#86efac}
     .status-box.batal{border-color:var(--orange);background:var(--orange-dim);color:#fdba74}
     .status-box.duplikat{border-color:var(--yellow);background:var(--yellow-dim);color:#fde68a}
@@ -89,7 +88,7 @@
     .modal-actions{display:flex;gap:10px}
     .modal-cancel{flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
     .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e1e;border:1px solid var(--red);color:#fca5a5;font-size:13px;padding:12px 20px;border-radius:12px;z-index:200;opacity:0;transition:all .3s;max-width:90vw;text-align:center}
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e1e;border:1px solid var(--red);color:#fca5a5;font-size:13px;padding:12px 20px;border-radius:12px;z-index:200;opacity:0;transition:all .25s;max-width:90vw;text-align:center}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   </style>
 </head>
@@ -130,7 +129,7 @@
     <div class="btn-row">
       <button class="btn btn-start" id="btn-mulai" onclick="mulaiScan()">▶ Mulai Scan</button>
       <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
-      <button class="btn btn-reset" onclick="showResetModal()" title="Reset">↺</button>
+      <button class="btn btn-reset" onclick="showResetModal()">↺</button>
     </div>
     <div class="status-box" id="status">Siap — tekan Mulai Scan.</div>
     <div class="stats-row">
@@ -163,58 +162,90 @@
   const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
   const MODE     = "packing";
   const DB_NAME  = "ScanPackingDB";
-  const DB_VER   = 1;
 
+  // Warmup GAS
   fetch(GAS_URL + "?ping=1").catch(() => {});
 
-  // ── IN-MEMORY CACHE (sumber kebenaran selama sesi, DB hanya untuk persistensi) ──
-  // Semua operasi cek/hitung pakai ini → 0ms, tidak ada I/O
-  const cache = {
-    sukses:   0,
-    duplikat: 0,
-    resiBatal: new Set(),   // Set unik resi batal
-    get batal() { return this.resiBatal.size; },
-    get total()  { return this.sukses + this.batal + this.duplikat; }
-  };
-
-  function tampilStats() {
-    document.getElementById("count-sukses").textContent   = cache.sukses;
-    document.getElementById("count-batal").textContent    = cache.batal;
-    document.getElementById("count-duplikat").textContent = cache.duplikat;
-    document.getElementById("total-count").textContent    = cache.total;
+  // ── AUDIO — inisialisasi sekarang agar bunyi tidak delay ──
+  // Bunyi langsung dibunyikan sebelum fetch agar tidak menunggu response server
+  let audioCtx;
+  function inisialisasiAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Buat dan buang oscillator kosong agar context aktif dan siap
+    const o = audioCtx.createOscillator();
+    o.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.001);
+  }
+  function bunyi(tipe) {
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    if (tipe === "sukses") {
+      o.type = "sine";
+      o.frequency.setValueAtTime(1000, t);
+      o.frequency.setValueAtTime(1400, t + 0.06);
+      g.gain.setValueAtTime(0.4, t); g.gain.linearRampToValueAtTime(0, t + 0.12);
+      o.start(t); o.stop(t + 0.12);
+    } else if (tipe === "batal") {
+      o.type = "square";
+      o.frequency.setValueAtTime(300, t);
+      g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 0.25);
+      o.start(t); o.stop(t + 0.25);
+    } else if (tipe === "duplikat") {
+      o.type = "triangle";
+      o.frequency.setValueAtTime(700, t);
+      g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 0.15);
+      o.start(t); o.stop(t + 0.15);
+    } else {
+      o.type = "square";
+      o.frequency.setValueAtTime(200, t);
+      g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t + 0.3);
+      o.start(t); o.stop(t + 0.3);
+    }
   }
 
-  // ── INDEXEDDB (hanya untuk persistensi lintas sesi, write async non-blocking) ──
+  // ── COUNTER — hanya di memory, bukan dari DB ──
+  // DB hanya untuk riwayat tampilan, BUKAN sumber kebenaran status resi
+  // Status batal selalu dikonfirmasi ulang ke server — tidak pernah di-cache
+  let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
+  // Set resi batal HANYA untuk deduplikasi counter (bukan untuk blok scan ke server)
+  const resiBatalUnik = new Set();
+
+  function tampilStats() {
+    document.getElementById("count-sukses").textContent   = cntSukses;
+    document.getElementById("count-batal").textContent    = cntBatal;
+    document.getElementById("count-duplikat").textContent = cntDuplikat;
+    document.getElementById("total-count").textContent    = cntSukses + cntBatal + cntDuplikat;
+  }
+
+  // ── INDEXEDDB — hanya untuk riwayat tampilan ──
   let db;
   function initDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VER);
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, 2);
       req.onupgradeneeded = e => {
         const d = e.target.result;
-        if (!d.objectStoreNames.contains("scans")) {
-          const s = d.createObjectStore("scans", { keyPath: "id", autoIncrement: true });
-          s.createIndex("resi", "resi", { unique: false });
-          s.createIndex("ts",   "ts",   { unique: false });
-        }
+        // Hapus store lama yang mungkin menyimpan status batal (penyebab bug)
+        if (d.objectStoreNames.contains("scans")) d.deleteObjectStore("scans");
+        const s = d.createObjectStore("scans", { keyPath: "id", autoIncrement: true });
+        s.createIndex("ts", "ts", { unique: false });
       };
-      req.onsuccess = e => { db = e.target.result; resolve(); };
-      req.onerror   = () => reject(req.error);
+      req.onsuccess = e => { db = e.target.result; res(); };
+      req.onerror   = () => rej(req.error);
     });
   }
 
-  // Write ke DB — fire and forget, tidak await (non-blocking)
   function dbWrite(data) {
     if (!db) return;
-    const tx = db.transaction("scans", "readwrite");
-    tx.objectStore("scans").add(data);
-    // tidak perlu tunggu, scan berikutnya sudah bisa jalan
+    db.transaction("scans", "readwrite").objectStore("scans").add(data);
   }
 
-  function dbClearAll() {
+  function dbClear() {
     return new Promise((res, rej) => {
       if (!db) return res();
-      const tx = db.transaction("scans", "readwrite");
-      const r  = tx.objectStore("scans").clear();
+      const r = db.transaction("scans", "readwrite").objectStore("scans").clear();
       r.onsuccess = () => res(); r.onerror = () => rej(r.error);
     });
   }
@@ -222,35 +253,33 @@
   function dbGetAll() {
     return new Promise((res, rej) => {
       if (!db) return res([]);
-      const tx = db.transaction("scans", "readonly");
-      const r  = tx.objectStore("scans").getAll();
+      const r = db.transaction("scans", "readonly").objectStore("scans").getAll();
       r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
     });
   }
 
-  // Bangun cache dari DB saat pertama kali load
-  async function initCache() {
-    const all = await dbGetAll();
-    cache.sukses   = 0;
-    cache.duplikat = 0;
-    cache.resiBatal.clear();
-    all.forEach(s => {
-      if (s.status === "sukses")        cache.sukses++;
-      else if (s.status === "duplikat") cache.duplikat++;
-      else if (s.status === "batal")    cache.resiBatal.add(s.resi);
-    });
-    tampilStats();
-    // Render riwayat dari DB (hanya sekali saat load)
+  // Load hanya riwayat tampilan — counter dimulai dari 0 tiap sesi
+  async function initRiwayat() {
+    const all    = await dbGetAll();
     const sorted = all.sort((a, b) => b.ts - a.ts).slice(0, 30);
     sorted.forEach(s => tambahRiwayatDOM(s.resi, s.status, s.ts));
+    // Bangun resiBatalUnik dari riwayat untuk deduplikasi counter sesi ini
+    all.forEach(s => { if (s.status === "batal") resiBatalUnik.add(s.resi); });
+    // Hitung counter dari riwayat
+    all.forEach(s => {
+      if (s.status === "sukses")        cntSukses++;
+      else if (s.status === "duplikat") cntDuplikat++;
+      else if (s.status === "batal")    { /* sudah lewat resiBatalUnik */ }
+    });
+    cntBatal = resiBatalUnik.size;
+    tampilStats();
   }
 
   // ── TOAST ──
   let toastTimer;
   function showToast(msg) {
     const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
+    t.textContent = msg; t.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 4000);
   }
@@ -261,38 +290,10 @@
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app").style.display = "block";
       inisialisasiAudio();
-      initDB().then(initCache);
+      initDB().then(initRiwayat);
     } else {
       document.getElementById("login-error").textContent = "❌ Password salah.";
       document.getElementById("input-password").value = "";
-    }
-  }
-
-  // ── AUDIO ──
-  let audioCtx;
-  function inisialisasiAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  function bunyi(tipe) {
-    if (!audioCtx) return;
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    if (tipe === "sukses") {
-      o.type = "sine"; o.frequency.setValueAtTime(1200, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      o.start(); o.stop(audioCtx.currentTime + 0.12);
-    } else if (tipe === "duplikat") {
-      o.type = "triangle"; o.frequency.setValueAtTime(600, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      o.start(); o.stop(audioCtx.currentTime + 0.25);
-    } else if (tipe === "batal") {
-      o.type = "sawtooth"; o.frequency.setValueAtTime(400, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      o.start(); o.stop(audioCtx.currentTime + 0.3);
-    } else {
-      o.type = "square"; o.frequency.setValueAtTime(250, audioCtx.currentTime);
-      g.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      o.start(); o.stop(audioCtx.currentTime + 0.4);
     }
   }
 
@@ -306,16 +307,16 @@
     if (kelas) resetTimer = setTimeout(() => {
       statusDiv.className = "status-box";
       statusDiv.innerHTML = "Siap scan berikutnya…";
-    }, 2500);
+    }, 2000);
   }
 
   // ── RIWAYAT DOM ──
   function tambahRiwayatDOM(resi, status, ts) {
     const div = document.getElementById("riwayat");
     const el  = document.createElement("div");
-    el.className = "item " + (status === "batal" ? "batal" : status === "duplikat" ? "duplikat" : "");
+    el.className = "item" + (status === "batal" ? " batal" : status === "duplikat" ? " duplikat" : "");
     const icon = status === "sukses" ? "✅" : status === "batal" ? "🚫" : "⚠️";
-    const t    = new Date(ts).toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+    const t = new Date(ts).toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
     el.innerHTML = `<span class="item-icon">${icon}</span><span class="item-resi">${resi}</span><span class="item-time">${t}</span>`;
     div.insertBefore(el, div.firstChild);
     while (div.children.length > 30) div.removeChild(div.lastChild);
@@ -323,8 +324,8 @@
 
   async function clearRiwayat() {
     if (!confirm("Hapus semua riwayat? Data di Google Sheets tetap aman.")) return;
-    await dbClearAll();
-    cache.sukses = 0; cache.duplikat = 0; cache.resiBatal.clear();
+    await dbClear();
+    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear();
     tampilStats();
     document.getElementById("riwayat").innerHTML = "";
   }
@@ -351,9 +352,8 @@
     hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
     codeReader.hints = hints;
 
-    // 640x480 cukup untuk barcode, lebih ringan dari 1280x720
     codeReader.decodeFromConstraints({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
     }, "video", (result, err) => {
       if (!result || !scanning || sedangKirim) return;
       const resi = result.getText().trim().toUpperCase();
@@ -364,53 +364,57 @@
     });
   }
 
-  // Dipisah agar callback ZXing tetap sync dan ringan
   async function prosesHasil(resi, ts) {
     sedangKirim = true;
 
-    // ── CEK CACHE (0ms, no I/O) ──
-    if (cache.resiBatal.has(resi)) {
-      bunyi("batal");
-      setStatus("🚫 <b>" + resi + "</b> — BATAL (sudah tercatat)", "batal");
-      tambahRiwayatDOM(resi, "batal", ts);
-      sedangKirim = false;
-      return;
-    }
-
+    // Bunyi "proses" langsung — tidak tunggu server
+    // Ini memberi feedback instan ke operator
+    bunyi("duplikat"); // nada netral sebagai tanda "terbaca"
     setStatus("⏳ <b>" + resi + "</b>…", "proses");
 
-    const tsScan = new Date(ts).toISOString();
-
     try {
-      const r     = await fetch(GAS_URL, {
+      const resp  = await fetch(GAS_URL, {
         method : "POST",
         body   : JSON.stringify({
           resi, mode: MODE,
-          tsScan,
+          tsScan  : new Date(ts).toISOString(),
           tglScan : new Date(ts).toLocaleDateString("id-ID"),
           jamScan : new Date(ts).toLocaleTimeString("id-ID"),
           ua      : navigator.userAgent
         }),
         headers: { "Content-Type": "text/plain" }
       });
-      const pesan   = await r.text();
+      const pesan   = await resp.text();
       const ok      = pesan.includes("✅");
       const isBatal = pesan.includes("🚫") || pesan.toLowerCase().includes("batal");
-      const dup     = pesan.includes("⚠️");
 
       let stat;
-      if (ok)           { stat = "sukses";   cache.sukses++; }
-      else if (isBatal) { stat = "batal";    cache.resiBatal.add(resi); }
-      else              { stat = "duplikat"; cache.duplikat++; }
+      if (ok) {
+        stat = "sukses";
+        cntSukses++;
+        // Kalau resi ini pernah tercatat batal di sesi ini, koreksi counter
+        if (resiBatalUnik.has(resi)) {
+          resiBatalUnik.delete(resi);
+          cntBatal = resiBatalUnik.size;
+        }
+      } else if (isBatal) {
+        stat = "batal";
+        // Tambah counter hanya jika resi ini belum dihitung batal
+        if (!resiBatalUnik.has(resi)) {
+          resiBatalUnik.add(resi);
+          cntBatal = resiBatalUnik.size;
+        }
+      } else {
+        stat = "duplikat";
+        cntDuplikat++;
+      }
 
-      // Update UI langsung (0ms)
-      tampilStats();
+      // Bunyi hasil sebenarnya (menggantikan bunyi tanda baca sebelumnya)
       bunyi(stat);
+      tampilStats();
       setStatus(pesan, stat === "sukses" ? "sukses" : stat === "batal" ? "batal" : "duplikat");
       tambahRiwayatDOM(resi, stat, ts);
-
-      // Simpan ke DB async, non-blocking — tidak tahan scan berikutnya
-      dbWrite({ resi, status: stat, pesan, ts, mode: MODE });
+      dbWrite({ resi, status: stat, pesan, ts, mode: MODE }); // non-blocking
 
     } catch(e) {
       showToast("❌ Gagal konek — " + resi + " belum tercatat!");
@@ -430,27 +434,21 @@
     setStatus("⏹ Dihentikan.");
   }
 
-  // ── RESET ──
   function showResetModal() { document.getElementById("modal-reset").classList.add("open"); }
   function hideResetModal() { document.getElementById("modal-reset").classList.remove("open"); }
   async function resetSemua() {
-    await dbClearAll();
-    cache.sukses = 0; cache.duplikat = 0; cache.resiBatal.clear();
+    await dbClear();
+    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear();
     tampilStats();
     document.getElementById("riwayat").innerHTML = "";
     hideResetModal();
   }
 
   // ── PWA ──
-  const manifest = {
-    name:"Scan Packing",short_name:"Packing",start_url:"./scan-packing.html",
-    display:"standalone",background_color:"#0f0f1a",theme_color:"#1a1a2e",
-    icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}]
-  };
-  const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
-  document.getElementById("manifest-link").href = URL.createObjectURL(blob);
+  const mf = { name:"Scan Packing", short_name:"Packing", start_url:"./scan-packing.html", display:"standalone", background_color:"#0f0f1a", theme_color:"#1a1a2e", icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}] };
+  document.getElementById("manifest-link").href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
   if ("serviceWorker" in navigator) {
-    const sw = `const C="scan-packing-v2";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+    const sw = `const C="sp-v3";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
   }
 </script>
