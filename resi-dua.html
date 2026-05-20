@@ -264,7 +264,14 @@
     }
     .clear-btn:hover { color: var(--red); }
 
-    #riwayat { display: flex; flex-direction: column; gap: 6px; }
+    #riwayat {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 280px; overflow-y: auto;
+      padding-right: 2px;
+    }
+    #riwayat::-webkit-scrollbar { width: 4px; }
+    #riwayat::-webkit-scrollbar-track { background: transparent; }
+    #riwayat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     .item {
       display: flex; align-items: center; gap: 10px;
@@ -550,7 +557,13 @@
     }
 
     async function clearRiwayat() {
-      if (!confirm("Hapus tampilan riwayat?")) return;
+      if (!confirm("Hapus semua riwayat scan?")) return;
+      await new Promise((resolve, reject) => {
+        const tx  = db.transaction("scans", "readwrite");
+        const req = tx.objectStore("scans").clear();
+        req.onsuccess = () => resolve();
+        req.onerror   = () => reject(req.error);
+      });
       document.getElementById("riwayat").innerHTML = "";
     }
 
