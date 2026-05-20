@@ -262,11 +262,14 @@
     });
   }
 
+  const resiBatalTercatat = new Set();
+
   async function getStat(k)  { const r = await dbGet("stats", k); return r ? r.val : 0; }
   async function incStat(k)  { const v = await getStat(k); await dbPut("stats", { key: k, val: v+1 }); return v+1; }
   async function resetStats() {
     for (const k of ["sukses","batal","duplikat"])
       await dbPut("stats", { key: k, val: 0 });
+    resiBatalTercatat.clear();
   }
   async function loadStats() {
     const s = await getStat("sukses"), b = await getStat("batal"), d = await getStat("duplikat");
@@ -279,15 +282,24 @@
   async function tambahScan(resi, status, pesan) {
     const ts = Date.now();
     await dbPut("scans", { resi, status, pesan, ts, mode: MODE });
-    if (status === "sukses")   await incStat("sukses");
-    else if (status === "batal")    await incStat("batal");
-    else if (status === "duplikat") await incStat("duplikat");
+    if (status === "sukses") {
+      await incStat("sukses");
+    } else if (status === "batal") {
+      if (!resiBatalTercatat.has(resi)) {
+        resiBatalTercatat.add(resi);
+        await incStat("batal");
+      }
+    } else if (status === "duplikat") {
+      await incStat("duplikat");
+    }
     await loadStats();
     tambahRiwayatDOM(resi, status, ts);
   }
 
   async function loadRiwayat() {
     const all = await dbGetAll("scans");
+    // Rebuild Set dari data tersimpan agar konsisten setelah reload
+    all.forEach(s => { if (s.status === "batal") resiBatalTercatat.add(s.resi); });
     const sorted = all.sort((a, b) => b.ts - a.ts).slice(0, 30);
     document.getElementById("riwayat").innerHTML = "";
     sorted.forEach(s => tambahRiwayatDOM(s.resi, s.status, s.ts));
