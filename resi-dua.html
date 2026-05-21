@@ -5,124 +5,559 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scan Packing</title>
   <link rel="manifest" href="#" id="manifest-link">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#0a0a14">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap');
+    /* ══════════════════════════════════════════════
+       DESIGN TOKENS
+    ══════════════════════════════════════════════ */
     :root {
-      --bg:#0f0f1a;--surface:#1a1a2e;--surface2:#232342;
-      --accent:#4f8aff;--green:#22c55e;--green-dim:#14532d;
-      --red:#ef4444;--orange:#f97316;--orange-dim:#7c2d12;
-      --yellow:#eab308;--yellow-dim:#713f12;
-      --text:#e8e8f0;--muted:#8888aa;--border:#2a2a4a;
-      --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
+      --bg:        #0a0a14;
+      --bg2:       #0f0f1c;
+      --surface:   #141425;
+      --surface2:  #1c1c30;
+      --surface3:  #22223a;
+      --border:    #2a2a44;
+      --border2:   #353558;
+
+      --accent:    #5b8aff;
+      --accent-dim:#1a2a55;
+      --green:     #22d07a;
+      --green-dim: #0a2a1a;
+      --red:       #ff4d6a;
+      --red-dim:   #2a0a12;
+      --orange:    #ff8c42;
+      --orange-dim:#2a1400;
+      --yellow:    #f5c542;
+      --yellow-dim:#2a1f00;
+
+      --text:      #e4e4f4;
+      --text2:     #9898b8;
+      --text3:     #5a5a7a;
+
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Sora', sans-serif;
+
+      --r-sm: 8px;
+      --r-md: 12px;
+      --r-lg: 16px;
+      --r-xl: 20px;
     }
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-    #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-    .login-card{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px}
-    .login-logo{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
-    .login-title{font-size:22px;font-weight:600;margin-bottom:28px}
-    .login-card input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:16px;color:var(--text);outline:none;margin-bottom:12px;font-family:var(--sans);transition:border-color .2s}
-    .login-card input:focus{border-color:var(--accent)}
-    .login-card input::placeholder{color:var(--muted)}
-    .login-btn{width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-    .login-btn:active{opacity:.8}
-    .login-error{margin-top:12px;color:var(--red);font-size:13px;text-align:center}
-    #app{display:none}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
-    .topbar-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
-    .topbar-title{font-size:16px;font-weight:600;margin-top:2px}
-    .counter-badge{text-align:right}
-    .counter-num{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--accent);line-height:1}
-    .counter-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-    .content{padding:16px 20px}
-    .scanner-wrap{position:relative;width:100%;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--border);aspect-ratio:4/3;max-height:260px}
-    #video{width:100%;height:100%;object-fit:cover;display:block}
-    .scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-    .scan-frame{width:180px;height:140px;border:2px solid var(--accent);border-radius:8px;position:relative}
-    .scan-frame::before,.scan-frame::after{content:'';position:absolute;width:20px;height:20px;border-color:var(--accent);border-style:solid}
-    .scan-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
-    .scan-frame::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
-    #scan-line{position:absolute;left:0;width:100%;height:2px;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:scanline 1.8s ease-in-out infinite;display:none}
-    @keyframes scanline{0%,100%{top:10%}50%{top:88%}}
-    .scanner-idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
-    .scanner-idle-icon{font-size:40px;margin-bottom:8px}
-    .scanner-idle-text{color:var(--muted);font-size:13px}
-    .btn-row{display:flex;gap:10px;margin-top:14px}
-    .btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:6px}
-    .btn:active{opacity:.75;transform:scale(.97)}
-    .btn-start{background:var(--accent);color:white}
-    .btn-stop{background:var(--red);color:white;display:none}
-    .btn-reset{flex:0 0 auto;width:50px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-size:18px}
-    .status-box{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-height:64px;display:flex;align-items:center;font-size:14px;line-height:1.5;transition:border-color .15s,background .15s}
-    .status-box.sukses{border-color:var(--green);background:var(--green-dim);color:#86efac}
-    .status-box.batal{border-color:var(--orange);background:var(--orange-dim);color:#fdba74}
-    .status-box.duplikat{border-color:var(--yellow);background:var(--yellow-dim);color:#fde68a}
-    .status-box.proses{border-color:var(--yellow);background:var(--yellow-dim);color:#fde68a}
-    .stats-row{display:flex;gap:10px;margin-top:14px}
-    .stat-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
-    .stat-num{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text)}
-    .stat-num.green{color:var(--green)}.stat-num.orange{color:var(--orange)}
-    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 
-    /* Queue indicator */
-    .queue-indicator{display:none;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
-    .queue-indicator.active{display:block;color:var(--yellow)}
+    /* ══════════════════════════════════════════════
+       RESET & BASE
+    ══════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
 
-    .section-header{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
-    .section-title{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-    .clear-btn{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:4px 8px}
-    .clear-btn:hover{color:var(--red)}
-    #riwayat{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;padding-right:2px;padding-bottom:4px}
-    #riwayat::-webkit-scrollbar{width:4px}
-    #riwayat::-webkit-scrollbar-track{background:transparent}
-    #riwayat::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-    .item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:8px;padding:10px 12px;font-size:13px}
-    .item.batal{border-left-color:var(--orange)}.item.duplikat{border-left-color:var(--yellow)}
-    .item.pending{border-left-color:var(--muted);opacity:0.7}
-    .item-icon{font-size:16px;flex-shrink:0}
-    .item-resi{font-family:var(--mono);font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .item-time{font-size:11px;color:var(--muted);flex-shrink:0}
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:flex-end;justify-content:center;display:none}
-    .modal-bg.open{display:flex}
-    .modal{background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px 24px 36px;width:100%;max-width:480px}
-    .modal h3{font-size:16px;font-weight:600;margin-bottom:8px}
-    .modal p{font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.5}
-    .modal-actions{display:flex;gap:10px}
-    .modal-cancel{flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-    .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e1e1e;border:1px solid var(--red);color:#fca5a5;font-size:13px;padding:12px 20px;border-radius:12px;z-index:200;opacity:0;transition:all .25s;max-width:90vw;text-align:center}
-    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    /* ══════════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════════ */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 24px;
+      background: radial-gradient(ellipse 60% 50% at 50% 0%, #1a1a3a 0%, var(--bg) 70%);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 36px 28px;
+      box-shadow: 0 32px 64px rgba(0,0,0,.6);
+    }
+    .login-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 100px;
+      padding: 4px 12px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .login-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    .login-sub   { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+    .login-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      font-size: 16px;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 12px;
+      font-family: var(--sans);
+      transition: border-color .2s;
+    }
+    .login-input:focus { border-color: var(--accent); }
+    .login-input::placeholder { color: var(--text3); }
+    .login-btn {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--r-md);
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--sans);
+      letter-spacing: .3px;
+      transition: opacity .15s;
+    }
+    .login-btn:active { opacity: .8; }
+    .login-error { margin-top: 12px; color: var(--red); font-size: 13px; text-align: center; }
+
+    /* ══════════════════════════════════════════════
+       APP SHELL
+    ══════════════════════════════════════════════ */
+    #app { display: none; }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .topbar-left {}
+    .topbar-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .sync-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text2);
+      font-size: 12px;
+      font-family: var(--mono);
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      white-space: nowrap;
+    }
+    .sync-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .sync-btn.syncing .sync-icon { animation: spin .8s linear infinite; }
+    .sync-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      flex-shrink: 0;
+      transition: background .3s;
+    }
+    .sync-dot.fresh { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .sync-dot.stale { background: var(--yellow); }
+    .sync-dot.error { background: var(--red); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .counter-badge { text-align: right; }
+    .counter-num {
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .counter-lbl { font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
+
+    /* ── Content ── */
+    .content { padding: 14px 16px 100px; }
+
+    /* ── Scanner ── */
+    .scanner-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border);
+      aspect-ratio: 4/3;
+      max-height: 240px;
+    }
+    #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .scan-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .scan-frame {
+      width: 170px; height: 130px;
+      border: 2px solid rgba(91,138,255,.6);
+      border-radius: var(--r-sm);
+      position: relative;
+    }
+    .scan-frame::before, .scan-frame::after {
+      content: ''; position: absolute;
+      width: 22px; height: 22px;
+      border-color: var(--accent); border-style: solid;
+    }
+    .scan-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .scan-frame::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    #scan-line {
+      position: absolute; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: scanline 1.8s ease-in-out infinite;
+      display: none;
+    }
+    @keyframes scanline { 0%,100%{top:10%} 50%{top:88%} }
+    .scanner-idle {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,.65);
+    }
+    .scanner-idle-icon { font-size: 38px; margin-bottom: 8px; }
+    .scanner-idle-text { color: var(--text2); font-size: 13px; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+    .btn {
+      flex: 1; padding: 12px 14px;
+      border: none; border-radius: var(--r-md);
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      font-family: var(--sans);
+      letter-spacing: .2px;
+      transition: opacity .15s, transform .1s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:active { opacity: .75; transform: scale(.97); }
+    .btn-start  { background: var(--accent); color: white; }
+    .btn-stop   { background: var(--red); color: white; display: none; }
+    .btn-icon   { flex: 0 0 auto; width: 44px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); font-size: 17px; }
+
+    /* ── Status Box ── */
+    .status-box {
+      margin-top: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 13px 16px;
+      min-height: 60px;
+      display: flex; align-items: center;
+      font-size: 14px; line-height: 1.5;
+      transition: border-color .15s, background .15s;
+      font-family: var(--mono);
+    }
+    .status-box b { font-weight: 700; }
+    .status-box.sukses  { border-color: var(--green);  background: var(--green-dim);  color: #5effa8; }
+    .status-box.batal   { border-color: var(--orange); background: var(--orange-dim); color: #ffb07a; }
+    .status-box.duplikat{ border-color: var(--yellow); background: var(--yellow-dim); color: #ffe07a; }
+    .status-box.proses  { border-color: var(--accent); background: var(--accent-dim); color: #9ab8ff; }
+    .status-box.error   { border-color: var(--red);    background: var(--red-dim);    color: #ff9aaa; }
+
+    /* ── Stats ── */
+    .stats-row { display: flex; gap: 8px; margin-top: 10px; }
+    .stat-card {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 12px 8px; text-align: center;
+    }
+    .stat-num { font-family: var(--mono); font-size: 24px; font-weight: 700; }
+    .stat-num.green  { color: var(--green); }
+    .stat-num.red    { color: var(--red); }
+    .stat-num.yellow { color: var(--yellow); }
+    .stat-num.accent { color: var(--accent); }
+    .stat-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* ── Divider ── */
+    .section-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 18px 0 10px;
+    }
+    .section-title {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 2px; color: var(--text3); text-transform: uppercase;
+    }
+    .txt-btn {
+      font-size: 11px; color: var(--text3); background: none;
+      border: none; cursor: pointer; font-family: var(--sans);
+      padding: 4px 0;
+    }
+    .txt-btn:hover { color: var(--red); }
+
+    /* ── Kirim Batch Section ── */
+    .batch-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      margin-top: 10px;
+    }
+    .batch-info {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .batch-count {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .batch-desc { font-size: 13px; color: var(--text2); line-height: 1.4; }
+    .batch-desc b { color: var(--text); font-weight: 600; }
+    .btn-kirim {
+      width: 100%;
+      padding: 15px;
+      background: var(--green);
+      color: #000;
+      border: none;
+      border-radius: var(--r-md);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--sans);
+      letter-spacing: .3px;
+      transition: opacity .15s, transform .1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-kirim:active { opacity: .8; transform: scale(.98); }
+    .btn-kirim:disabled {
+      background: var(--surface3);
+      color: var(--text3);
+      cursor: not-allowed;
+    }
+    .kirim-progress {
+      display: none;
+      margin-top: 10px;
+    }
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 100px;
+      height: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 100px;
+      transition: width .3s ease;
+      width: 0%;
+    }
+    .progress-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+      text-align: center;
+    }
+    .kirim-result-row {
+      display: flex; gap: 8px; margin-top: 10px;
+    }
+    .kirim-stat {
+      flex: 1; text-align: center;
+      background: var(--surface2);
+      border-radius: var(--r-sm);
+      padding: 8px 4px;
+    }
+    .kirim-stat-num { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+    .kirim-stat-lbl { font-size: 10px; color: var(--text3); letter-spacing: 1px; margin-top: 1px; }
+
+    /* ── Riwayat ── */
+    #riwayat {
+      display: flex; flex-direction: column; gap: 5px;
+      max-height: 320px; overflow-y: auto;
+      padding-right: 2px; padding-bottom: 4px;
+    }
+    #riwayat::-webkit-scrollbar { width: 3px; }
+    #riwayat::-webkit-scrollbar-track { background: transparent; }
+    #riwayat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .riwayat-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      border-radius: var(--r-sm);
+      padding: 9px 12px;
+      font-size: 12px;
+      transition: border-left-color .2s, background .2s;
+    }
+    .riwayat-item.batal   { border-left-color: var(--orange); }
+    .riwayat-item.duplikat{ border-left-color: var(--yellow); }
+    .riwayat-item.pending { border-left-color: var(--text3); opacity: .65; }
+    .riwayat-item.sent    { border-left-color: var(--green); }
+    .riwayat-item.error-item { border-left-color: var(--red); }
+    .item-icon    { font-size: 14px; flex-shrink: 0; }
+    .item-resi    { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .item-tags    { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
+    .item-tag {
+      font-family: var(--mono); font-size: 9px; letter-spacing: .5px;
+      padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+      font-weight: 600;
+    }
+    .tag-pending  { background: var(--surface3); color: var(--text3); }
+    .tag-sent     { background: var(--green-dim); color: var(--green); }
+    .tag-batal    { background: var(--orange-dim); color: var(--orange); }
+    .tag-duplikat { background: var(--yellow-dim); color: var(--yellow); }
+    .tag-error    { background: var(--red-dim); color: var(--red); }
+    .item-time    { font-size: 10px; color: var(--text3); flex-shrink: 0; }
+
+    /* ── Sync status bar ── */
+    .sync-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text2);
+      font-family: var(--mono);
+    }
+    .sync-bar-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text3);
+      flex-shrink: 0;
+    }
+    .sync-bar-dot.fresh { background: var(--green); }
+    .sync-bar-dot.stale { background: var(--yellow); }
+    .sync-bar-dot.loading { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .sync-bar-txt { flex: 1; }
+    .sync-bar-count {
+      background: var(--surface3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--text);
+      font-size: 10px;
+    }
+
+    /* ── Modal ── */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+      display: none;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: var(--r-xl) var(--r-xl) 0 0;
+      padding: 24px 24px 36px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .modal p  { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-cancel {
+      flex: 1; padding: 13px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r-md); color: var(--text);
+      font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans);
+    }
+    .modal-confirm {
+      flex: 1; padding: 13px;
+      background: var(--red); border: none;
+      border-radius: var(--r-md); color: white;
+      font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans);
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px; font-family: var(--mono);
+      padding: 12px 20px;
+      border-radius: var(--r-md);
+      z-index: 200;
+      opacity: 0;
+      transition: all .25s;
+      max-width: 90vw; text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.toast-green { border-color: var(--green); color: var(--green); }
+    #toast.toast-red   { border-color: var(--red);   color: var(--red); }
+    #toast.toast-yellow{ border-color: var(--yellow); color: var(--yellow); }
   </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════
+     LOGIN
+═══════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">Scan System</div>
+    <div class="login-badge">Scan System</div>
     <div class="login-title">📦 Packing</div>
-    <input type="password" id="input-password" placeholder="Masukkan password"
-           onkeydown="if(event.key==='Enter') cekPassword()">
-    <button class="login-btn" onclick="cekPassword()">Masuk</button>
+    <div class="login-sub">Masuk untuk mulai scan paket</div>
+    <input class="login-input" type="password" id="input-password"
+           placeholder="Password" onkeydown="if(event.key==='Enter')cekPassword()">
+    <button class="login-btn" onclick="cekPassword()">Masuk →</button>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════
+     APP
+═══════════════════════════════════════════ -->
 <div id="app">
+  <!-- Topbar -->
   <div class="topbar">
-    <div>
-      <div class="topbar-label">Scan Mode</div>
+    <div class="topbar-left">
+      <div class="topbar-badge">Scan Mode</div>
       <div class="topbar-title">📦 Packing</div>
     </div>
-    <div class="counter-badge">
-      <div class="counter-num" id="total-count">0</div>
-      <div class="counter-label">Total Scan</div>
+    <div class="topbar-right">
+      <!-- Status Sync Button -->
+      <button class="sync-btn" id="btn-sync-status" onclick="syncStatusManual()">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span class="sync-icon">⟳</span>
+        <span id="sync-lbl">Sync</span>
+      </button>
+      <!-- Total Counter -->
+      <div class="counter-badge">
+        <div class="counter-num" id="total-count">0</div>
+        <div class="counter-lbl">Scanned</div>
+      </div>
     </div>
   </div>
+
   <div class="content">
+
+    <!-- Scanner -->
     <div class="scanner-wrap">
       <video id="video" autoplay playsinline muted></video>
       <div id="scan-line"></div>
@@ -132,441 +567,763 @@
         <div class="scanner-idle-text">Kamera belum aktif</div>
       </div>
     </div>
+
+    <!-- Scanner Buttons -->
     <div class="btn-row">
       <button class="btn btn-start" id="btn-mulai" onclick="mulaiScan()">▶ Mulai Scan</button>
       <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
-      <button class="btn btn-reset" onclick="showResetModal()">↺</button>
+      <button class="btn btn-icon" title="Reset" onclick="showResetModal()">↺</button>
     </div>
-    <div id="queue-indicator" class="queue-indicator">⏳ Mengirim ke server…</div>
+
+    <!-- Status Box -->
     <div class="status-box" id="status">Siap — tekan Mulai Scan.</div>
+
+    <!-- Stats -->
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-num green" id="count-sukses">0</div><div class="stat-label">Berhasil</div></div>
-      <div class="stat-card"><div class="stat-num orange" id="count-batal">0</div><div class="stat-label">Batal</div></div>
-      <div class="stat-card"><div class="stat-num" id="count-duplikat">0</div><div class="stat-label">Duplikat</div></div>
+      <div class="stat-card">
+        <div class="stat-num green" id="cnt-sukses">0</div>
+        <div class="stat-lbl">Berhasil</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num red" id="cnt-batal">0</div>
+        <div class="stat-lbl">Batal</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num yellow" id="cnt-duplikat">0</div>
+        <div class="stat-lbl">Duplikat</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num accent" id="cnt-pending">0</div>
+        <div class="stat-lbl">Belum Kirim</div>
+      </div>
     </div>
-    <div class="section-header">
-      <div class="section-title">Riwayat</div>
-      <button class="clear-btn" onclick="clearRiwayat()">Hapus riwayat</button>
+
+    <!-- Batch Kirim Panel -->
+    <div class="section-row" style="margin-top:18px; margin-bottom:8px">
+      <div class="section-title">Kirim ke Server</div>
+    </div>
+    <div class="batch-panel">
+      <div class="batch-info">
+        <div class="batch-count" id="batch-count">0</div>
+        <div class="batch-desc">
+          paket <b>siap dikirim</b> ke Google Sheets.<br>
+          Scan dulu semua, kirim sekaligus.
+        </div>
+      </div>
+      <button class="btn-kirim" id="btn-kirim" onclick="kirimSemua()" disabled>
+        <span>📤</span> <span id="btn-kirim-txt">Kirim Semua</span>
+      </button>
+      <div class="kirim-progress" id="kirim-progress">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Mengirim…</div>
+      </div>
+      <div class="kirim-result-row" id="kirim-result" style="display:none">
+        <div class="kirim-stat">
+          <div class="kirim-stat-num" style="color:var(--green)" id="res-sukses">0</div>
+          <div class="kirim-stat-lbl">Berhasil</div>
+        </div>
+        <div class="kirim-stat">
+          <div class="kirim-stat-num" style="color:var(--orange)" id="res-batal">0</div>
+          <div class="kirim-stat-lbl">Batal</div>
+        </div>
+        <div class="kirim-stat">
+          <div class="kirim-stat-num" style="color:var(--yellow)" id="res-dupli">0</div>
+          <div class="kirim-stat-lbl">Duplikat</div>
+        </div>
+        <div class="kirim-stat">
+          <div class="kirim-stat-num" style="color:var(--red)" id="res-error">0</div>
+          <div class="kirim-stat-lbl">Error</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sync Status Bar -->
+    <div class="sync-bar" id="sync-bar">
+      <div class="sync-bar-dot" id="sync-bar-dot"></div>
+      <div class="sync-bar-txt" id="sync-bar-txt">Status pesanan belum disinkron</div>
+      <div class="sync-bar-count" id="sync-bar-count">0 resi cached</div>
+    </div>
+
+    <!-- Riwayat -->
+    <div class="section-row">
+      <div class="section-title">Riwayat Scan</div>
+      <button class="txt-btn" onclick="clearRiwayat()">Hapus riwayat</button>
     </div>
     <div id="riwayat"></div>
-  </div>
-</div>
 
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- Reset Modal -->
 <div class="modal-bg" id="modal-reset">
   <div class="modal">
-    <h3>Reset Hitungan?</h3>
-    <p>Semua hitungan dan riwayat akan dikosongkan. Data di Google Sheets tetap aman.</p>
+    <h3>Reset Sesi?</h3>
+    <p>Semua hitungan dan riwayat di halaman ini akan dikosongkan. Paket yang belum dikirim akan hilang. Data di Google Sheets tetap aman.</p>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="hideResetModal()">Batal</button>
+      <button class="modal-cancel" onclick="hideModal('modal-reset')">Batal</button>
       <button class="modal-confirm" onclick="resetSemua()">Reset</button>
     </div>
   </div>
 </div>
+
 <div id="toast"></div>
 
 <script>
-  const PASSWORD = "kodachi123";
-  const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
-  const MODE     = "packing";
-  const DB_NAME  = "ScanPackingDB";
+/* ══════════════════════════════════════════════════════════════
+   KONFIGURASI — ubah sesuai kebutuhan
+══════════════════════════════════════════════════════════════ */
+const CFG = {
+  PASSWORD  : "kodachi123",
+  GAS_URL   : "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec",
+  MODE      : "packing",       // "packing" | "kirim"
+  DB_NAME   : "ScanPackingDB", // ganti "ScanKirimDB" untuk halaman kirim
+  DB_VERSION: 3,
 
-  // ─────────────────────────────────────────────
-  // WARMUP — panasin koneksi ke GAS sebelum scan
-  // Kirim GET request agar GAS tidak cold start
-  // ─────────────────────────────────────────────
-  fetch(GAS_URL + "?ping=1").catch(() => {});
+  // URL endpoint untuk fetch status pesanan (kolom C,I,J sheet Paket)
+  // Endpoint GET dengan parameter action=getStatus
+  STATUS_FETCH_URL : "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec",
 
-  // ─────────────────────────────────────────────
-  // AUDIO
-  // ─────────────────────────────────────────────
-  let audioCtx;
-  function inisialisasiAudio() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    o.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + 0.001);
-  }
-  function bunyi(tipe) {
-    if (!audioCtx) return;
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    const t = audioCtx.currentTime;
-    if (tipe === "sukses") {
-      o.type = "sine";
-      o.frequency.setValueAtTime(1000, t);
-      o.frequency.setValueAtTime(1400, t + 0.06);
-      g.gain.setValueAtTime(0.4, t); g.gain.linearRampToValueAtTime(0, t + 0.12);
-      o.start(t); o.stop(t + 0.12);
-    } else if (tipe === "batal") {
-      o.type = "square";
-      o.frequency.setValueAtTime(300, t);
-      g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 0.25);
-      o.start(t); o.stop(t + 0.25);
-    } else if (tipe === "duplikat") {
-      o.type = "triangle";
-      o.frequency.setValueAtTime(700, t);
-      g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 0.15);
-      o.start(t); o.stop(t + 0.15);
-    } else { // nada netral saat baca barcode
-      o.type = "sine";
-      o.frequency.setValueAtTime(900, t);
-      g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t + 0.06);
-      o.start(t); o.stop(t + 0.06);
-    }
-  }
+  SYNC_INTERVAL_MS : 60_000,   // auto-sync tiap 1 menit
+  DEBOUNCE_MS      : 3_000,    // debounce scan resi sama
+  BATCH_CONCURRENCY: 3,        // kirim N request paralel saat batch
+};
 
-  // ─────────────────────────────────────────────
-  // COUNTER
-  // ─────────────────────────────────────────────
-  let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
-  const resiBatalUnik = new Set();
+/* ══════════════════════════════════════════════════════════════
+   AUDIO ENGINE
+══════════════════════════════════════════════════════════════ */
+let audioCtx;
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = audioCtx.createOscillator();
+  o.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + 0.001);
+}
+function bunyi(tipe) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  const t = audioCtx.currentTime;
+  const presets = {
+    sukses  : { type:"sine",     freqs:[[1000,0],[1400,.06]], dur:.12, gain:.4 },
+    batal   : { type:"square",   freqs:[[260,0]],             dur:.3,  gain:.25 },
+    duplikat: { type:"triangle", freqs:[[700,0]],             dur:.15, gain:.2 },
+    beep    : { type:"sine",     freqs:[[900,0]],             dur:.06, gain:.15 },
+  };
+  const p = presets[tipe] || presets.beep;
+  o.type = p.type;
+  p.freqs.forEach(([f, dt]) => o.frequency.setValueAtTime(f, t + dt));
+  g.gain.setValueAtTime(p.gain, t);
+  g.gain.linearRampToValueAtTime(0, t + p.dur);
+  o.start(t); o.stop(t + p.dur);
+}
 
-  function tampilStats() {
-    document.getElementById("count-sukses").textContent   = cntSukses;
-    document.getElementById("count-batal").textContent    = cntBatal;
-    document.getElementById("count-duplikat").textContent = cntDuplikat;
-    document.getElementById("total-count").textContent    = cntSukses + cntBatal + cntDuplikat;
-  }
+/* ══════════════════════════════════════════════════════════════
+   INDEXEDDB LAYER
+   Stores:
+   - scans   : riwayat scan sesi ini {id,resi,status,ts,mode,sent}
+   - statuscache : status pesanan dari GS {resi,statusPesanan,updatedAt}
+══════════════════════════════════════════════════════════════ */
+let idb;
 
-  // ─────────────────────────────────────────────
-  // INDEXEDDB — hanya untuk riwayat tampilan
-  // ─────────────────────────────────────────────
-  let db;
-  function initDB() {
-    return new Promise((res, rej) => {
-      const req = indexedDB.open(DB_NAME, 2);
-      req.onupgradeneeded = e => {
-        const d = e.target.result;
-        if (d.objectStoreNames.contains("scans")) d.deleteObjectStore("scans");
-        const s = d.createObjectStore("scans", { keyPath: "id", autoIncrement: true });
-        s.createIndex("ts", "ts", { unique: false });
-      };
-      req.onsuccess = e => { db = e.target.result; res(); };
-      req.onerror   = () => rej(req.error);
-    });
-  }
-  function dbWrite(data) { if (!db) return; db.transaction("scans","readwrite").objectStore("scans").add(data); }
-  function dbClear() {
-    return new Promise((res, rej) => {
-      if (!db) return res();
-      const r = db.transaction("scans","readwrite").objectStore("scans").clear();
-      r.onsuccess = () => res(); r.onerror = () => rej(r.error);
-    });
-  }
-  function dbGetAll() {
-    return new Promise((res, rej) => {
-      if (!db) return res([]);
-      const r = db.transaction("scans","readonly").objectStore("scans").getAll();
-      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-    });
-  }
-
-  async function initRiwayat() {
-    const all    = await dbGetAll();
-    const sorted = all.sort((a,b) => b.ts - a.ts).slice(0,30);
-    sorted.forEach(s => tambahRiwayatDOM(s.resi, s.status, s.ts));
-    all.forEach(s => { if (s.status === "batal") resiBatalUnik.add(s.resi); });
-    all.forEach(s => {
-      if (s.status === "sukses")        cntSukses++;
-      else if (s.status === "duplikat") cntDuplikat++;
-    });
-    cntBatal = resiBatalUnik.size;
-    tampilStats();
-  }
-
-  // ─────────────────────────────────────────────
-  // SCAN QUEUE — kirim ke server tanpa blok UI
-  // Satu item diproses per satu (tidak parallel)
-  // agar urutan di sheet tetap benar
-  // ─────────────────────────────────────────────
-  const sendQueue = [];         // antrian item yang belum terkirim
-  let queueRunning = false;     // flag apakah worker sedang jalan
-
-  function enqueueScan(item) {
-    sendQueue.push(item);
-    updateQueueBadge();
-    if (!queueRunning) runQueue();
-  }
-
-  async function runQueue() {
-    if (queueRunning || sendQueue.length === 0) return;
-    queueRunning = true;
-    while (sendQueue.length > 0) {
-      const item = sendQueue[0]; // peek — jangan hapus dulu
-      const ok = await kirimKeServer(item);
-      if (ok) {
-        sendQueue.shift(); // hapus hanya setelah berhasil
-      } else {
-        // Gagal — tunggu 3 detik lalu coba lagi (tanpa hapus dari queue)
-        await sleep(3000);
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(CFG.DB_NAME, CFG.DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      // Store: scans
+      if (d.objectStoreNames.contains("scans")) d.deleteObjectStore("scans");
+      const s = d.createObjectStore("scans", { keyPath:"id", autoIncrement:true });
+      s.createIndex("resi", "resi", { unique:false });
+      s.createIndex("ts",   "ts",   { unique:false });
+      s.createIndex("sent", "sent", { unique:false });
+      // Store: statuscache
+      if (!d.objectStoreNames.contains("statuscache")) {
+        const sc = d.createObjectStore("statuscache", { keyPath:"resi" });
+        sc.createIndex("updatedAt","updatedAt",{unique:false});
       }
-      updateQueueBadge();
+    };
+    req.onsuccess = e => { idb = e.target.result; res(); };
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+function idbTx(store, mode="readonly") {
+  return idb.transaction(store, mode).objectStore(store);
+}
+
+function idbGetAll(store) {
+  return new Promise((res,rej) => {
+    const r = idbTx(store).getAll();
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+function idbPut(store, data) {
+  return new Promise((res,rej) => {
+    const r = idbTx(store,"readwrite").put(data);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+function idbAdd(store, data) {
+  return new Promise((res,rej) => {
+    const r = idbTx(store,"readwrite").add(data);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+function idbClear(store) {
+  return new Promise((res,rej) => {
+    const r = idbTx(store,"readwrite").clear();
+    r.onsuccess = () => res();
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+function idbUpdate(store, key, updateFn) {
+  return new Promise((res,rej) => {
+    const tx = idb.transaction(store,"readwrite");
+    const os = tx.objectStore(store);
+    const get = os.get(key);
+    get.onsuccess = () => {
+      const updated = updateFn(get.result);
+      const put = os.put(updated);
+      put.onsuccess = () => res(put.result);
+      put.onerror   = () => rej(put.error);
+    };
+    get.onerror = () => rej(get.error);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATUS CACHE (pesanan di GS — untuk deteksi BATAL offline)
+══════════════════════════════════════════════════════════════ */
+// statusCache: Map<resiUpper, {statusPesanan, updatedAt}>
+// statusPesanan: "Batal" | "Sudah" | "" | dll
+const statusCache = new Map();
+let lastSyncAt = null;
+let syncTimer   = null;
+
+// Load dari IDB ke memory saat init
+async function loadStatusCache() {
+  const rows = await idbGetAll("statuscache");
+  rows.forEach(r => statusCache.set(r.resi, r));
+  updateSyncBar();
+}
+
+// Cek apakah resi BATAL berdasarkan cache lokal
+function isResiBatal(resi) {
+  const entry = statusCache.get(resi.toUpperCase());
+  return entry && String(entry.statusPesanan).trim() === "Batal";
+}
+
+// Sync status: GET ke GAS dengan action=getStatus
+// GAS harus mengembalikan JSON array: [{resi,statusJ,keteranganI}]
+async function syncStatus(manual = false) {
+  const dot    = document.getElementById("sync-dot");
+  const syncBtn = document.getElementById("btn-sync-status");
+  const lbl    = document.getElementById("sync-lbl");
+
+  dot.className = "sync-dot stale";
+  syncBtn.classList.add("syncing");
+  lbl.textContent = "Sync…";
+
+  setSyncBarLoading(true);
+
+  try {
+    const url  = CFG.STATUS_FETCH_URL + "?action=getStatus&t=" + Date.now();
+    const resp = await fetch(url, { redirect:"follow" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+
+    // json diharapkan: [{resi: "...", statusJ: "Batal"|"Sudah"|"", keteranganI: "..."}]
+    if (Array.isArray(json)) {
+      for (const row of json) {
+        const key   = String(row.resi).trim().toUpperCase();
+        const entry = { resi: key, statusPesanan: row.statusJ || "", keteranganI: row.keteranganI || "", updatedAt: Date.now() };
+        statusCache.set(key, entry);
+        await idbPut("statuscache", entry);
+      }
     }
-    queueRunning = false;
+
+    lastSyncAt = new Date();
+    dot.className  = "sync-dot fresh";
+    lbl.textContent = fmtTime(lastSyncAt);
+
+    // Cek resi yang sudah di-scan — apakah ada yang ternyata batal?
+    await checkBatalPasca();
+
+    if (manual) showToast("✅ Status berhasil disinkron — " + statusCache.size + " resi", "green");
+  } catch(err) {
+    dot.className  = "sync-dot error";
+    lbl.textContent = "Error";
+    if (manual) showToast("❌ Sync gagal: " + err.message, "red");
+  } finally {
+    syncBtn.classList.remove("syncing");
+    setSyncBarLoading(false);
+    updateSyncBar();
+  }
+}
+
+function syncStatusManual() {
+  syncStatus(true);
+}
+
+function startAutoSync() {
+  syncStatus(); // langsung sync pertama
+  syncTimer = setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS);
+}
+
+// Setelah sync, periksa semua resi di sesi ini yang statusnya "sukses" tapi ternyata batal di GS
+async function checkBatalPasca() {
+  const scans = await idbGetAll("scans");
+  for (const s of scans) {
+    if (s.status === "sukses" && isResiBatal(s.resi)) {
+      // Koreksi
+      s.status = "batal";
+      await idbPut("scans", s);
+      // Update DOM
+      updateRiwayatDOM(s.id, "batal");
+      // Koreksi counter
+      cntSukses  = Math.max(0, cntSukses - 1);
+      cntBatal++;
+      tampilStats();
+      showToast("🚫 " + s.resi + " ternyata BATAL!", "red");
+      bunyi("batal");
+    }
+  }
+}
+
+function setSyncBarLoading(v) {
+  document.getElementById("sync-bar-dot").className = "sync-bar-dot" + (v ? " loading" : "");
+}
+
+function updateSyncBar() {
+  const dot  = document.getElementById("sync-bar-dot");
+  const txt  = document.getElementById("sync-bar-txt");
+  const cnt  = document.getElementById("sync-bar-count");
+
+  cnt.textContent = statusCache.size + " resi cached";
+
+  if (!lastSyncAt) {
+    dot.className    = "sync-bar-dot stale";
+    txt.textContent  = "Belum disinkron — tekan tombol Sync";
+  } else {
+    const minAgo = Math.floor((Date.now() - lastSyncAt) / 60000);
+    dot.className   = minAgo < 2 ? "sync-bar-dot fresh" : "sync-bar-dot stale";
+    txt.textContent = "Sync " + (minAgo === 0 ? "baru saja" : minAgo + " menit lalu") + " — deteksi batal aktif";
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════ */
+let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
+const resiDiScan = new Set();    // dedup lokal sesi ini
+const idxDomItem = new Map();    // resi / id -> DOM element
+
+function tampilStats() {
+  document.getElementById("cnt-sukses").textContent   = cntSukses;
+  document.getElementById("cnt-batal").textContent    = cntBatal;
+  document.getElementById("cnt-duplikat").textContent = cntDuplikat;
+
+  const pending = [...resiDiScan].filter(r => {
+    const el = idxDomItem.get("resi_" + r);
+    return el && el.dataset.sent !== "1" && el.dataset.status === "sukses";
+  }).length;
+  // Hitung pending dari DB lebih akurat
+  updatePendingCount();
+}
+
+async function updatePendingCount() {
+  const scans   = await idbGetAll("scans");
+  const pending = scans.filter(s => !s.sent && s.status === "sukses").length;
+  document.getElementById("cnt-pending").textContent = pending;
+  document.getElementById("batch-count").textContent = pending;
+  document.getElementById("total-count").textContent = scans.length;
+
+  const btnKirim = document.getElementById("btn-kirim");
+  btnKirim.disabled = pending === 0;
+  document.getElementById("btn-kirim-txt").textContent = pending > 0
+    ? "Kirim " + pending + " Paket ke Sheets"
+    : "Kirim Semua";
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════════════ */
+function cekPassword() {
+  const val = document.getElementById("input-password").value;
+  if (val === CFG.PASSWORD) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    initAudio();
+    onAppStart();
+  } else {
+    document.getElementById("login-error").textContent = "❌ Password salah.";
+    document.getElementById("input-password").value = "";
+  }
+}
+
+async function onAppStart() {
+  await initDB();
+  await loadStatusCache();
+  await initRiwayat();
+  startAutoSync();
+  // Warmup GAS
+  fetch(CFG.GAS_URL + "?ping=1").catch(()=>{});
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RIWAYAT — init dari IDB
+══════════════════════════════════════════════════════════════ */
+async function initRiwayat() {
+  const scans  = await idbGetAll("scans");
+  const sorted = [...scans].sort((a,b) => b.ts - a.ts).slice(0, 40);
+  sorted.forEach(s => {
+    tambahRiwayatDOM(s.resi, s.status, s.ts, s.id, s.sent);
+    resiDiScan.add(s.resi);
+  });
+
+  cntSukses   = scans.filter(s => s.status === "sukses").length;
+  cntBatal    = scans.filter(s => s.status === "batal").length;
+  cntDuplikat = scans.filter(s => s.status === "duplikat").length;
+  tampilStats();
+}
+
+function tambahRiwayatDOM(resi, status, ts, id, sent) {
+  const wrap = document.getElementById("riwayat");
+  const el   = document.createElement("div");
+  el.dataset.status = status;
+  el.dataset.sent   = sent ? "1" : "0";
+  el.dataset.id     = id || "";
+
+  const icon = status === "sukses" ? "✅" : status === "batal" ? "🚫" : status === "duplikat" ? "⚠️" : "⏳";
+  const tagTxt = sent ? "sent" : (status === "sukses" ? "pending" : status);
+  const tagCls = sent ? "tag-sent" : (status === "sukses" ? "tag-pending" : "tag-" + status);
+  const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+
+  el.className = "riwayat-item " + (sent ? "sent" : status);
+  el.innerHTML =
+    `<span class="item-icon">${icon}</span>` +
+    `<span class="item-resi">${resi}</span>` +
+    `<span class="item-tags"><span class="item-tag ${tagCls}">${tagTxt}</span></span>` +
+    `<span class="item-time">${t}</span>`;
+
+  wrap.insertBefore(el, wrap.firstChild);
+  while (wrap.children.length > 40) wrap.removeChild(wrap.lastChild);
+
+  idxDomItem.set("id_"   + id,   el);
+  idxDomItem.set("resi_" + resi, el);
+}
+
+function updateRiwayatDOM(idOrResi, status, sent) {
+  const el = idxDomItem.get("id_" + idOrResi) || idxDomItem.get("resi_" + idOrResi);
+  if (!el) return;
+  el.dataset.status = status;
+  if (sent !== undefined) el.dataset.sent = sent ? "1" : "0";
+
+  const icon   = status === "sukses" ? "✅" : status === "batal" ? "🚫" : status === "duplikat" ? "⚠️" : status === "error-item" ? "❗" : "⏳";
+  const isSent = el.dataset.sent === "1";
+  const tagTxt = isSent ? "sent" : (status === "sukses" ? "pending" : status);
+  const tagCls = isSent ? "tag-sent" : (status === "sukses" ? "tag-pending" : "tag-" + (status === "error-item" ? "error" : status));
+
+  el.className = "riwayat-item " + (isSent ? "sent" : status);
+  const iconEl = el.querySelector(".item-icon");
+  const tagEl  = el.querySelector(".item-tag");
+  if (iconEl) iconEl.textContent = icon;
+  if (tagEl)  { tagEl.textContent = tagTxt; tagEl.className = "item-tag " + tagCls; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROSES SCAN — dedup + deteksi batal dari cache
+══════════════════════════════════════════════════════════════ */
+async function prosesHasil(resi, ts) {
+  // ── 1. Cek duplikat lokal ──
+  if (resiDiScan.has(resi)) {
+    bunyi("duplikat");
+    setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
+    cntDuplikat++;
+    const id = await idbAdd("scans", { resi, status:"duplikat", ts, mode:CFG.MODE, sent:false });
+    tambahRiwayatDOM(resi, "duplikat", ts, id, false);
+    tampilStats();
+    return;
   }
 
-  function updateQueueBadge() {
-    const el = document.getElementById("queue-indicator");
-    if (sendQueue.length > 0) {
-      el.className = "queue-indicator active";
-      el.textContent = "⏳ Mengirim ke server… (" + sendQueue.length + " antri)";
-    } else {
-      el.className = "queue-indicator";
-    }
+  // ── 2. Cek status pesanan dari cache lokal (deteksi batal SEBELUM ke server) ──
+  if (isResiBatal(resi)) {
+    const entry = statusCache.get(resi);
+    const ket   = entry && entry.keteranganI ? " (" + entry.keteranganI + ")" : "";
+    bunyi("batal");
+    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — tidak di-packing!", "batal");
+    cntBatal++;
+    resiDiScan.add(resi);
+    const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
+    tambahRiwayatDOM(resi, "batal", ts, id, false);
+    tampilStats();
+    return;
   }
 
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  // ── 3. Sukses — simpan lokal, tampil langsung, tunggu kirim batch ──
+  resiDiScan.add(resi);
+  bunyi("sukses");
+  setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim.", "sukses");
+  cntSukses++;
+  const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
+  tambahRiwayatDOM(resi, "sukses", ts, id, false);
+  tampilStats();
+}
 
-  // ─────────────────────────────────────────────
-  // KIRIM KE SERVER — return true jika sukses
-  // ─────────────────────────────────────────────
-  async function kirimKeServer(item) {
+/* ══════════════════════════════════════════════════════════════
+   BATCH KIRIM — kirim semua yang pending ke GAS
+══════════════════════════════════════════════════════════════ */
+let isKiriming = false;
+
+async function kirimSemua() {
+  if (isKiriming) return;
+  isKiriming = true;
+
+  const scans   = await idbGetAll("scans");
+  const pending = scans.filter(s => !s.sent && s.status === "sukses");
+
+  if (pending.length === 0) {
+    isKiriming = false;
+    showToast("Tidak ada paket yang perlu dikirim.", "yellow");
+    return;
+  }
+
+  // UI: tampilkan progress
+  document.getElementById("btn-kirim").disabled = true;
+  document.getElementById("btn-kirim-txt").textContent = "Mengirim…";
+  const progWrap = document.getElementById("kirim-progress");
+  const progFill = document.getElementById("progress-fill");
+  const progTxt  = document.getElementById("progress-text");
+  const resArea  = document.getElementById("kirim-result");
+  progWrap.style.display = "block";
+  resArea.style.display  = "none";
+
+  let done = 0, resSukses = 0, resBatal = 0, resDupli = 0, resError = 0;
+
+  // Kirim dengan konkurensi terbatas
+  const queue = [...pending];
+
+  async function kirimSatu(item) {
     try {
-      // PENTING: GAS pakai redirect (302) saat POST
-      // keepalive:true tidak bisa follow redirect → request gagal diam-diam
-      // Solusi: hapus keepalive, biarkan browser follow redirect otomatis
       const payload = JSON.stringify({
         resi    : item.resi,
-        mode    : MODE,
+        mode    : CFG.MODE,
         tsScan  : new Date(item.ts).toISOString(),
         tglScan : new Date(item.ts).toLocaleDateString("id-ID"),
         jamScan : new Date(item.ts).toLocaleTimeString("id-ID"),
-        ua      : navigator.userAgent
+        ua      : navigator.userAgent.substring(0,100)
       });
-      const resp = await fetch(GAS_URL, {
-        method   : "POST",
-        body     : payload,
-        headers  : { "Content-Type": "text/plain;charset=utf-8" },
-        redirect : "follow"   // ikuti redirect 302 dari GAS
+      const resp  = await fetch(CFG.GAS_URL, {
+        method  :"POST",
+        body    : payload,
+        headers : { "Content-Type":"text/plain;charset=utf-8" },
+        redirect: "follow"
       });
-
-      const pesan   = await resp.text();
+      const pesan = await resp.text();
       const isBatal = pesan.includes("🚫") || pesan.toLowerCase().includes("batal");
       const isDupli = pesan.includes("⚠️");
 
-      // ── KOREKSI jika server bilang batal / duplikat ──
-      // (Optimistic UI sudah anggap sukses — perlu koreksi counter)
       if (isBatal) {
-        // Koreksi: kurangi sukses, tambah batal
-        if (!resiBatalUnik.has(item.resi)) {
-          cntSukses = Math.max(0, cntSukses - 1);
-          resiBatalUnik.add(item.resi);
-          cntBatal = resiBatalUnik.size;
-          tampilStats();
-          // Update tampilan item di riwayat
-          updateRiwayatItem(item.resi, "batal", pesan);
-          showToast("🚫 " + item.resi + " ternyata BATAL! Sudah dikoreksi.");
-          bunyi("batal");
-        }
-      } else if (isDupli) {
-        // Koreksi: kurangi sukses, tambah duplikat
-        cntSukses = Math.max(0, cntSukses - 1);
-        cntDuplikat++;
+        resBatal++;
+        // Koreksi item di IDB & DOM
+        await idbUpdate("scans", item.id, r => ({...r, status:"batal", sent:true}));
+        updateRiwayatDOM(item.id, "batal", true);
+        if (cntSukses > 0)  { cntSukses--; cntBatal++; }
         tampilStats();
-        updateRiwayatItem(item.resi, "duplikat", pesan);
-        // Tidak perlu toast — duplikat normal saja
+        showToast("🚫 " + item.resi + " BATAL!", "red");
+      } else if (isDupli) {
+        resDupli++;
+        await idbUpdate("scans", item.id, r => ({...r, status:"duplikat", sent:true}));
+        updateRiwayatDOM(item.id, "duplikat", true);
+        if (cntSukses > 0)  { cntSukses--; cntDuplikat++; }
+        tampilStats();
+      } else {
+        resSukses++;
+        await idbUpdate("scans", item.id, r => ({...r, sent:true}));
+        updateRiwayatDOM(item.id, "sukses", true);
       }
-      // Jika server sukses → tidak perlu koreksi apapun (sudah benar dari optimistic)
-      return true;
-
     } catch(e) {
-      // Network error — akan retry otomatis lewat runQueue
-      return false;
+      resError++;
+      await idbUpdate("scans", item.id, r => ({...r, status:"error-item", sent:false}));
+      updateRiwayatDOM(item.id, "error-item", false);
     }
+    done++;
+    const pct = Math.round((done / pending.length) * 100);
+    progFill.style.width  = pct + "%";
+    progTxt.textContent   = done + " / " + pending.length + " dikirim…";
   }
 
-  // ─────────────────────────────────────────────
-  // TOAST
-  // ─────────────────────────────────────────────
-  let toastTimer;
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg; t.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
+  // Concurrent batch dengan pool
+  for (let i = 0; i < queue.length; i += CFG.BATCH_CONCURRENCY) {
+    const batch = queue.slice(i, i + CFG.BATCH_CONCURRENCY);
+    await Promise.all(batch.map(kirimSatu));
   }
 
-  // ─────────────────────────────────────────────
-  // LOGIN
-  // ─────────────────────────────────────────────
-  function cekPassword() {
-    if (document.getElementById("input-password").value === PASSWORD) {
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      inisialisasiAudio();
-      initDB().then(initRiwayat);
-      // Warmup ulang setelah login agar GAS warm saat scan pertama
-      setTimeout(() => fetch(GAS_URL + "?ping=1").catch(() => {}), 500);
-    } else {
-      document.getElementById("login-error").textContent = "❌ Password salah.";
-      document.getElementById("input-password").value = "";
+  // Tampilkan hasil
+  progWrap.style.display = "none";
+  resArea.style.display  = "flex";
+  document.getElementById("res-sukses").textContent = resSukses;
+  document.getElementById("res-batal").textContent  = resBatal;
+  document.getElementById("res-dupli").textContent  = resDupli;
+  document.getElementById("res-error").textContent  = resError;
+
+  if (resError > 0) {
+    showToast("⚠️ " + resError + " paket gagal — coba kirim ulang.", "yellow");
+    document.getElementById("btn-kirim").disabled = false;
+    document.getElementById("btn-kirim-txt").textContent = "Kirim Ulang " + resError + " Paket";
+  } else {
+    showToast("✅ Semua paket berhasil dikirim!", "green");
+    document.getElementById("btn-kirim-txt").textContent = "Kirim Semua";
+    document.getElementById("btn-kirim").disabled = true;
+  }
+
+  await updatePendingCount();
+  tampilStats();
+  isKiriming = false;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCANNER ENGINE
+══════════════════════════════════════════════════════════════ */
+let codeReader = null, scanning = false;
+let resiTerakhir = "", waktuTerakhir = 0;
+
+function mulaiScan() {
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  setStatus("⏳ Mengaktifkan kamera…", "proses");
+  document.getElementById("btn-mulai").style.display = "none";
+  document.getElementById("btn-stop").style.display  = "inline-flex";
+  document.getElementById("scan-line").style.display = "block";
+  document.getElementById("scanner-idle").style.display = "none";
+  scanning = true;
+
+  codeReader = new ZXing.BrowserMultiFormatReader();
+  const hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+    ZXing.BarcodeFormat.CODE_128,
+    ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.QR_CODE,
+    ZXing.BarcodeFormat.DATA_MATRIX,
+  ]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  codeReader.hints = hints;
+
+  codeReader.decodeFromConstraints({
+    video: {
+      facingMode : { ideal:"environment" },
+      width      : { ideal:640 },
+      height     : { ideal:480 },
+      frameRate  : { ideal:30 }
     }
-  }
+  }, "video", (result, err) => {
+    if (!result || !scanning) return;
+    const resi = result.getText().trim().toUpperCase();
+    const now  = Date.now();
+    if (resi === resiTerakhir && now - waktuTerakhir < CFG.DEBOUNCE_MS) return;
+    resiTerakhir  = resi;
+    waktuTerakhir = now;
+    bunyi("beep");
+    prosesHasil(resi, now);
+  });
+}
 
-  // ─────────────────────────────────────────────
-  // STATUS BOX
-  // ─────────────────────────────────────────────
-  const statusDiv = document.getElementById("status");
-  let resetTimer = null;
-  function setStatus(pesan, kelas) {
-    statusDiv.innerHTML = pesan;
-    statusDiv.className = "status-box " + (kelas || "");
-    clearTimeout(resetTimer);
-    if (kelas) resetTimer = setTimeout(() => {
+function stopScan() {
+  scanning = false;
+  if (codeReader) { codeReader.reset(); codeReader = null; }
+  document.getElementById("scan-line").style.display  = "none";
+  document.getElementById("btn-mulai").style.display  = "inline-flex";
+  document.getElementById("btn-stop").style.display   = "none";
+  document.getElementById("scanner-idle").style.display = "flex";
+  setStatus("⏹ Scanner dihentikan.");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════════════ */
+const statusDiv = document.getElementById("status");
+let resetTimer  = null;
+
+function setStatus(html, kelas) {
+  statusDiv.innerHTML  = html;
+  statusDiv.className  = "status-box " + (kelas || "");
+  clearTimeout(resetTimer);
+  if (kelas && kelas !== "proses") {
+    resetTimer = setTimeout(() => {
       statusDiv.className = "status-box";
       statusDiv.innerHTML = "Siap scan berikutnya…";
-    }, 2000);
+    }, 2500);
   }
+}
 
-  // ─────────────────────────────────────────────
-  // RIWAYAT DOM
-  // ─────────────────────────────────────────────
-  // Simpan referensi DOM item per resi untuk koreksi
-  const itemElMap = new Map(); // resi -> element
+let toastTimer, toastClass;
+function showToast(msg, type) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className   = "show toast-" + (type || "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ""; }, 5000);
+}
 
-  function tambahRiwayatDOM(resi, status, ts) {
-    const div = document.getElementById("riwayat");
-    const el  = document.createElement("div");
-    el.className = "item " + (status === "batal" ? "batal" : status === "duplikat" ? "duplikat" : "");
-    const icon = status === "sukses" ? "✅" : status === "batal" ? "🚫" : "⚠️";
-    const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-    el.innerHTML = `<span class="item-icon">${icon}</span><span class="item-resi">${resi}</span><span class="item-time">${t}</span>`;
-    div.insertBefore(el, div.firstChild);
-    while (div.children.length > 30) div.removeChild(div.lastChild);
-    // Simpan referensi untuk koreksi nanti
-    itemElMap.set(resi, el);
-  }
+function fmtTime(d) {
+  return d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+}
 
-  function updateRiwayatItem(resi, statusBaru, pesan) {
-    const el = itemElMap.get(resi);
-    if (!el) return;
-    const icon = statusBaru === "batal" ? "🚫" : "⚠️";
-    el.className = "item " + statusBaru;
-    const resiSpan = el.querySelector(".item-resi");
-    const iconSpan = el.querySelector(".item-icon");
-    if (iconSpan) iconSpan.textContent = icon;
-    if (resiSpan) resiSpan.textContent = resi;
-  }
+/* ══════════════════════════════════════════════════════════════
+   MODAL & RESET
+══════════════════════════════════════════════════════════════ */
+function showModal(id)  { document.getElementById(id).classList.add("open"); }
+function hideModal(id)  { document.getElementById(id).classList.remove("open"); }
+function showResetModal() { showModal("modal-reset"); }
 
-  async function clearRiwayat() {
-    if (!confirm("Hapus semua riwayat? Data di Google Sheets tetap aman.")) return;
-    await dbClear();
-    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear(); itemElMap.clear();
-    tampilStats();
-    document.getElementById("riwayat").innerHTML = "";
-  }
+async function resetSemua() {
+  stopScan();
+  await idbClear("scans");
+  cntSukses = 0; cntBatal = 0; cntDuplikat = 0;
+  resiDiScan.clear();
+  idxDomItem.clear();
+  document.getElementById("riwayat").innerHTML = "";
+  document.getElementById("kirim-result").style.display  = "none";
+  document.getElementById("kirim-progress").style.display = "none";
+  tampilStats();
+  hideModal("modal-reset");
+  setStatus("Reset selesai. Siap scan baru.");
+  showToast("Sesi di-reset.", "yellow");
+}
 
-  // ─────────────────────────────────────────────
-  // SCANNER
-  // ─────────────────────────────────────────────
-  let codeReader = null, scanning = false, resiTerakhir = "", waktuTerakhir = 0;
+async function clearRiwayat() {
+  if (!confirm("Hapus riwayat tampilan? Data pending yang belum dikirim juga hilang. Lanjutkan?")) return;
+  await resetSemua();
+}
 
-  // Set resi yang sudah di-scan di sesi ini (dedup lokal sebelum nanya server)
-  const resiDiprosesLokal = new Set();
+/* ══════════════════════════════════════════════════════════════
+   PWA
+══════════════════════════════════════════════════════════════ */
+const mf = {
+  name:"Scan Packing", short_name:"Packing", start_url:"./scan-packing.html",
+  display:"standalone", background_color:"#0a0a14", theme_color:"#141425",
+  icons:[{ src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>", sizes:"any", type:"image/svg+xml" }]
+};
+document.getElementById("manifest-link").href =
+  URL.createObjectURL(new Blob([JSON.stringify(mf)], { type:"application/manifest+json" }));
 
-  function mulaiScan() {
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-    setStatus("⏳ Kamera aktif…", "proses");
-    document.getElementById("btn-mulai").style.display = "none";
-    document.getElementById("btn-stop").style.display  = "inline-flex";
-    document.getElementById("scan-line").style.display = "block";
-    document.getElementById("scanner-idle").style.display = "none";
-    scanning = true;
-
-    codeReader = new ZXing.BrowserMultiFormatReader();
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-      ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.CODE_39,
-      ZXing.BarcodeFormat.QR_CODE
-    ]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-    codeReader.hints = hints;
-
-    codeReader.decodeFromConstraints({
-      video: { facingMode:{ideal:"environment"}, width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:30} }
-    }, "video", (result, err) => {
-      if (!result || !scanning) return;
-      const resi = result.getText().trim().toUpperCase();
-      const now  = Date.now();
-      // Debounce: abaikan scan sama dalam 3 detik
-      if (resi === resiTerakhir && now - waktuTerakhir < 3000) return;
-      resiTerakhir = resi; waktuTerakhir = now;
-      prosesHasil(resi, now);
-    });
-  }
-
-  // ─────────────────────────────────────────────
-  // PROSES HASIL — OPTIMISTIC UI
-  //
-  // Alur:
-  // 1. Tampilkan sukses LANGSUNG (tanpa tunggu server)
-  // 2. Bunyikan bunyi sukses LANGSUNG
-  // 3. Masukkan ke queue → kirim ke GAS di background
-  // 4. Jika server balas batal/duplikat → koreksi counter & tampilan
-  //
-  // Efek untuk operator: TIDAK ADA TUNGGU sama sekali
-  // ─────────────────────────────────────────────
-  function prosesHasil(resi, ts) {
-    // Cek dedup lokal — resi yang sama di sesi ini
-    // (server tetap dicek untuk memastikan, tapi UI langsung tampil)
-    if (resiDiprosesLokal.has(resi)) {
-      // Sudah pernah scan di sesi ini → tampil duplikat langsung
-      bunyi("duplikat");
-      setStatus("⚠️ <b>" + resi + "</b> sudah di-scan!", "duplikat");
-      cntDuplikat++;
-      tampilStats();
-      tambahRiwayatDOM(resi, "duplikat", ts);
-      dbWrite({ resi, status:"duplikat", ts, mode:MODE });
-      // Tetap kirim ke server untuk dicatat di log
-      enqueueScan({ resi, ts });
-      return;
-    }
-
-    // ── OPTIMISTIC: Anggap sukses dulu ──
-    resiDiprosesLokal.add(resi);
-    bunyi("sukses");   // bunyi sukses LANGSUNG
-    setStatus("✅ <b>" + resi + "</b> berhasil!", "sukses");
-    cntSukses++;
-    tampilStats();
-    tambahRiwayatDOM(resi, "sukses", ts);
-    dbWrite({ resi, status:"sukses", ts, mode:MODE });
-
-    // ── Kirim ke server di background (tidak blok UI) ──
-    enqueueScan({ resi, ts });
-  }
-
-  function stopScan() {
-    scanning = false;
-    if (codeReader) { codeReader.reset(); codeReader = null; }
-    document.getElementById("scan-line").style.display  = "none";
-    document.getElementById("btn-mulai").style.display  = "inline-flex";
-    document.getElementById("btn-stop").style.display   = "none";
-    document.getElementById("scanner-idle").style.display = "flex";
-    setStatus("⏹ Dihentikan.");
-  }
-
-  function showResetModal() { document.getElementById("modal-reset").classList.add("open"); }
-  function hideResetModal() { document.getElementById("modal-reset").classList.remove("open"); }
-  async function resetSemua() {
-    await dbClear();
-    cntSukses = 0; cntBatal = 0; cntDuplikat = 0;
-    resiBatalUnik.clear(); itemElMap.clear(); resiDiprosesLokal.clear();
-    tampilStats();
-    document.getElementById("riwayat").innerHTML = "";
-    hideResetModal();
-  }
-
-  // ─────────────────────────────────────────────
-  // PWA
-  // ─────────────────────────────────────────────
-  const mf = {name:"Scan Packing",short_name:"Packing",start_url:"./scan-packing.html",display:"standalone",background_color:"#0f0f1a",theme_color:"#1a1a2e",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}]};
-  document.getElementById("manifest-link").href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
-  if ("serviceWorker" in navigator) {
-    const sw = `const C="sp-v4";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
-    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
-  }
+if ("serviceWorker" in navigator) {
+  const sw = `const V="sp-v5";
+self.addEventListener("install",e=>e.waitUntil(caches.open(V).then(c=>c.addAll([location.href]))));
+self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  navigator.serviceWorker
+    .register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"})))
+    .catch(()=>{});
+}
 </script>
 </body>
 </html>
