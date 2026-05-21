@@ -123,11 +123,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
 /* STATUS BOX */
 .status-box { margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; min-height: 58px; display: flex; align-items: center; font-size: 14px; line-height: 1.5; transition: border-color .15s, background .15s; font-family: var(--mono); }
-.status-box.sukses   { border-color: var(--green);  background: var(--gdim); color: #86efac; }
-.status-box.batal    { border-color: var(--orange); background: var(--odim); color: #fdba74; }
-.status-box.duplikat { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
-.status-box.proses   { border-color: var(--accent); background: var(--adim); color: #93c5fd; }
-.status-box.error    { border-color: var(--red);    background: var(--rdim); color: #fca5a5; }
+.status-box.sukses        { border-color: var(--green);  background: var(--gdim); color: #86efac; }
+.status-box.batal         { border-color: var(--orange); background: var(--odim); color: #fdba74; }
+.status-box.duplikat      { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
+.status-box.sudah-packing { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
+.status-box.proses        { border-color: var(--accent); background: var(--adim); color: #93c5fd; }
+.status-box.error         { border-color: var(--red);    background: var(--rdim); color: #fca5a5; }
 
 /* STATS */
 .stats-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -149,8 +150,6 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .batch-count { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--accent2); line-height: 1; min-width: 48px; }
 .batch-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
 .batch-desc b { color: var(--text); font-weight: 700; }
-
-/* Kolom info */
 
 .btn-kirim { width: 100%; padding: 15px; background: var(--green); color: #000; border: none; border-radius: var(--r-md); font-size: 15px; font-weight: 800; cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-kirim:active { opacity: .8; transform: scale(.98); }
@@ -186,19 +185,21 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 #riwayat::-webkit-scrollbar-track { background: transparent; }
 #riwayat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .ritem { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--r-sm); padding: 9px 12px; font-size: 12px; transition: border-left-color .2s; }
-.ritem.batal      { border-left-color: var(--orange); }
-.ritem.duplikat   { border-left-color: var(--yellow); }
-.ritem.sent       { border-left-color: var(--green); opacity: .8; }
-.ritem.error-item { border-left-color: var(--red); }
+.ritem.batal          { border-left-color: var(--orange); }
+.ritem.duplikat       { border-left-color: var(--yellow); }
+.ritem.sudah-packing  { border-left-color: var(--yellow); }
+.ritem.sent           { border-left-color: var(--green); opacity: .8; }
+.ritem.error-item     { border-left-color: var(--red); }
 .ri-icon { font-size: 14px; flex-shrink: 0; }
 .ri-resi { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ri-tags { display: flex; gap: 4px; flex-shrink: 0; }
 .ri-tag  { font-family: var(--mono); font-size: 9px; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-.tag-pending  { background: var(--surf3); color: var(--text3); }
-.tag-sent     { background: var(--gdim); color: var(--green); }
-.tag-batal    { background: var(--odim); color: var(--orange); }
-.tag-duplikat { background: var(--ydim); color: var(--yellow); }
-.tag-error    { background: var(--rdim); color: var(--red); }
+.tag-pending       { background: var(--surf3); color: var(--text3); }
+.tag-sent          { background: var(--gdim); color: var(--green); }
+.tag-batal         { background: var(--odim); color: var(--orange); }
+.tag-duplikat      { background: var(--ydim); color: var(--yellow); }
+.tag-sudah-packing { background: var(--ydim); color: var(--yellow); }
+.tag-error         { background: var(--rdim); color: var(--red); }
 .ri-time { font-size: 10px; color: var(--text3); flex-shrink: 0; }
 
 /* MODAL */
@@ -283,10 +284,11 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
     <div class="status-box" id="status-box">Siap — tekan Mulai Scan.</div>
 
-    <!-- Stats -->
+    <!-- Stats: 5 kotak (tambah Sudah Pack) -->
     <div class="stats-row">
       <div class="stat-card"><div class="stat-num g" id="cnt-sukses">0</div><div class="stat-lbl">Berhasil</div></div>
       <div class="stat-card"><div class="stat-num r" id="cnt-batal">0</div><div class="stat-lbl">Batal</div></div>
+      <div class="stat-card"><div class="stat-num y" id="cnt-sudah-pack">0</div><div class="stat-lbl">Sdh Pack</div></div>
       <div class="stat-card"><div class="stat-num y" id="cnt-duplikat">0</div><div class="stat-lbl">Duplikat</div></div>
       <div class="stat-card"><div class="stat-num a" id="cnt-pending">0</div><div class="stat-lbl">Belum Kirim</div></div>
     </div>
@@ -356,9 +358,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 const CFG = {
   GAS_URL          : "https://script.google.com/macros/s/AKfycbw49jVtYe3XhJDRJMkxlv4aYUMPQUnwL6ID9ZrjAYMqLi-WSSoY_gBwucvjH6-s6RD0/exec",
   PASSWORD         : "kodachi123",
-  MODE             : "packing",      // ← hanya isi kolom J & K
+  MODE             : "packing",
   DB_NAME          : "ScanPackingDB",
-  DB_VERSION       : 6,
+  DB_VERSION       : 7,              // naik versi agar schema diperbarui
   SYNC_INTERVAL_MS : 60_000,
   DEBOUNCE_MS      : 2_800,
   BATCH_CONCURRENCY: 3,
@@ -370,7 +372,8 @@ const CFG = {
    STATE
 ════════════════════════════════════════ */
 let currentUser = "";
-let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
+// cntSudahPack: resi yang di cache sudah berstatus J="Sudah" (bukan dari sesi ini)
+let cntSukses = 0, cntBatal = 0, cntSudahPack = 0, cntDuplikat = 0;
 const resiDiScan = new Set();
 const domItemMap = new Map();
 let isKiriming   = false;
@@ -457,7 +460,11 @@ function idbUpdate(store, key, fn) {
 }
 
 /* ════════════════════════════════════════
-   STATUS CACHE (deteksi BATAL offline)
+   STATUS CACHE
+   Digunakan untuk deteksi BATAL dan SUDAH-PACKING secara offline.
+   - statusJ = "Batal"  → tolak, pesanan batal
+   - statusJ = "Sudah"  → tolak, sudah pernah di-packing (duplikat)
+   - statusJ = ""       → belum packing, boleh proses
 ════════════════════════════════════════ */
 const statusCache = new Map();
 let lastSyncAt = null;
@@ -468,9 +475,20 @@ async function loadStatusCache() {
   updateSyncUI();
 }
 
+function getCacheEntry(resi) {
+  return statusCache.get(resi.toUpperCase());
+}
+
+// Resi dibatalkan → kolom J = "Batal"
 function isResiBatal(resi) {
-  const e = statusCache.get(resi.toUpperCase());
+  const e = getCacheEntry(resi);
   return e && String(e.statusJ).trim() === "Batal";
+}
+
+// ★ BARU: Resi sudah pernah di-packing → kolom J = "Sudah"
+function isResiSudahPacking(resi) {
+  const e = getCacheEntry(resi);
+  return e && String(e.statusJ).trim() === "Sudah";
 }
 
 async function syncStatus(manual = false) {
@@ -493,7 +511,13 @@ async function syncStatus(manual = false) {
     if (Array.isArray(json)) {
       for (const row of json) {
         const key   = String(row.resi).trim().toUpperCase();
-        const entry = { resi:key, statusJ:row.statusJ||"", statusL:row.statusL||"", keteranganI:row.keteranganI||"", updatedAt:Date.now() };
+        const entry = {
+          resi        : key,
+          statusJ     : row.statusJ     || "",
+          statusL     : row.statusL     || "",
+          keteranganI : row.keteranganI || "",
+          updatedAt   : Date.now()
+        };
         statusCache.set(key, entry);
         await idbPut("statuscache", entry);
       }
@@ -519,6 +543,7 @@ async function syncStatus(manual = false) {
 function syncManual() { syncStatus(true); }
 function startAutoSync() { syncStatus(); setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS); }
 
+// Koreksi pasca-sync: resi yang sebelumnya sukses, ternyata BATAL di Sheets
 async function checkBatalPasca() {
   const scans = await idbGetAll("scans");
   for (const s of scans) {
@@ -548,7 +573,7 @@ function updateSyncUI() {
   } else {
     const m = Math.floor((Date.now() - lastSyncAt) / 60000);
     sbd.className   = m < 2 ? "sbd fresh" : "sbd stale";
-    sbt.textContent = "Sync " + (m === 0 ? "baru saja" : m + "min lalu") + " — deteksi batal aktif";
+    sbt.textContent = "Sync " + (m === 0 ? "baru saja" : m + "min lalu") + " — deteksi batal & packing aktif";
   }
 }
 
@@ -578,7 +603,7 @@ async function onAppStart() {
 }
 
 /* ════════════════════════════════════════
-   FETCH NAMA dari E8 — diisi ke kolom K
+   FETCH NAMA dari E8
 ════════════════════════════════════════ */
 async function fetchNamaDanTampilkan() {
   try {
@@ -589,8 +614,6 @@ async function fetchNamaDanTampilkan() {
   } catch(_) {
     currentUser = "";
   }
-
-  // Update user-strip (nama tampil di bawah, bukan di topbar)
   document.getElementById("user-nama-strip").textContent = currentUser || "(tidak tersedia)";
   document.getElementById("user-strip").style.display    = currentUser ? "flex" : "none";
 }
@@ -599,9 +622,10 @@ async function fetchNamaDanTampilkan() {
    STATS
 ════════════════════════════════════════ */
 function tampilStats() {
-  document.getElementById("cnt-sukses").textContent   = cntSukses;
-  document.getElementById("cnt-batal").textContent    = cntBatal;
-  document.getElementById("cnt-duplikat").textContent = cntDuplikat;
+  document.getElementById("cnt-sukses").textContent     = cntSukses;
+  document.getElementById("cnt-batal").textContent      = cntBatal;
+  document.getElementById("cnt-sudah-pack").textContent = cntSudahPack;
+  document.getElementById("cnt-duplikat").textContent   = cntDuplikat;
   updatePendingCount();
 }
 
@@ -638,9 +662,10 @@ async function initRiwayat() {
     buatItemRiwayat(s.resi, s.status, s.ts, s.id, s.sent);
     resiDiScan.add(s.resi);
   });
-  cntSukses   = scans.filter(s => s.status === "sukses").length;
-  cntBatal    = scans.filter(s => s.status === "batal").length;
-  cntDuplikat = scans.filter(s => s.status === "duplikat").length;
+  cntSukses    = scans.filter(s => s.status === "sukses").length;
+  cntBatal     = scans.filter(s => s.status === "batal").length;
+  cntSudahPack = scans.filter(s => s.status === "sudah-packing").length;
+  cntDuplikat  = scans.filter(s => s.status === "duplikat").length;
   tampilStats();
 }
 
@@ -658,14 +683,28 @@ function buatItemRiwayat(resi, status, ts, id, sent) {
 }
 
 function _renderItem(el, resi, status, sent, ts) {
-  const icon   = { sukses:"✅", batal:"🚫", duplikat:"⚠️", "error-item":"❗" }[status] || "⏳";
-  const tagTxt = sent ? "sent" : (status === "sukses" ? "pending" : status);
-  const tagCls = sent ? "tag-sent" : (
-    status === "sukses"     ? "tag-pending"  :
-    status === "batal"      ? "tag-batal"    :
-    status === "duplikat"   ? "tag-duplikat" :
-    status === "error-item" ? "tag-error"    : "tag-pending"
-  );
+  const icons = {
+    sukses          : "✅",
+    batal           : "🚫",
+    duplikat        : "⚠️",
+    "sudah-packing" : "📦",
+    "error-item"    : "❗"
+  };
+  const icon = icons[status] || "⏳";
+
+  let tagTxt, tagCls;
+  if (sent) {
+    tagTxt = "sent"; tagCls = "tag-sent";
+  } else if (status === "sukses") {
+    tagTxt = "pending"; tagCls = "tag-pending";
+  } else if (status === "sudah-packing") {
+    tagTxt = "sdh pack"; tagCls = "tag-sudah-packing";
+  } else if (status === "error-item") {
+    tagTxt = "error"; tagCls = "tag-error";
+  } else {
+    tagTxt = status; tagCls = "tag-" + status;
+  }
+
   el.className = "ritem " + (sent ? "sent" : status);
   const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   el.innerHTML =
@@ -688,16 +727,21 @@ function updateRiwayatDOM(idOrResi, status, sent) {
 
 /* ════════════════════════════════════════
    PROSES HASIL SCAN
+
+   Urutan prioritas:
+   1. Resi BATAL (J = "Batal")  → tolak langsung
+   2. Resi SUDAH PACKING di Sheets (J = "Sudah") → duplikat dari server
+   3. Duplikat sesi ini (resiDiScan)  → duplikat lokal
+   4. Sukses → simpan lokal, antri kirim
 ════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
 
-  // ① Cek BATAL dulu — prioritas tertinggi, selalu tampil meski sudah pernah discan
+  // ① Batal — prioritas tertinggi
   if (isResiBatal(resi)) {
-    const e   = statusCache.get(resi.toUpperCase());
+    const e   = getCacheEntry(resi);
     const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
     bunyi("batal");
     setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
-    // Tidak masukkan ke resiDiScan → scan ulang tetap tampil BATAL terus
     cntBatal++;
     const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
     buatItemRiwayat(resi, "batal", ts, id, false);
@@ -705,7 +749,21 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // ② Cek duplikat sesi (hanya untuk resi non-batal)
+  // ② Sudah di-packing sebelumnya (dari cache Sheets, J = "Sudah")
+  //    Ditampilkan meski belum pernah discan di sesi ini agar petugas tahu
+  if (isResiSudahPacking(resi)) {
+    bunyi("duplikat");
+    setStatus("📦 <b>" + resi + "</b> sudah di-packing sebelumnya (dari Sheets)!", "sudah-packing");
+    cntSudahPack++;
+    // Tetap masukkan ke resiDiScan agar scan berikutnya masuk ke cek ③ (duplikat sesi)
+    resiDiScan.add(resi);
+    const id = await idbAdd("scans", { resi, status:"sudah-packing", ts, mode:CFG.MODE, sent:false });
+    buatItemRiwayat(resi, "sudah-packing", ts, id, false);
+    tampilStats();
+    return;
+  }
+
+  // ③ Duplikat sesi ini (sudah discan tadi, tapi bukan batal/sudah-pack)
   if (resiDiScan.has(resi)) {
     bunyi("duplikat");
     setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
@@ -716,7 +774,7 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // ③ Sukses → simpan lokal, siap kirim batch
+  // ④ Sukses → simpan lokal, siap kirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
   setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
@@ -728,15 +786,9 @@ async function prosesHasil(resi, ts) {
 
 /* ════════════════════════════════════════
    KIRIM KE GAS — isi J="Sudah", K=nama
-   Payload: { resi, mode:"packing", nama, tglScan:"", jamScan:"", ua }
-   GAS akan isi: J → "Sudah" | K → nama saja (stamp = nama)
 ════════════════════════════════════════ */
 async function kirimKeGAS(item, attempt) {
   attempt = attempt || 1;
-
-  // Payload: nama saja, tglScan & jamScan dikosongkan
-  // GAS: stamp = (nama ? nama + " | " : "") + tglScan + " " + jamScan
-  // → karena tglScan & jamScan kosong, stamp = nama saja ✓
   const payload = JSON.stringify({
     resi    : item.resi,
     mode    : "packing",
@@ -830,12 +882,13 @@ async function jalankanBatch(pending) {
         showToast("🚫 " + item.resi + " BATAL!", "r");
 
       } else if (st === "duplikat") {
+        // Server konfirmasi: sudah packing sebelumnya
         rDupli++;
-        await idbUpdate("scans", item.id, r => ({ ...r, status:"duplikat", sent:true }));
-        updateRiwayatDOM(item.id, "duplikat", true);
-        cntSukses = Math.max(0, cntSukses - 1); cntDuplikat++;
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"sudah-packing", sent:true }));
+        updateRiwayatDOM(item.id, "sudah-packing", true);
+        cntSukses = Math.max(0, cntSukses - 1); cntSudahPack++;
         tampilStats();
-        showToast("⚠️ " + item.resi + " sudah pernah di-packing.", "y");
+        showToast("📦 " + item.resi + " sudah di-packing sebelumnya.", "y");
 
       } else if (st === "not_found") {
         rDupli++;
@@ -844,7 +897,6 @@ async function jalankanBatch(pending) {
         showToast("⚠️ " + item.resi + " tidak ada di data Sheets!", "y");
 
       } else {
-        // error / unknown
         rError++;
         await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
         updateRiwayatDOM(item.id, "error-item", false);
@@ -976,7 +1028,7 @@ const showResetModal = () => showModal("modal-reset");
 async function resetSemua() {
   stopScan();
   await idbClear("scans");
-  cntSukses = 0; cntBatal = 0; cntDuplikat = 0;
+  cntSukses = 0; cntBatal = 0; cntSudahPack = 0; cntDuplikat = 0;
   resiDiScan.clear();
   domItemMap.clear();
   document.getElementById("riwayat").innerHTML = "";
@@ -1007,7 +1059,7 @@ document.getElementById("manifest-link").href =
   URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type:"application/manifest+json" }));
 
 if ("serviceWorker" in navigator) {
-  const sw = `const V="sp-v8";
+  const sw = `const V="sp-v9";
 self.addEventListener("install",e=>e.waitUntil(caches.open(V).then(c=>c.addAll([location.href]))));
 self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   navigator.serviceWorker.register(
