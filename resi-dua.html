@@ -192,7 +192,7 @@
   <div class="topbar">
     <div>
       <div class="topbar-badge">Scan Mode</div>
-      <div class="topbar-title">📦 Packing</div>
+      <div class="topbar-title" id="topbar-title">📦 Packing</div>
     </div>
     <div class="topbar-right">
       <button class="sync-btn" id="btn-sync-status" onclick="syncStatusManual()">
@@ -295,7 +295,7 @@
    KONFIGURASI
 ══════════════════════════════════════════════════════════════ */
 const CFG = {
-  PASSWORD         : "kodachi123",
+  PASSWORD         : "kodachi123",   // satu password untuk semua petugas
   GAS_URL          : "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec",
   MODE             : "packing",
   DB_NAME          : "ScanPackingDB",
@@ -303,9 +303,12 @@ const CFG = {
   SYNC_INTERVAL_MS : 60_000,
   DEBOUNCE_MS      : 3_000,
   BATCH_CONCURRENCY: 3,
-  MAX_RETRY        : 2,       // jumlah percobaan ulang otomatis per item
-  RETRY_DELAY_MS   : 1_500,   // jeda antar percobaan
+  MAX_RETRY        : 2,
+  RETRY_DELAY_MS   : 1_500,
 };
+
+// Nama partimer — di-fetch dari spreadsheet (E8 sheet impordariNota)
+let currentUser = "";
 
 /* ══════════════════════════════════════════════════════════════
    AUDIO ENGINE
@@ -552,12 +555,29 @@ function cekPassword() {
     document.getElementById("input-password").value = "";
   }
 }
+
 async function onAppStart() {
   await initDB();
+  await fetchNamaPartimer();   // ambil nama dari spreadsheet sebelum mulai
   await loadStatusCache();
   await initRiwayat();
   startAutoSync();
   fetch(CFG.GAS_URL + "?ping=1").catch(() => {});
+}
+
+// Fetch nama partimer dari GAS (baca sel E8 sheet impordariNota)
+async function fetchNamaPartimer() {
+  try {
+    const resp = await fetch(CFG.GAS_URL + "?action=getNama&t=" + Date.now(), { redirect:"follow" });
+    const text = await resp.text();
+    const json = JSON.parse(text);
+    if (json.nama) {
+      currentUser = String(json.nama).trim();
+      document.getElementById("topbar-title").textContent = "📦 Packing — " + currentUser;
+    }
+  } catch(_) {
+    // Gagal fetch nama — lanjut tanpa nama (tidak blokir app)
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -658,6 +678,7 @@ async function kirimKeGAS(item, attempt) {
   const payload = JSON.stringify({
     resi    : item.resi,
     mode    : CFG.MODE,
+    nama    : currentUser,
     tsScan  : new Date(item.ts).toISOString(),
     tglScan : new Date(item.ts).toLocaleDateString("id-ID"),
     jamScan : new Date(item.ts).toLocaleTimeString("id-ID"),
