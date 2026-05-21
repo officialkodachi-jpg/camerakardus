@@ -736,7 +736,7 @@ async function prosesHasil(resi, ts) {
   // Sukses → simpan lokal, siap kirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
-  setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
+  setStatus("✅ <b>" + resi + "</b> — tersimpan.", "sukses");
   cntSukses++;
   const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
   buatItemRiwayat(resi, "sukses", ts, id, false);
