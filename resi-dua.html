@@ -71,14 +71,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 #app { display: none; }
 .topbar {
   position: sticky; top: 0; z-index: 20;
-  background: rgba(8,12,20,.92); backdrop-filter: blur(12px);
+  background: rgba(8,12,20,.95); backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 12px 16px;
   display: grid; grid-template-columns: 1fr auto auto;
   align-items: center; gap: 12px;
 }
-.topbar-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 2px; }
-.topbar-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 3px; opacity: .7; }
+.topbar-title { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
 .sync-btn { display: flex; align-items: center; gap: 6px; padding: 7px 11px; background: var(--surf2); border: 1px solid var(--border2); border-radius: var(--r-sm); color: var(--text2); font-size: 11px; font-family: var(--mono); cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
 .sync-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .sync-btn.syncing .si { animation: spin .7s linear infinite; }
@@ -94,11 +94,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .content { padding: 14px 16px 110px; }
 
 /* PETUGAS STRIP */
-.user-strip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--adim); border: 1px solid rgba(59,130,246,.2); border-radius: var(--r-sm); margin-bottom: 12px; font-size: 12px; font-family: var(--mono); color: var(--accent2); }
-.user-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
-.user-strip-info { flex: 1; }
-.user-strip-nama { font-weight: 700; font-size: 13px; }
-.user-strip-sub  { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.user-strip { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r-sm); margin-bottom: 10px; font-family: var(--mono); }
+.user-strip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 5px var(--green); }
+.user-strip-label { font-size: 9px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; }
+.user-strip-nama { font-size: 12px; font-weight: 600; color: var(--text2); flex: 1; }
 
 /* SCANNER */
 .scanner-wrap { position: relative; width: 100%; border-radius: var(--r-lg); overflow: hidden; background: #000; border: 1px solid var(--border); aspect-ratio: 4/3; max-height: 240px; }
@@ -152,10 +151,6 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .batch-desc b { color: var(--text); font-weight: 700; }
 
 /* Kolom info */
-.col-badge { display: inline-flex; gap: 6px; margin-top: 6px; }
-.col-tag { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 4px; font-weight: 700; }
-.col-j { background: var(--gdim); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
-.col-k { background: var(--adim); color: var(--accent2); border: 1px solid rgba(59,130,246,.25); }
 
 .btn-kirim { width: 100%; padding: 15px; background: var(--green); color: #000; border: none; border-radius: var(--r-md); font-size: 15px; font-weight: 800; cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-kirim:active { opacity: .8; transform: scale(.98); }
@@ -246,8 +241,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 <div id="app">
   <div class="topbar">
     <div class="topbar-info">
-      <div class="topbar-badge">Scan Packing</div>
-      <div class="topbar-title" id="topbar-title">📦 Memuat…</div>
+      <div class="topbar-badge">Scan System</div>
+      <div class="topbar-title">📦 Scan Packing</div>
     </div>
     <button class="sync-btn" id="btn-sync" onclick="syncManual()">
       <span class="sync-dot" id="sync-dot"></span>
@@ -265,10 +260,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     <!-- Petugas strip -->
     <div class="user-strip" id="user-strip" style="display:none">
       <span class="user-strip-dot"></span>
-      <div class="user-strip-info">
-        <div class="user-strip-nama" id="user-nama-strip">—</div>
-        <div class="user-strip-sub">Nama ini akan dicatat di kolom K (Packing)</div>
-      </div>
+      <span class="user-strip-label">Petugas</span>
+      <span class="user-strip-nama" id="user-nama-strip">—</span>
     </div>
 
     <!-- Scanner -->
@@ -300,19 +293,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
     <!-- Batch Kirim -->
     <div class="section-row">
-      <div class="section-title">Kirim ke Google Sheets</div>
+      <div class="section-title">Antrian Kirim</div>
     </div>
     <div class="batch-panel">
       <div class="batch-info">
         <div class="batch-count" id="batch-count">0</div>
-        <div class="batch-desc">
-          paket siap dikirim ke Sheets.<br>
-          <b>Kolom J</b> ← "Sudah" &nbsp;|&nbsp; <b>Kolom K</b> ← Nama petugas
-          <div class="col-badge">
-            <span class="col-tag col-j">J = Sudah</span>
-            <span class="col-tag col-k" id="col-k-preview">K = …</span>
-          </div>
-        </div>
+        <div class="batch-desc">paket siap dikirim ke Sheets</div>
       </div>
       <button class="btn-kirim" id="btn-kirim" onclick="kirimSemua()" disabled>
         <span>📤</span><span id="btn-kirim-txt">Kirim Semua</span>
@@ -604,13 +590,9 @@ async function fetchNamaDanTampilkan() {
     currentUser = "";
   }
 
-  const label = currentUser || "(nama tidak tersedia)";
-  document.getElementById("topbar-title").textContent    = "📦 " + label;
-  document.getElementById("user-nama-strip").textContent = label;
+  // Update user-strip (nama tampil di bawah, bukan di topbar)
+  document.getElementById("user-nama-strip").textContent = currentUser || "(tidak tersedia)";
   document.getElementById("user-strip").style.display    = currentUser ? "flex" : "none";
-
-  // Preview kolom K di panel kirim
-  document.getElementById("col-k-preview").textContent = "K = " + (currentUser || "?");
 }
 
 /* ════════════════════════════════════════
@@ -737,7 +719,7 @@ async function prosesHasil(resi, ts) {
   // ③ Sukses → simpan lokal, siap kirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
-  setStatus("✅ <b>" + resi + "</b> — tersimpan!", "sukses");
+  setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
   cntSukses++;
   const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
   buatItemRiwayat(resi, "sukses", ts, id, false);
