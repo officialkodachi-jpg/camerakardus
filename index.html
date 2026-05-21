@@ -3,35 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Scan Label Kardus</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <title>Scanner Produk v3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
   <style>
     :root {
-      --bg:       #0a0e17;
-      --surface:  #111827;
-      --surface2: #1c2638;
-      --surface3: #243044;
-      --accent:   #3b82f6;
-      --accent2:  #60a5fa;
-      --green:    #10b981;
-      --green-bg: rgba(16,185,129,.12);
-      --red:      #ef4444;
-      --red-bg:   rgba(239,68,68,.12);
-      --orange:   #f59e0b;
-      --orange-bg:rgba(245,158,11,.12);
-      --yellow:   #eab308;
-      --yellow-bg:rgba(234,179,8,.12);
-      --text:     #f1f5f9;
-      --muted:    #64748b;
-      --muted2:   #94a3b8;
-      --border:   rgba(255,255,255,.07);
-      --mono:     'JetBrains Mono', monospace;
-      --sans:     'Space Grotesk', sans-serif;
-      --radius:   14px;
+      --bg:       #0b0c10;
+      --s1:       #13151f;
+      --s2:       #1a1d2e;
+      --s3:       #22263a;
+      --acc:      #7c6af7;
+      --acc2:     #a594f9;
+      --green:    #22d3a0;
+      --red:      #f43f5e;
+      --amber:    #fbbf24;
+      --ai:       #e879f9;
+      --ai-dim:   rgba(232,121,249,.12);
+      --text:     #e8eaf6;
+      --muted:    #5b6080;
+      --muted2:   #8890b8;
+      --brd:      rgba(255,255,255,.06);
+      --mono:     'Fira Code', monospace;
+      --sans:     'Syne', sans-serif;
+      --r:        12px;
     }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent }
 
     body {
       font-family: var(--sans);
@@ -39,499 +35,477 @@
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
-      padding-bottom: 32px;
+      padding-bottom: 40px;
     }
 
-    /* ── Background grid ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
+    /* Subtle noise grain */
+    body::after {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 200px;
+      opacity: 0.4;
     }
 
     /* ── LOGIN ── */
     #login-screen {
-      position: fixed; inset: 0; z-index: 200;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-      background: var(--bg);
+      position:fixed; inset:0; z-index:500;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+      background: radial-gradient(ellipse at 30% 20%, rgba(124,106,247,.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 80%, rgba(34,211,160,.08) 0%, transparent 50%),
+                  var(--bg);
     }
-    #login-screen.hidden { display: none; }
+    #login-screen.hidden { display:none }
 
-    .login-card {
-      width: 100%; max-width: 360px;
-      background: var(--surface);
-      border: 1px solid var(--border);
+    .lcard {
+      width:100%; max-width:360px;
+      background: var(--s1);
+      border: 1px solid var(--brd);
       border-radius: 20px;
       padding: 36px 28px;
       position: relative;
-      overflow: hidden;
     }
-    .login-card::before {
-      content: '';
-      position: absolute; top: -80px; right: -80px;
-      width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(59,130,246,.15) 0%, transparent 70%);
-      pointer-events: none;
+    .lcard::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, var(--acc), var(--ai), var(--green));
+      border-radius: 20px 20px 0 0;
     }
-    .login-eyebrow {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
-      color: var(--accent); text-transform: uppercase; margin-bottom: 10px;
+    .l-eye { font-size: 40px; margin-bottom:16px; display:block; }
+    .l-chip {
+      display:inline-block; font-family:var(--mono); font-size:9px;
+      letter-spacing:2px; color:var(--acc2); background:rgba(124,106,247,.12);
+      border:1px solid rgba(124,106,247,.25); border-radius:99px;
+      padding:3px 10px; margin-bottom:14px; text-transform:uppercase;
     }
-    .login-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-    .login-sub { font-size: 13px; color: var(--muted2); margin-bottom: 28px; }
+    .l-title { font-size:26px; font-weight:800; margin-bottom:6px; }
+    .l-sub { font-size:13px; color:var(--muted2); margin-bottom:28px; }
 
-    .field-wrap { position: relative; margin-bottom: 14px; }
-    .field-wrap input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 15px; color: var(--text);
-      font-family: var(--sans);
-      outline: none;
-      transition: border-color .2s;
+    .l-input {
+      width:100%; background:var(--s2); border:1.5px solid var(--brd);
+      border-radius:10px; padding:14px 16px; font-size:15px;
+      color:var(--text); font-family:var(--sans); outline:none;
+      transition:border-color .2s; margin-bottom:12px;
     }
-    .field-wrap input:focus { border-color: var(--accent); }
-    .field-wrap input::placeholder { color: var(--muted); }
+    .l-input:focus { border-color:var(--acc); }
+    .l-input::placeholder { color:var(--muted); }
 
-    .btn-login {
-      width: 100%;
-      background: var(--accent);
-      color: white; border: none;
-      border-radius: 10px; padding: 15px;
-      font-size: 15px; font-weight: 700;
-      cursor: pointer; font-family: var(--sans);
-      letter-spacing: .3px;
+    .l-btn {
+      width:100%; background:var(--acc); color:#fff; border:none;
+      border-radius:10px; padding:15px; font-size:15px; font-weight:700;
+      cursor:pointer; font-family:var(--sans); letter-spacing:.3px;
       transition: opacity .15s, transform .1s;
     }
-    .btn-login:active { opacity: .85; transform: scale(.98); }
-    .login-err { margin-top: 12px; color: var(--red); font-size: 13px; text-align: center; min-height: 20px; }
-
-    /* ── APP WRAPPER ── */
-    #app { position: relative; z-index: 1; }
+    .l-btn:active { opacity:.85; transform:scale(.98); }
+    .l-err { margin-top:12px; color:var(--red); font-size:13px; text-align:center; min-height:18px; }
 
     /* ── TOPBAR ── */
     .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 20px 12px;
-      background: rgba(17,24,39,.9);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 50;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px 12px;
+      background: rgba(11,12,16,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--brd);
+      position:sticky; top:0; z-index:50;
     }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .topbar-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent), #818cf8);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+    .tb-left { display:flex; align-items:center; gap:12px; }
+    .tb-icon {
+      width:38px; height:38px;
+      background: linear-gradient(135deg, var(--acc), #4e6cf7);
+      border-radius:11px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; flex-shrink:0;
     }
-    .topbar-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px; color: var(--accent); text-transform: uppercase; }
-    .topbar-title { font-size: 15px; font-weight: 700; line-height: 1.2; }
-    .topbar-badge {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 6px 14px; text-align: center;
+    .tb-chip { font-family:var(--mono); font-size:9px; letter-spacing:2px; color:var(--acc2); text-transform:uppercase; }
+    .tb-name { font-size:15px; font-weight:700; line-height:1.2; margin-top:1px; }
+    .tb-badge {
+      background:var(--s2); border:1px solid var(--brd);
+      border-radius:10px; padding:6px 14px; text-align:center;
     }
-    .badge-num { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent2); line-height: 1; }
-    .badge-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 1px; }
+    .badge-n { font-family:var(--mono); font-size:22px; font-weight:600; color:var(--acc2); line-height:1; }
+    .badge-l { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:1px; }
 
     /* ── CONTENT ── */
-    .content { padding: 16px 18px; max-width: 480px; margin: 0 auto; }
+    .content { padding:16px 18px; max-width:480px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
 
-    /* ── CAMERA ── */
-    .camera-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      position: relative;
+    /* ── MODE TOGGLE ── */
+    .mode-toggle {
+      display:grid; grid-template-columns:1fr 1fr;
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:4px; gap:4px;
     }
-    .camera-header {
-      padding: 12px 16px 0;
-      display: flex; align-items: center; gap: 8px;
+    .mode-btn {
+      padding:10px; border:none; border-radius:9px;
+      font-family:var(--sans); font-size:13px; font-weight:600;
+      cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+      background:transparent; color:var(--muted2);
     }
-    .camera-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
+    .mode-btn.active {
+      background:var(--acc); color:#fff;
+      box-shadow: 0 0 16px rgba(124,106,247,.35);
     }
-    .camera-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse-dot 1.5s ease-in-out infinite; }
-    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .camera-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--muted2); text-transform: uppercase; }
 
-    .camera-wrap {
-      position: relative;
-      width: 100%; aspect-ratio: 4/3;
-      max-height: 260px;
-      background: #000;
-      margin-top: 10px;
-      overflow: hidden;
+    /* ── CAMERA CARD ── */
+    .cam-card {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); overflow:hidden;
     }
-    #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cam-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px 8px;
+    }
+    .cam-status { display:flex; align-items:center; gap:8px; }
+    .cam-dot {
+      width:8px; height:8px; border-radius:50%;
+      background:var(--muted); transition:all .3s;
+    }
+    .cam-dot.live { background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .cam-label { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--muted2); text-transform:uppercase; }
+    .ai-badge-top {
+      font-family:var(--mono); font-size:9px; letter-spacing:1px;
+      color:var(--ai); background:var(--ai-dim); border:1px solid rgba(232,121,249,.2);
+      border-radius:99px; padding:2px 8px;
+    }
 
-    /* Aiming overlay */
-    .aim-overlay {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: none;
+    .cam-wrap {
+      position:relative; width:100%; aspect-ratio:4/3; max-height:260px;
+      background:#000; overflow:hidden;
     }
-    .aim-box {
-      width: 220px; height: 160px;
-      position: relative;
-    }
-    .aim-corner {
-      position: absolute; width: 24px; height: 24px;
-    }
-    .aim-corner svg { width: 100%; height: 100%; }
-    .aim-corner.tl { top: 0; left: 0; }
-    .aim-corner.tr { top: 0; right: 0; transform: scaleX(-1); }
-    .aim-corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
-    .aim-corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+    #video { width:100%; height:100%; object-fit:cover; display:block; }
+
+    .aim-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+    .aim-box { width:200px; height:150px; position:relative; }
+    .aim-c { position:absolute; width:22px; height:22px; }
+    .aim-c svg { width:100%; height:100%; }
+    .aim-c.tl{top:0;left:0} .aim-c.tr{top:0;right:0;transform:scaleX(-1)}
+    .aim-c.bl{bottom:0;left:0;transform:scaleY(-1)} .aim-c.br{bottom:0;right:0;transform:scale(-1,-1)}
 
     .scan-line {
-      position: absolute; left: 12%; width: 76%; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      box-shadow: 0 0 8px var(--accent);
-      display: none;
-      animation: scan 2s ease-in-out infinite;
+      position:absolute; left:8%; width:84%; height:2px;
+      background:linear-gradient(90deg,transparent,var(--acc),transparent);
+      box-shadow:0 0 10px var(--acc); display:none;
+      animation:sline 2s ease-in-out infinite;
     }
-    @keyframes scan { 0%,100%{top:15%} 50%{top:83%} }
+    @keyframes sline{0%,100%{top:12%}50%{top:86%}}
 
-    .camera-idle {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.65); gap: 8px;
+    .cam-idle {
+      position:absolute; inset:0; background:rgba(0,0,0,.7);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
     }
-    .idle-icon { font-size: 42px; filter: grayscale(.4); }
-    .idle-text { font-size: 13px; color: var(--muted2); }
+    .idle-icon { font-size:44px; }
+    .idle-text { font-size:13px; color:var(--muted2); }
 
-    /* ── BUTTONS ── */
-    .btn-row { display: flex; gap: 10px; padding: 14px 16px 16px; }
+    /* ── BUTTON ROW ── */
+    .btn-row { display:flex; gap:10px; padding:12px 14px 14px; }
     .btn {
-      flex: 1; padding: 13px 10px;
-      border: none; border-radius: 10px;
-      font-size: 14px; font-weight: 600;
-      cursor: pointer; font-family: var(--sans);
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-      transition: opacity .15s, transform .1s;
-      letter-spacing: .2px;
+      flex:1; padding:13px 8px; border:none; border-radius:10px;
+      font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans);
+      display:flex; align-items:center; justify-content:center; gap:7px;
+      transition: opacity .15s, transform .1s, box-shadow .15s;
+      letter-spacing:.2px;
     }
-    .btn:active { opacity: .75; transform: scale(.97); }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-danger  { background: var(--red); color: white; display: none; }
-    .btn-capture { background: linear-gradient(135deg, #8b5cf6, var(--accent)); color: white; display: none; }
-    .btn-icon {
-      flex: 0 0 48px; background: var(--surface2);
-      border: 1px solid var(--border); color: var(--muted2);
-      font-size: 16px;
-    }
+    .btn:active { opacity:.75; transform:scale(.97); }
+    .btn-start { background:var(--acc); color:#fff; box-shadow:0 4px 20px rgba(124,106,247,.3); }
+    .btn-stop  { background:var(--red); color:#fff; display:none; box-shadow:0 4px 16px rgba(244,63,94,.25); }
+    .btn-cap   { background:var(--green); color:#0b0c10; display:none; box-shadow:0 4px 16px rgba(34,211,160,.25); }
+    .btn-reset { flex:0 0 auto; width:48px; background:var(--s2); color:var(--muted2); border:1px solid var(--brd); font-size:16px; }
 
     /* ── STATUS BOX ── */
-    .status-wrap { padding: 0 16px 14px; }
     .status-box {
-      border-radius: 10px; padding: 13px 16px;
-      font-size: 14px; line-height: 1.55;
-      border: 1px solid var(--border);
-      background: var(--surface2);
-      color: var(--muted2);
-      min-height: 52px; display: flex; align-items: center;
-      transition: all .2s;
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:14px 16px;
+      min-height:60px; display:flex; align-items:center;
+      font-size:14px; line-height:1.5;
+      transition:all .2s;
     }
-    .status-box.loading { border-color: var(--yellow); background: var(--yellow-bg); color: #fde68a; }
-    .status-box.ok      { border-color: var(--green);  background: var(--green-bg);  color: #6ee7b7; }
-    .status-box.err     { border-color: var(--red);    background: var(--red-bg);    color: #fca5a5; }
-    .status-box.ai      { border-color: #8b5cf6; background: rgba(139,92,246,.1); color: #c4b5fd; }
+    .status-box.ok      { border-color:var(--green); background:rgba(34,211,160,.08); color:#6effd6; }
+    .status-box.err     { border-color:var(--red);   background:rgba(244,63,94,.08);  color:#fca5a5; }
+    .status-box.loading { border-color:var(--acc);   background:rgba(124,106,247,.08); color:var(--acc2); }
+    .status-box.ai      { border-color:var(--ai);    background:var(--ai-dim);         color:#f0abfc; }
 
-    /* ── AI BADGE ── */
-    .ai-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(139,92,246,.2); border: 1px solid rgba(139,92,246,.4);
-      border-radius: 20px; padding: 2px 10px;
-      font-size: 11px; font-family: var(--mono); color: #c4b5fd;
-      margin-bottom: 8px;
+    /* ── KOREKSI ── */
+    .koreksi-wrap {
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:14px 16px;
+      display:none; flex-direction:column; gap:10px;
     }
-    .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6; animation: pulse-dot 1.5s infinite; }
+    .koreksi-wrap.visible { display:flex; }
+    .koreksi-title {
+      font-family:var(--mono); font-size:10px; letter-spacing:2px;
+      color:var(--amber); text-transform:uppercase;
+      display:flex; align-items:center; gap:8px;
+    }
+    .koreksi-title span { font-size:15px; }
+    .koreksi-input {
+      background:var(--s2); border:1.5px solid var(--brd);
+      border-radius:9px; padding:12px 14px;
+      font-size:14px; color:var(--text); font-family:var(--sans);
+      outline:none; width:100%; transition:border-color .2s;
+    }
+    .koreksi-input:focus { border-color:var(--amber); }
+    .koreksi-input::placeholder { color:var(--muted); }
+    .koreksi-row { display:flex; gap:8px; }
+    .btn-koreksi-ok {
+      flex:1; padding:11px; background:var(--amber); color:#0b0c10;
+      border:none; border-radius:9px; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:var(--sans);
+    }
+    .btn-koreksi-batal {
+      padding:11px 16px; background:var(--s2); color:var(--muted2);
+      border:1px solid var(--brd); border-radius:9px; font-size:13px;
+      cursor:pointer; font-family:var(--sans);
+    }
 
     /* ── STATS ── */
-    .stats-row { display: flex; gap: 10px; padding: 0 16px 14px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     .stat-card {
-      flex: 1; background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px; padding: 12px 10px; text-align: center;
+      background:var(--s1); border:1px solid var(--brd);
+      border-radius:var(--r); padding:12px 10px; text-align:center;
     }
-    .stat-num { font-family: var(--mono); font-size: 24px; font-weight: 700; line-height: 1; }
-    .stat-num.g { color: var(--green); }
-    .stat-num.r { color: var(--red); }
-    .stat-num.y { color: var(--yellow); }
-    .stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-    /* ── MODE TABS ── */
-    .mode-tabs { display: flex; gap: 8px; padding: 0 16px 14px; }
-    .mode-tab {
-      flex: 1; padding: 10px;
-      background: var(--surface2); border: 1.5px solid var(--border);
-      border-radius: 10px; text-align: center;
-      cursor: pointer; font-size: 13px; font-weight: 600;
-      color: var(--muted2); font-family: var(--sans);
-      transition: all .2s;
-    }
-    .mode-tab.active {
-      background: rgba(59,130,246,.12);
-      border-color: var(--accent);
-      color: var(--accent2);
-    }
+    .stat-n { font-family:var(--mono); font-size:22px; font-weight:600; line-height:1; }
+    .stat-n.green { color:var(--green); }
+    .stat-n.ai    { color:var(--ai);    }
+    .stat-n.red   { color:var(--red);   }
+    .stat-l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
 
     /* ── HISTORY ── */
-    .section-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0 16px; margin-bottom: 10px;
-    }
-    .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-    .clear-btn { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 8px; }
-    .clear-btn:hover { color: var(--red); }
+    .sec-header { display:flex; justify-content:space-between; align-items:center; }
+    .sec-title { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+    .btn-clear { font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:4px 8px; }
+    .btn-clear:hover { color:var(--red); }
 
-    #riwayat { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
-    #riwayat::-webkit-scrollbar { width: 4px; }
-    #riwayat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    #riwayat { display:flex; flex-direction:column; gap:6px; max-height:300px; overflow-y:auto; padding-right:2px; }
+    #riwayat::-webkit-scrollbar { width:3px; }
+    #riwayat::-webkit-scrollbar-track { background:transparent; }
+    #riwayat::-webkit-scrollbar-thumb { background:var(--s3); border-radius:4px; }
 
     .hist-item {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-left: 3px solid var(--green);
-      border-radius: 8px; padding: 10px 13px; font-size: 13px;
+      display:grid; grid-template-columns:22px 1fr auto auto;
+      align-items:center; gap:8px;
+      background:var(--s1); border:1px solid var(--brd);
+      border-left:3px solid var(--green);
+      border-radius:9px; padding:9px 12px; font-size:13px;
+      animation: fadeup .2s ease;
     }
-    .hist-item.err  { border-left-color: var(--red); }
-    .hist-item.warn { border-left-color: var(--yellow); }
-    .hist-item.ai   { border-left-color: #8b5cf6; }
-    .hist-icon { font-size: 15px; flex-shrink: 0; }
-    .hist-name { flex: 1; font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .hist-size { font-family: var(--mono); font-size: 11px; color: var(--accent2); flex-shrink: 0; background: rgba(59,130,246,.1); padding: 2px 8px; border-radius: 6px; }
-    .hist-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+    @keyframes fadeup { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    .hist-item.err  { border-left-color:var(--red); }
+    .hist-item.ai   { border-left-color:var(--ai); background:rgba(232,121,249,.04); }
+    .hist-item.warn { border-left-color:var(--amber); }
+    .hist-icon { font-size:15px; text-align:center; }
+    .hist-name { font-family:var(--mono); font-size:11.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .hist-size { font-family:var(--mono); font-size:11px; color:var(--acc2); flex-shrink:0; }
+    .hist-time { font-size:10px; color:var(--muted); flex-shrink:0; }
 
     /* ── MODAL ── */
     .modal-bg {
-      position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 100;
-      align-items: flex-end; justify-content: center; display: none;
+      position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:200;
+      align-items:flex-end; justify-content:center; display:none;
     }
-    .modal-bg.open { display: flex; }
+    .modal-bg.open { display:flex; }
     .modal {
-      background: var(--surface); border-top: 1px solid var(--border);
-      border-radius: 20px 20px 0 0; padding: 24px 24px 36px;
-      width: 100%; max-width: 480px;
+      background:var(--s1); border-top:1px solid var(--brd);
+      border-radius:18px 18px 0 0; padding:24px 24px 36px;
+      width:100%; max-width:480px;
     }
-    .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .modal p  { font-size: 14px; color: var(--muted2); margin-bottom: 20px; line-height: 1.55; }
-    .modal-actions { display: flex; gap: 10px; }
-    .modal-cancel  { flex: 1; padding: 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
-    .modal-confirm { flex: 1; padding: 13px; background: var(--red); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
+    .modal h3 { font-size:16px; font-weight:700; margin-bottom:6px; }
+    .modal p { font-size:13px; color:var(--muted2); margin-bottom:20px; line-height:1.6; }
+    .modal-actions { display:flex; gap:10px; }
+    .modal-cancel  { flex:1; padding:13px; background:var(--s2); border:1px solid var(--brd); border-radius:10px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
+    .modal-confirm { flex:1; padding:13px; background:var(--red); border:none; border-radius:10px; color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
 
     /* ── TOAST ── */
     #toast {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface); border: 1px solid var(--red);
-      color: #fca5a5; font-size: 13px; padding: 12px 20px;
-      border-radius: 12px; z-index: 300;
-      opacity: 0; transition: all .25s;
-      max-width: 90vw; text-align: center; font-family: var(--sans);
+      position:fixed; bottom:24px; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:var(--s1); border:1px solid var(--red);
+      color:#fca5a5; font-size:13px; padding:12px 20px;
+      border-radius:12px; z-index:400; opacity:0;
+      transition:all .25s; max-width:90vw; text-align:center;
     }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-    /* ── DIVIDER ── */
-    .divider { height: 1px; background: var(--border); margin: 4px 16px 16px; }
+    canvas { display:none; }
   </style>
 </head>
 <body>
 
-<!-- ── LOGIN ── -->
+<!-- LOGIN -->
 <div id="login-screen">
-  <div class="login-card">
-    <div class="login-eyebrow">📦 Scan System</div>
-    <div class="login-title">Label Scanner</div>
-    <div class="login-sub">Masuk untuk mulai scan kardus</div>
-    <div class="field-wrap">
-      <input type="password" id="pw-input" placeholder="Password"
-             onkeydown="if(event.key==='Enter') doLogin()">
-    </div>
-    <button class="btn-login" onclick="doLogin()">Masuk →</button>
-    <div class="login-err" id="login-err"></div>
+  <div class="lcard">
+    <span class="l-eye">🔬</span>
+    <div class="l-chip">Scanner System v3</div>
+    <div class="l-title">Scan Produk</div>
+    <div class="l-sub">OCR + Fuzzy Match + Gemini AI</div>
+    <input class="l-input" type="password" id="inp-pw" placeholder="Password"
+           onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="l-btn" onclick="doLogin()">Masuk →</button>
+    <div class="l-err" id="l-err"></div>
   </div>
 </div>
 
-<!-- ── APP ── -->
+<!-- APP -->
 <div id="app" style="display:none">
 
-  <!-- Topbar -->
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-icon">📦</div>
+    <div class="tb-left">
+      <div class="tb-icon">🔬</div>
       <div>
-        <div class="topbar-label">Label Scanner</div>
-        <div class="topbar-title">Scan Kardus</div>
+        <div class="tb-chip">Scanner Produk</div>
+        <div class="tb-name">Sepatu &amp; Aksesoris</div>
       </div>
     </div>
-    <div class="topbar-badge">
-      <div class="badge-num" id="total-count">0</div>
-      <div class="badge-lbl">Total Scan</div>
+    <div class="tb-badge">
+      <div class="badge-n" id="total-count">0</div>
+      <div class="badge-l">Total Scan</div>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- Mode Tabs -->
-    <div class="mode-tabs">
-      <button class="mode-tab active" id="tab-foto" onclick="setMode('foto')">📷 Foto Label</button>
-      <button class="mode-tab" id="tab-barcode" onclick="setMode('barcode')">📲 Scan Barcode</button>
+    <!-- MODE TOGGLE -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-mode-foto" onclick="setMode('foto')">
+        📷 Mode Foto <small style="font-size:10px;opacity:.7">(OCR)</small>
+      </button>
+      <button class="mode-btn" id="btn-mode-barcode" onclick="setMode('barcode')">
+        📲 Mode Barcode
+      </button>
     </div>
 
-    <!-- Camera Card -->
-    <div class="camera-card">
-      <div class="camera-header">
-        <div class="camera-dot" id="cam-dot"></div>
-        <div class="camera-label" id="cam-label">Kamera tidak aktif</div>
+    <!-- CAMERA CARD -->
+    <div class="cam-card">
+      <div class="cam-header">
+        <div class="cam-status">
+          <div class="cam-dot" id="cam-dot"></div>
+          <span class="cam-label" id="cam-label">Kamera tidak aktif</span>
+        </div>
+        <span class="ai-badge-top">✦ Gemini Flash</span>
       </div>
-      <div class="camera-wrap">
+      <div class="cam-wrap">
         <video id="video" autoplay playsinline muted></video>
-        <div class="scan-line" id="scan-line"></div>
+        <div id="scan-line" class="scan-line"></div>
         <div class="aim-overlay">
           <div class="aim-box">
-            <div class="aim-corner tl">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M1 12V1h11" stroke="rgba(59,130,246,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="aim-corner tr">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M1 12V1h11" stroke="rgba(59,130,246,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="aim-corner bl">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M1 12V1h11" stroke="rgba(59,130,246,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="aim-corner br">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M1 12V1h11" stroke="rgba(59,130,246,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
+            <div class="aim-c tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           </div>
         </div>
-        <div id="idle-screen" class="camera-idle">
-          <div class="idle-icon">📷</div>
-          <div class="idle-text">Tekan Mulai untuk aktifkan kamera</div>
+        <div class="cam-idle" id="idle-screen">
+          <div class="idle-icon">🔬</div>
+          <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
         </div>
       </div>
-
-      <!-- Buttons -->
       <div class="btn-row">
-        <button class="btn btn-primary" id="btn-start" onclick="mulaiScan()">▶ Mulai</button>
-        <button class="btn btn-danger"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
-        <button class="btn btn-capture" id="btn-capture" onclick="ambilFoto()">📸 Ambil Foto</button>
-        <button class="btn btn-icon"    onclick="showResetModal()">↺</button>
+        <button class="btn btn-start" id="btn-start" onclick="mulaiScan()">▶ Mulai</button>
+        <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
+        <button class="btn btn-cap"   id="btn-cap"   onclick="ambilFoto()">📷 Foto</button>
+        <button class="btn btn-reset" onclick="showResetModal()" title="Reset">↺</button>
       </div>
     </div>
 
-    <!-- Status -->
-    <div class="status-wrap" style="margin-top:12px">
-      <div class="status-box" id="status-box">Siap — pilih mode dan tekan Mulai.</div>
-    </div>
+    <!-- STATUS -->
+    <div class="status-box" id="status-box">Siap — pilih mode lalu tekan Mulai.</div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-num g" id="cnt-ok">0</div>
-        <div class="stat-lbl">Berhasil</div>
+    <!-- KOREKSI PANEL (muncul setelah hasil keluar) -->
+    <div class="koreksi-wrap" id="koreksi-wrap">
+      <div class="koreksi-title"><span>✏️</span> Koreksi Hasil (Ajarkan AI)</div>
+      <div style="font-size:12px;color:var(--muted2)">
+        Hasil terdeteksi: <b id="hasil-terdeteksi" style="color:var(--amber)">—</b>
       </div>
-      <div class="stat-card">
-        <div class="stat-num y" id="cnt-ai">0</div>
-        <div class="stat-lbl">Via AI</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num r" id="cnt-miss">0</div>
-        <div class="stat-lbl">Cek Manual</div>
+      <input class="koreksi-input" id="inp-koreksi" placeholder="Ketik nama produk yang benar..." />
+      <div class="koreksi-row">
+        <button class="btn-koreksi-ok" onclick="kirimKoreksi()">✓ Simpan Koreksi</button>
+        <button class="btn-koreksi-batal" onclick="tutupKoreksi()">Batal</button>
       </div>
     </div>
 
-    <div class="divider"></div>
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-n green" id="cnt-ok">0</div>
+        <div class="stat-l">Fuzzy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n ai" id="cnt-ai">0</div>
+        <div class="stat-l">Gemini AI</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-n red" id="cnt-miss">0</div>
+        <div class="stat-l">Gagal</div>
+      </div>
+    </div>
 
-    <!-- History -->
-    <div class="section-bar">
-      <div class="section-label">Riwayat Scan</div>
-      <button class="clear-btn" onclick="clearHistory()">Hapus semua</button>
+    <!-- HISTORY -->
+    <div class="sec-header">
+      <div class="sec-title">Riwayat Scan</div>
+      <button class="btn-clear" onclick="clearHistory()">Hapus</button>
     </div>
     <div id="riwayat"></div>
-  </div>
-</div>
 
-<!-- Modal Reset -->
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- MODAL RESET -->
 <div class="modal-bg" id="modal-reset">
   <div class="modal">
-    <h3>Reset Semua Hitungan?</h3>
-    <p>Riwayat lokal akan dihapus. Data di Google Sheets tetap aman.</p>
+    <h3>Reset Counter?</h3>
+    <p>Semua hitungan dan riwayat tampilan akan dikosongkan. Data di Google Sheets tetap aman.</p>
     <div class="modal-actions">
-      <button class="modal-cancel"  onclick="hideModal()">Batal</button>
+      <button class="modal-cancel" onclick="hideModal()">Batal</button>
       <button class="modal-confirm" onclick="doReset()">Reset</button>
     </div>
   </div>
 </div>
 
 <div id="toast"></div>
-<canvas id="canvas" style="display:none"></canvas>
+<canvas id="canvas"></canvas>
 
-<script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
 <script>
-// ─── CONFIG ─────────────────────────────────────────────────────────────────
-const PASSWORD = "kodachi123"; // <<< GANTI PASSWORD
-const GAS_URL  = "https://script.google.com/macros/s/AKfycbwHDbJcpdsMu4Np0Yft11erwceP1PwJzgxdmZCPn6REA6C3Dcp5AojHP14jPBVqQ_Al/exec"; // <<< GANTI URL GAS BARU
-// ────────────────────────────────────────────────────────────────────────────
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const PASSWORD = "kodachi123";
+const GAS_URL  = "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec";
 
 // Warmup GAS
-fetch(GAS_URL + "?ping=1").catch(() => {});
+fetch(GAS_URL + "?ping=1").catch(()=>{});
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let mode = "foto";          // "foto" | "barcode"
-let scanning = false;
-let sedangKirim = false;
-let stream = null;
-let codeReader = null;
-let lastScan = "";
+let mode         = "foto";     // "foto" | "barcode"
+let scanning     = false;
+let sedangKirim  = false;
+let stream       = null;
+let codeReader   = null;
+let lastScan     = "";
 let lastScanTime = 0;
 let cntOk = 0, cntAI = 0, cntMiss = 0;
-let audioCtx;
 
-// ─── AUDIO ──────────────────────────────────────────────────────────────────
+// Untuk fitur koreksi
+let hasilTerakhirRawText = "";
+let hasilTerakhirModel   = "";
+
+// ─── AUDIO ───────────────────────────────────────────────────────────────────
+let audioCtx;
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const o = audioCtx.createOscillator();
-  o.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime + 0.001);
+  o.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.001);
 }
-
 function bunyi(tipe) {
   if (!audioCtx) return;
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
   const t = audioCtx.currentTime;
-  const cfg = {
-    ok:     { type:"sine",     freq:[880,1320], gain:0.35, dur:0.14 },
-    ai:     { type:"triangle", freq:[660,880],  gain:0.3,  dur:0.18 },
-    miss:   { type:"square",   freq:[300,300],  gain:0.2,  dur:0.28 },
-    read:   { type:"triangle", freq:[600,600],  gain:0.15, dur:0.08 }
+  const configs = {
+    ok:     { type:"sine",     freqs:[[880,0],[1200,0.07]], dur:0.12, gain:0.35 },
+    ai:     { type:"sine",     freqs:[[700,0],[950,0.06],[1100,0.12]], dur:0.18, gain:0.3 },
+    miss:   { type:"square",   freqs:[[280,0]], dur:0.25, gain:0.18 },
+    read:   { type:"triangle", freqs:[[600,0]], dur:0.08, gain:0.2 }
   };
-  const c = cfg[tipe] || cfg.read;
+  const c = configs[tipe] || configs.read;
   o.type = c.type;
-  o.frequency.setValueAtTime(c.freq[0], t);
-  if (c.freq[1] !== c.freq[0]) o.frequency.linearRampToValueAtTime(c.freq[1], t + c.dur * 0.5);
+  c.freqs.forEach(([f,dt]) => o.frequency.setValueAtTime(f, t + dt));
   g.gain.setValueAtTime(c.gain, t);
   g.gain.linearRampToValueAtTime(0, t + c.dur);
   o.start(t); o.stop(t + c.dur);
@@ -539,23 +513,26 @@ function bunyi(tipe) {
 
 // ─── LOGIN ───────────────────────────────────────────────────────────────────
 function doLogin() {
-  if (document.getElementById("pw-input").value === PASSWORD) {
+  if (document.getElementById("inp-pw").value === PASSWORD) {
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("app").style.display = "block";
     initAudio();
   } else {
-    document.getElementById("login-err").textContent = "❌ Password salah.";
-    document.getElementById("pw-input").value = "";
+    document.getElementById("l-err").textContent = "❌ Password salah.";
+    document.getElementById("inp-pw").value = "";
   }
 }
+document.getElementById("inp-pw").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
 
-// ─── MODE TABS ───────────────────────────────────────────────────────────────
+// ─── MODE ────────────────────────────────────────────────────────────────────
 function setMode(m) {
   if (scanning) stopScan();
   mode = m;
-  document.getElementById("tab-foto").classList.toggle("active", m === "foto");
-  document.getElementById("tab-barcode").classList.toggle("active", m === "barcode");
-  setStatus("Mode: " + (m === "foto" ? "📷 Foto Label" : "📲 Scan Barcode") + " — tekan Mulai.", "");
+  document.getElementById("btn-mode-foto").classList.toggle("active", m === "foto");
+  document.getElementById("btn-mode-barcode").classList.toggle("active", m === "barcode");
+  setStatus("Mode " + (m === "foto" ? "Foto (OCR)" : "Barcode") + " dipilih — tekan Mulai.");
 }
 
 // ─── STATUS ──────────────────────────────────────────────────────────────────
@@ -569,84 +546,78 @@ function setStatus(msg, tipe) {
     statusTimer = setTimeout(() => {
       el.className = "status-box";
       el.innerHTML = "Siap scan berikutnya…";
-    }, 3500);
+    }, 4000);
   }
 }
 
-// ─── KAMERA MULAI/STOP ───────────────────────────────────────────────────────
+// ─── SCAN MULAI / STOP ───────────────────────────────────────────────────────
 async function mulaiScan() {
   if (audioCtx?.state === "suspended") audioCtx.resume();
-
+  scanning = true;
   document.getElementById("idle-screen").style.display = "none";
   document.getElementById("btn-start").style.display   = "none";
   document.getElementById("btn-stop").style.display    = "flex";
   document.getElementById("scan-line").style.display   = "block";
   document.getElementById("cam-dot").classList.add("live");
   document.getElementById("cam-label").textContent     = "LIVE";
-  scanning = true;
 
   if (mode === "foto") {
-    document.getElementById("btn-capture").style.display = "flex";
+    document.getElementById("btn-cap").style.display = "flex";
     await startCamera();
-    setStatus("📷 Kamera aktif — arahkan ke label kardus, lalu tekan Ambil Foto.", "loading");
+    setStatus("📷 Kamera aktif — arahkan ke label kardus, lalu tekan Foto.", "loading");
   } else {
     await startBarcodeScanner();
-    setStatus("📲 Scanner aktif — arahkan barcode ke frame tengah.", "loading");
+    setStatus("📲 Scanner aktif — arahkan barcode ke frame.", "loading");
   }
 }
 
 function stopScan() {
   scanning = false; sedangKirim = false;
-
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  if (codeReader) { codeReader.reset(); codeReader = null; }
-
-  document.getElementById("video").srcObject = null;
-  document.getElementById("scan-line").style.display   = "none";
-  document.getElementById("btn-start").style.display   = "flex";
-  document.getElementById("btn-stop").style.display    = "none";
-  document.getElementById("btn-capture").style.display = "none";
-  document.getElementById("idle-screen").style.display = "flex";
+  if (stream)      { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (codeReader)  { codeReader.reset(); codeReader = null; }
+  document.getElementById("video").srcObject          = null;
+  document.getElementById("scan-line").style.display  = "none";
+  document.getElementById("btn-start").style.display  = "flex";
+  document.getElementById("btn-stop").style.display   = "none";
+  document.getElementById("btn-cap").style.display    = "none";
+  document.getElementById("idle-screen").style.display= "flex";
   document.getElementById("cam-dot").classList.remove("live");
-  document.getElementById("cam-label").textContent     = "Kamera tidak aktif";
+  document.getElementById("cam-label").textContent    = "Kamera tidak aktif";
   setStatus("⏹ Dihentikan.");
 }
 
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 960 } }
+      video: { facingMode:{ideal:"environment"}, width:{ideal:1280}, height:{ideal:960} }
     });
     document.getElementById("video").srcObject = stream;
-  } catch (e) {
-    setStatus("❌ Tidak bisa akses kamera: " + e.message, "err");
+  } catch(e) {
+    setStatus("❌ Kamera tidak bisa diakses: " + e.message, "err");
     stopScan();
   }
 }
 
-// ─── MODE FOTO: AMBIL FOTO ────────────────────────────────────────────────────
+// ─── FOTO (OCR) ──────────────────────────────────────────────────────────────
 async function ambilFoto() {
   if (!stream || sedangKirim) return;
+  bunyi("read");
   const video  = document.getElementById("video");
   const canvas = document.getElementById("canvas");
   canvas.width  = video.videoWidth  || 640;
   canvas.height = video.videoHeight || 480;
   canvas.getContext("2d").drawImage(video, 0, 0);
-
-  // Kompres ke jpeg quality 0.8
-  const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
-  await kirimKeSever({ image: base64 });
+  const base64 = canvas.toDataURL("image/jpeg", 0.82).split(",")[1];
+  await kirimKeGAS({ image: base64 });
 }
 
-// ─── MODE BARCODE: SCAN ──────────────────────────────────────────────────────
+// ─── BARCODE ─────────────────────────────────────────────────────────────────
 async function startBarcodeScanner() {
   codeReader = new ZXing.BrowserMultiFormatReader();
   const hints = new Map();
   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.QR_CODE,
-    ZXing.BarcodeFormat.EAN_13,
+    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.QR_CODE,  ZXing.BarcodeFormat.EAN_13,
     ZXing.BarcodeFormat.EAN_8
   ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
@@ -654,7 +625,7 @@ async function startBarcodeScanner() {
 
   try {
     await codeReader.decodeFromConstraints(
-      { video: { facingMode: { ideal: "environment" }, width: { ideal: 640 } } },
+      { video:{ facingMode:{ideal:"environment"}, width:{ideal:640} } },
       "video",
       (result, err) => {
         if (!result || !scanning || sedangKirim) return;
@@ -663,19 +634,20 @@ async function startBarcodeScanner() {
         if (val === lastScan && now - lastScanTime < 3500) return;
         lastScan = val; lastScanTime = now;
         bunyi("read");
-        kirimKeSever({ barcode: val });
+        kirimKeGAS({ barcode: val });
       }
     );
-  } catch (e) {
+  } catch(e) {
     setStatus("❌ Scanner error: " + e.message, "err");
     stopScan();
   }
 }
 
 // ─── KIRIM KE GAS ────────────────────────────────────────────────────────────
-async function kirimKeSever(payload) {
+async function kirimKeGAS(payload) {
   sedangKirim = true;
-  setStatus("⏳ Memproses…", "loading");
+  setStatus("⏳ Memproses" + (payload.image ? " OCR + AI…" : " Barcode…"), "loading");
+  tutupKoreksi();
 
   try {
     const resp = await fetch(GAS_URL, {
@@ -684,75 +656,119 @@ async function kirimKeSever(payload) {
       headers: { "Content-Type": "text/plain" }
     });
     const teks = await resp.text();
-    prosesResponse(teks);
-  } catch (e) {
+    prosesResponse(teks, payload.image ? "foto" : "barcode");
+  } catch(e) {
     bunyi("miss");
     setStatus("❌ Gagal koneksi — coba lagi.", "err");
     showToast("❌ Koneksi gagal — data belum tersimpan!");
   }
-
   sedangKirim = false;
 }
 
-function prosesResponse(teks) {
+// ─── PROSES RESPONSE ─────────────────────────────────────────────────────────
+function prosesResponse(teks, sumber) {
   const isOk   = teks.includes("✅");
   const isAI   = teks.includes("(AI)");
   const isMiss = teks.includes("⚠️");
   const isErr  = teks.includes("❌") || teks.includes("Error");
 
   let tipe, icon;
-
   if (isErr || (!isOk && !isMiss)) {
-    tipe = "err"; icon = "❌"; cntMiss++;
-    bunyi("miss");
+    tipe = "err";  icon = "❌"; cntMiss++; bunyi("miss");
   } else if (isMiss) {
-    tipe = "err"; icon = "⚠️"; cntMiss++;
-    bunyi("miss");
+    tipe = "warn"; icon = "⚠️"; cntMiss++; bunyi("miss");
   } else if (isAI) {
-    tipe = "ai"; icon = "🤖"; cntAI++;
-    bunyi("ai");
+    tipe = "ai";   icon = "🤖"; cntAI++;   bunyi("ai");
   } else {
-    tipe = "ok"; icon = "✅"; cntOk++;
-    bunyi("ok");
+    tipe = "ok";   icon = "✅"; cntOk++;   bunyi("ok");
   }
 
-  // Parse model & size dari response
   const modelMatch = teks.match(/Model:\s*(.+?)\s*\|/);
   const sizeMatch  = teks.match(/Size:\s*(\S+)/);
-  const model = modelMatch ? modelMatch[1] : teks.substring(0, 60);
+  const model = modelMatch ? modelMatch[1] : teks.substring(0,60);
   const size  = sizeMatch  ? sizeMatch[1]  : "-";
 
-  const badge = isAI ? '<span style="font-size:11px;opacity:.7;"> ✦ Gemini AI</span>' : "";
-  setStatus(icon + " <b>" + model + "</b> &nbsp;· Size: " + size + badge, tipe);
+  // Simpan untuk fitur koreksi
+  hasilTerakhirModel = model;
+
+  const aiBadge = isAI ? ' <span style="font-size:11px;opacity:.75;color:var(--ai)">✦ Gemini</span>' : "";
+  setStatus(icon + " <b>" + model + "</b>&ensp;· Size: " + size + aiBadge, tipe);
+
+  // Tampilkan panel koreksi jika bukan error
+  if (isOk || isAI || isMiss) {
+    tampilKoreksi(model);
+  }
 
   updateStats();
-  tambahHistory(model, size, tipe, isAI);
+  tambahHistory(model, size, tipe, isAI, sumber);
+}
+
+// ─── KOREKSI (AJARKAN AI) ────────────────────────────────────────────────────
+function tampilKoreksi(modelTerdeteksi) {
+  document.getElementById("hasil-terdeteksi").textContent = modelTerdeteksi;
+  document.getElementById("inp-koreksi").value = "";
+  document.getElementById("koreksi-wrap").classList.add("visible");
+}
+function tutupKoreksi() {
+  document.getElementById("koreksi-wrap").classList.remove("visible");
+}
+
+async function kirimKoreksi() {
+  const benar = document.getElementById("inp-koreksi").value.trim();
+  if (!benar) { showToast("Isi nama produk yang benar dulu."); return; }
+
+  const salah = hasilTerakhirModel;
+  tutupKoreksi();
+  setStatus("⏳ Menyimpan koreksi ke AI…", "loading");
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        koreksi: true,
+        rawText: salah,          // teks yang salah
+        hasilSalah: salah,
+        hasilBenar: benar
+      }),
+      headers: { "Content-Type": "text/plain" }
+    });
+    const txt = await resp.text();
+    if (txt.includes("✅")) {
+      bunyi("ok");
+      setStatus("✅ Koreksi tersimpan — AI akan belajar dari ini!", "ok");
+    } else {
+      setStatus("⚠️ " + txt, "warn");
+    }
+  } catch(e) {
+    showToast("❌ Gagal simpan koreksi.");
+    setStatus("Siap scan berikutnya…");
+  }
 }
 
 // ─── STATS ───────────────────────────────────────────────────────────────────
 function updateStats() {
-  document.getElementById("cnt-ok").textContent   = cntOk;
-  document.getElementById("cnt-ai").textContent   = cntAI;
-  document.getElementById("cnt-miss").textContent = cntMiss;
+  document.getElementById("cnt-ok").textContent    = cntOk;
+  document.getElementById("cnt-ai").textContent    = cntAI;
+  document.getElementById("cnt-miss").textContent  = cntMiss;
   document.getElementById("total-count").textContent = cntOk + cntAI + cntMiss;
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────────────────────
-function tambahHistory(model, size, tipe, isAI) {
+function tambahHistory(model, size, tipe, isAI, sumber) {
   const el   = document.createElement("div");
-  const kelas = isAI ? "ai" : (tipe === "ok" ? "" : tipe === "err" ? "err" : "warn");
-  el.className = "hist-item " + kelas;
-  const icon  = isAI ? "🤖" : (tipe === "ok" ? "✅" : "⚠️");
-  const waktu = new Date().toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
-  el.innerHTML = `
-    <span class="hist-icon">${icon}</span>
-    <span class="hist-name">${model}</span>
-    <span class="hist-size">${size}</span>
-    <span class="hist-time">${waktu}</span>
-  `;
+  const kls  = isAI ? "ai" : (tipe === "ok" ? "" : tipe === "err" ? "err" : "warn");
+  el.className = "hist-item " + kls;
+  const icon  = isAI ? "🤖" : (tipe === "ok" ? "✅" : tipe === "warn" ? "⚠️" : "❌");
+  const waktu = new Date().toLocaleTimeString("id-ID", {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const srcBadge = sumber === "foto" ? "📷" : "📲";
+  el.innerHTML =
+    `<span class="hist-icon">${icon}</span>` +
+    `<span class="hist-name">${model}</span>` +
+    `<span class="hist-size">${size} ${srcBadge}</span>` +
+    `<span class="hist-time">${waktu}</span>`;
   const wrap = document.getElementById("riwayat");
   wrap.insertBefore(el, wrap.firstChild);
-  while (wrap.children.length > 40) wrap.removeChild(wrap.lastChild);
+  while (wrap.children.length > 50) wrap.removeChild(wrap.lastChild);
 }
 
 function clearHistory() {
@@ -762,7 +778,7 @@ function clearHistory() {
   updateStats();
 }
 
-// ─── MODAL & RESET ───────────────────────────────────────────────────────────
+// ─── MODAL RESET ─────────────────────────────────────────────────────────────
 function showResetModal() { document.getElementById("modal-reset").classList.add("open"); }
 function hideModal()       { document.getElementById("modal-reset").classList.remove("open"); }
 function doReset() {
