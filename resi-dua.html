@@ -13,9 +13,6 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-/* ════════════════════════════════════════
-   TOKENS
-════════════════════════════════════════ */
 :root {
   --bg      : #080c14;
   --bg2     : #0d1220;
@@ -24,11 +21,9 @@
   --surf3   : #222d45;
   --border  : #1e2d47;
   --border2 : #2a3d5c;
-
   --accent  : #3b82f6;
   --accent2 : #60a5fa;
   --adim    : rgba(59,130,246,.12);
-
   --green   : #22c55e;
   --gdim    : rgba(34,197,94,.10);
   --red     : #ef4444;
@@ -37,27 +32,18 @@
   --odim    : rgba(249,115,22,.10);
   --yellow  : #eab308;
   --ydim    : rgba(234,179,8,.10);
-
   --text    : #e2e8f0;
   --text2   : #94a3b8;
   --text3   : #475569;
-
   --mono    : 'JetBrains Mono', monospace;
   --sans    : 'Plus Jakarta Sans', sans-serif;
-
-  --r-sm : 8px;
-  --r-md : 12px;
-  --r-lg : 16px;
-  --r-xl : 24px;
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { font-size: 16px; }
 body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; }
 
-/* ════════════════════════════════════════
-   LOGIN SCREEN
-════════════════════════════════════════ */
+/* LOGIN */
 #login-screen {
   display: flex; align-items: center; justify-content: center;
   min-height: 100dvh; padding: 24px;
@@ -69,41 +55,20 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   border-radius: var(--r-xl); padding: 40px 32px;
   box-shadow: 0 40px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(59,130,246,.08);
 }
-.login-logo {
-  width: 56px; height: 56px; border-radius: 16px;
-  background: var(--adim); border: 1px solid var(--border2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; margin-bottom: 20px;
-}
-.login-badge {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
-  color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
-}
+.login-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--adim); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 20px; }
+.login-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
 .login-title { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
 .login-sub   { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
 .login-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; letter-spacing: .5px; }
-.login-input {
-  width: 100%; background: var(--surf2); border: 1px solid var(--border2);
-  border-radius: var(--r-md); padding: 14px 16px; font-size: 16px;
-  color: var(--text); outline: none; margin-bottom: 20px;
-  font-family: var(--sans); transition: border-color .2s, box-shadow .2s;
-}
+.login-input { width: 100%; background: var(--surf2); border: 1px solid var(--border2); border-radius: var(--r-md); padding: 14px 16px; font-size: 16px; color: var(--text); outline: none; margin-bottom: 20px; font-family: var(--sans); transition: border-color .2s, box-shadow .2s; }
 .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--adim); }
 .login-input::placeholder { color: var(--text3); }
-.login-btn {
-  width: 100%; background: var(--accent); color: white; border: none;
-  border-radius: var(--r-md); padding: 15px; font-size: 15px; font-weight: 700;
-  cursor: pointer; font-family: var(--sans); letter-spacing: .3px;
-  transition: opacity .15s, transform .1s;
-}
+.login-btn { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--r-md); padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s; }
 .login-btn:active { opacity: .85; transform: scale(.98); }
 .login-error { margin-top: 12px; color: var(--red); font-size: 13px; text-align: center; }
 
-/* ════════════════════════════════════════
-   APP SHELL
-════════════════════════════════════════ */
+/* APP */
 #app { display: none; }
-
 .topbar {
   position: sticky; top: 0; z-index: 20;
   background: rgba(8,12,20,.92); backdrop-filter: blur(12px);
@@ -112,18 +77,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   display: grid; grid-template-columns: 1fr auto auto;
   align-items: center; gap: 12px;
 }
-.topbar-info {}
 .topbar-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 2px; }
 .topbar-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.sync-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 11px; background: var(--surf2); border: 1px solid var(--border2);
-  border-radius: var(--r-sm); color: var(--text2); font-size: 11px;
-  font-family: var(--mono); cursor: pointer;
-  transition: border-color .2s, color .2s;
-  white-space: nowrap;
-}
+.sync-btn { display: flex; align-items: center; gap: 6px; padding: 7px 11px; background: var(--surf2); border: 1px solid var(--border2); border-radius: var(--r-sm); color: var(--text2); font-size: 11px; font-family: var(--mono); cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
 .sync-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .sync-btn.syncing .si { animation: spin .7s linear infinite; }
 .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background .3s; }
@@ -131,89 +87,52 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .sync-dot.stale { background: var(--yellow); }
 .sync-dot.err   { background: var(--red); }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .topbar-counter { text-align: right; }
-.counter-num  { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1; }
-.counter-lbl  { font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
+.counter-num { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1; }
+.counter-lbl { font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
 
 .content { padding: 14px 16px 110px; }
 
-/* ════════════════════════════════════════
-   SCANNER
-════════════════════════════════════════ */
-.scanner-wrap {
-  position: relative; width: 100%; border-radius: var(--r-lg);
-  overflow: hidden; background: #000; border: 1px solid var(--border);
-  aspect-ratio: 4/3; max-height: 240px;
-}
-#video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* PETUGAS STRIP */
+.user-strip { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--adim); border: 1px solid rgba(59,130,246,.2); border-radius: var(--r-sm); margin-bottom: 12px; font-size: 12px; font-family: var(--mono); color: var(--accent2); }
+.user-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
+.user-strip-info { flex: 1; }
+.user-strip-nama { font-weight: 700; font-size: 13px; }
+.user-strip-sub  { font-size: 10px; color: var(--text3); margin-top: 1px; }
 
+/* SCANNER */
+.scanner-wrap { position: relative; width: 100%; border-radius: var(--r-lg); overflow: hidden; background: #000; border: 1px solid var(--border); aspect-ratio: 4/3; max-height: 240px; }
+#video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.scan-frame {
-  width: 180px; height: 140px; border: 2px solid rgba(59,130,246,.5);
-  border-radius: var(--r-sm); position: relative;
-}
-.scan-frame::before, .scan-frame::after {
-  content: ''; position: absolute; width: 24px; height: 24px;
-  border-color: var(--accent2); border-style: solid;
-}
+.scan-frame { width: 180px; height: 140px; border: 2px solid rgba(59,130,246,.5); border-radius: var(--r-sm); position: relative; }
+.scan-frame::before, .scan-frame::after { content: ''; position: absolute; width: 24px; height: 24px; border-color: var(--accent2); border-style: solid; }
 .scan-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 5px 0 0 0; }
 .scan-frame::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 5px 0; }
-
-#scan-line {
-  position: absolute; left: 0; width: 100%; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent2), transparent);
-  box-shadow: 0 0 10px var(--accent2);
-  animation: scanline 2s ease-in-out infinite; display: none;
-}
+#scan-line { position: absolute; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--accent2), transparent); box-shadow: 0 0 10px var(--accent2); animation: scanline 2s ease-in-out infinite; display: none; }
 @keyframes scanline { 0%,100% { top: 8%; } 50% { top: 90%; } }
-
-.scanner-idle {
-  position: absolute; inset: 0; display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.65);
-}
+.scanner-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,.65); }
 .scanner-idle-icon { font-size: 42px; margin-bottom: 8px; }
 .scanner-idle-text { color: var(--text2); font-size: 13px; }
 
-/* ════════════════════════════════════════
-   BUTTONS
-════════════════════════════════════════ */
+/* BUTTONS */
 .btn-row { display: flex; gap: 8px; margin-top: 12px; }
-.btn {
-  flex: 1; padding: 12px 14px; border: none; border-radius: var(--r-md);
-  font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
-  letter-spacing: .2px; transition: opacity .15s, transform .1s;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
+.btn { flex: 1; padding: 12px 14px; border: none; border-radius: var(--r-md); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .btn:active { opacity: .75; transform: scale(.97); }
-.btn-start  { background: var(--accent); color: white; }
-.btn-stop   { background: var(--red); color: white; display: none; }
-.btn-icon   { flex: 0 0 44px; background: var(--surf2); color: var(--text2); border: 1px solid var(--border2); font-size: 18px; }
+.btn-start { background: var(--accent); color: white; }
+.btn-stop  { background: var(--red); color: white; display: none; }
+.btn-icon  { flex: 0 0 44px; background: var(--surf2); color: var(--text2); border: 1px solid var(--border2); font-size: 18px; }
 
-/* ════════════════════════════════════════
-   STATUS BOX
-════════════════════════════════════════ */
-.status-box {
-  margin-top: 12px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-md); padding: 14px 16px; min-height: 58px;
-  display: flex; align-items: center; font-size: 14px; line-height: 1.5;
-  transition: border-color .15s, background .15s; font-family: var(--mono);
-}
+/* STATUS BOX */
+.status-box { margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; min-height: 58px; display: flex; align-items: center; font-size: 14px; line-height: 1.5; transition: border-color .15s, background .15s; font-family: var(--mono); }
 .status-box.sukses   { border-color: var(--green);  background: var(--gdim); color: #86efac; }
 .status-box.batal    { border-color: var(--orange); background: var(--odim); color: #fdba74; }
 .status-box.duplikat { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
 .status-box.proses   { border-color: var(--accent); background: var(--adim); color: #93c5fd; }
 .status-box.error    { border-color: var(--red);    background: var(--rdim); color: #fca5a5; }
 
-/* ════════════════════════════════════════
-   STATS ROW
-════════════════════════════════════════ */
+/* STATS */
 .stats-row { display: flex; gap: 8px; margin-top: 10px; }
-.stat-card {
-  flex: 1; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-md); padding: 11px 8px; text-align: center;
-}
+.stat-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 11px 8px; text-align: center; }
 .stat-num { font-family: var(--mono); font-size: 22px; font-weight: 700; line-height: 1; }
 .stat-num.g { color: var(--green); }
 .stat-num.r { color: var(--red); }
@@ -221,44 +140,28 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .stat-num.a { color: var(--accent2); }
 .stat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
 
-/* ════════════════════════════════════════
-   BATCH KIRIM PANEL
-════════════════════════════════════════ */
-.section-row {
-  display: flex; justify-content: space-between; align-items: center;
-  margin: 18px 0 10px;
-}
+/* BATCH PANEL */
+.section-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px; }
 .section-title { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
 .txt-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 0; }
 .txt-btn:hover { color: var(--red); }
-
-.batch-panel {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: 16px;
-}
+.batch-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 16px; }
 .batch-info { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .batch-count { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--accent2); line-height: 1; min-width: 48px; }
 .batch-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
 .batch-desc b { color: var(--text); font-weight: 700; }
 
-.btn-kirim {
-  width: 100%; padding: 15px; background: var(--green); color: #000;
-  border: none; border-radius: var(--r-md); font-size: 15px; font-weight: 800;
-  cursor: pointer; font-family: var(--sans); letter-spacing: .3px;
-  transition: opacity .15s, transform .1s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
+/* Kolom info */
+.col-badge { display: inline-flex; gap: 6px; margin-top: 6px; }
+.col-tag { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 4px; font-weight: 700; }
+.col-j { background: var(--gdim); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.col-k { background: var(--adim); color: var(--accent2); border: 1px solid rgba(59,130,246,.25); }
+
+.btn-kirim { width: 100%; padding: 15px; background: var(--green); color: #000; border: none; border-radius: var(--r-md); font-size: 15px; font-weight: 800; cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-kirim:active { opacity: .8; transform: scale(.98); }
 .btn-kirim:disabled { background: var(--surf3); color: var(--text3); cursor: not-allowed; transform: none; }
 
-.btn-retry {
-  width: 100%; margin-top: 8px; padding: 12px;
-  background: var(--odim); color: var(--orange);
-  border: 1px solid var(--orange); border-radius: var(--r-md);
-  font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
-  display: none; align-items: center; justify-content: center; gap: 6px;
-  transition: opacity .15s;
-}
+.btn-retry { width: 100%; margin-top: 8px; padding: 12px; background: var(--odim); color: var(--orange); border: 1px solid var(--orange); border-radius: var(--r-md); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans); display: none; align-items: center; justify-content: center; gap: 6px; transition: opacity .15s; }
 .btn-retry:active { opacity: .7; }
 .btn-retry.visible { display: flex; }
 
@@ -268,19 +171,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .prog-txt    { font-family: var(--mono); font-size: 11px; color: var(--text2); text-align: center; }
 
 .kirim-result { display: none; gap: 8px; margin-top: 12px; }
-.kres-card  { flex: 1; text-align: center; background: var(--surf2); border-radius: var(--r-sm); padding: 8px 4px; }
-.kres-num   { font-family: var(--mono); font-size: 18px; font-weight: 700; }
-.kres-lbl   { font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
+.kres-card { flex: 1; text-align: center; background: var(--surf2); border-radius: var(--r-sm); padding: 8px 4px; }
+.kres-num  { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+.kres-lbl  { font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
 
-/* ════════════════════════════════════════
-   SYNC BAR
-════════════════════════════════════════ */
-.sync-bar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 12px; background: var(--surf2); border: 1px solid var(--border);
-  border-radius: var(--r-sm); margin-top: 10px;
-  font-size: 11px; color: var(--text2); font-family: var(--mono);
-}
+/* SYNC BAR */
+.sync-bar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r-sm); margin-top: 10px; font-size: 11px; color: var(--text2); font-family: var(--mono); }
 .sbd { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text3); }
 .sbd.fresh   { background: var(--green); }
 .sbd.stale   { background: var(--yellow); }
@@ -289,30 +185,16 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .sbt { flex: 1; }
 .sbc { background: var(--surf3); border-radius: 4px; padding: 2px 7px; color: var(--text); font-size: 10px; }
 
-/* ════════════════════════════════════════
-   RIWAYAT
-════════════════════════════════════════ */
-#riwayat {
-  display: flex; flex-direction: column; gap: 5px;
-  max-height: 340px; overflow-y: auto; padding-right: 2px; padding-bottom: 4px;
-}
+/* RIWAYAT */
+#riwayat { display: flex; flex-direction: column; gap: 5px; max-height: 340px; overflow-y: auto; padding-right: 2px; padding-bottom: 4px; }
 #riwayat::-webkit-scrollbar { width: 3px; }
 #riwayat::-webkit-scrollbar-track { background: transparent; }
 #riwayat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-.ritem {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-left: 3px solid var(--green); border-radius: var(--r-sm);
-  padding: 9px 12px; font-size: 12px;
-  transition: border-left-color .2s, background .2s;
-}
+.ritem { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--r-sm); padding: 9px 12px; font-size: 12px; transition: border-left-color .2s; }
 .ritem.batal      { border-left-color: var(--orange); }
 .ritem.duplikat   { border-left-color: var(--yellow); }
-.ritem.pending    { border-left-color: var(--text3); opacity: .7; }
-.ritem.sent       { border-left-color: var(--green); }
+.ritem.sent       { border-left-color: var(--green); opacity: .8; }
 .ritem.error-item { border-left-color: var(--red); }
-
 .ri-icon { font-size: 14px; flex-shrink: 0; }
 .ri-resi { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ri-tags { display: flex; gap: 4px; flex-shrink: 0; }
@@ -324,59 +206,27 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .tag-error    { background: var(--rdim); color: var(--red); }
 .ri-time { font-size: 10px; color: var(--text3); flex-shrink: 0; }
 
-/* ════════════════════════════════════════
-   MODAL
-════════════════════════════════════════ */
-.modal-bg {
-  position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100;
-  align-items: flex-end; justify-content: center; display: none;
-}
+/* MODAL */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; align-items: flex-end; justify-content: center; display: none; }
 .modal-bg.open { display: flex; }
-.modal {
-  background: var(--surface); border-top: 1px solid var(--border);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  padding: 24px 24px 36px; width: 100%; max-width: 480px;
-}
-.modal h3  { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-.modal p   { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+.modal { background: var(--surface); border-top: 1px solid var(--border); border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 24px 24px 36px; width: 100%; max-width: 480px; }
+.modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.modal p  { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
 .modal-act { display: flex; gap: 10px; }
 .m-cancel  { flex: 1; padding: 13px; background: var(--surf2); border: 1px solid var(--border2); border-radius: var(--r-md); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
 .m-confirm { flex: 1; padding: 13px; background: var(--red); border: none; border-radius: var(--r-md); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
 
-/* ════════════════════════════════════════
-   TOAST
-════════════════════════════════════════ */
-#toast {
-  position: fixed; bottom: 24px; left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); font-size: 13px; font-family: var(--mono);
-  padding: 12px 20px; border-radius: var(--r-md); z-index: 200;
-  opacity: 0; transition: all .25s; max-width: 92vw; text-align: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,.6);
-}
-#toast.show   { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* TOAST */
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-family: var(--mono); padding: 12px 20px; border-radius: var(--r-md); z-index: 200; opacity: 0; transition: all .25s; max-width: 92vw; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.6); }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 #toast.tg { border-color: var(--green); color: #86efac; }
 #toast.tr { border-color: var(--red);   color: #fca5a5; }
 #toast.ty { border-color: var(--yellow);color: #fde047; }
-
-/* ════════════════════════════════════════
-   USER INFO STRIP
-════════════════════════════════════════ */
-.user-strip {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; background: var(--adim);
-  border: 1px solid rgba(59,130,246,.2); border-radius: var(--r-sm);
-  margin-bottom: 12px; font-size: 12px; font-family: var(--mono); color: var(--accent2);
-}
-.user-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     LOGIN
-═══════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">📦</div>
@@ -392,16 +242,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     APP
-═══════════════════════════════════════════ -->
+<!-- APP -->
 <div id="app">
-
-  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-info">
       <div class="topbar-badge">Scan Packing</div>
-      <div class="topbar-title" id="topbar-title">📦 Memuat nama…</div>
+      <div class="topbar-title" id="topbar-title">📦 Memuat…</div>
     </div>
     <button class="sync-btn" id="btn-sync" onclick="syncManual()">
       <span class="sync-dot" id="sync-dot"></span>
@@ -416,11 +262,13 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
   <div class="content">
 
-    <!-- User strip -->
+    <!-- Petugas strip -->
     <div class="user-strip" id="user-strip" style="display:none">
       <span class="user-strip-dot"></span>
-      <span id="user-nama-strip">Memuat…</span>
-      <span style="color:var(--text3);margin-left:auto">Petugas Aktif</span>
+      <div class="user-strip-info">
+        <div class="user-strip-nama" id="user-nama-strip">—</div>
+        <div class="user-strip-sub">Nama ini akan dicatat di kolom K (Packing)</div>
+      </div>
     </div>
 
     <!-- Scanner -->
@@ -440,7 +288,6 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
       <button class="btn btn-icon"  title="Reset sesi" onclick="showResetModal()">↺</button>
     </div>
 
-    <!-- Status -->
     <div class="status-box" id="status-box">Siap — tekan Mulai Scan.</div>
 
     <!-- Stats -->
@@ -458,8 +305,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     <div class="batch-panel">
       <div class="batch-info">
         <div class="batch-count" id="batch-count">0</div>
-        <div class="batch-desc">paket <b>siap dikirim</b> ke Google Sheets.<br>
-          Scan dulu semua paket, lalu kirim sekaligus.</div>
+        <div class="batch-desc">
+          paket siap dikirim ke Sheets.<br>
+          <b>Kolom J</b> ← "Sudah" &nbsp;|&nbsp; <b>Kolom K</b> ← Nama petugas
+          <div class="col-badge">
+            <span class="col-tag col-j">J = Sudah</span>
+            <span class="col-tag col-k" id="col-k-preview">K = …</span>
+          </div>
+        </div>
       </div>
       <button class="btn-kirim" id="btn-kirim" onclick="kirimSemua()" disabled>
         <span>📤</span><span id="btn-kirim-txt">Kirim Semua</span>
@@ -479,7 +332,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
       </div>
     </div>
 
-    <!-- Sync Bar -->
+    <!-- Sync bar -->
     <div class="sync-bar">
       <div class="sbd" id="sbd"></div>
       <div class="sbt" id="sbt">Status pesanan belum disinkron</div>
@@ -493,8 +346,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
     </div>
     <div id="riwayat"></div>
 
-  </div><!-- /content -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <!-- Modal Reset -->
 <div class="modal-bg" id="modal-reset">
@@ -511,35 +364,34 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 <div id="toast"></div>
 
 <script>
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    KONFIGURASI
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 const CFG = {
-  // !! Ganti GAS_URL setelah re-deploy !!
   GAS_URL          : "https://script.google.com/macros/s/AKfycbw49jVtYe3XhJDRJMkxlv4aYUMPQUnwL6ID9ZrjAYMqLi-WSSoY_gBwucvjH6-s6RD0/exec",
   PASSWORD         : "kodachi123",
-  MODE             : "packing",        // mode untuk GAS
+  MODE             : "packing",      // ← hanya isi kolom J & K
   DB_NAME          : "ScanPackingDB",
-  DB_VERSION       : 5,
+  DB_VERSION       : 6,
   SYNC_INTERVAL_MS : 60_000,
-  DEBOUNCE_MS      : 2_800,           // jeda scan ulang resi sama
-  BATCH_CONCURRENCY: 3,               // kirim 3 resi paralel
-  MAX_RETRY        : 2,               // retry otomatis jika gagal
+  DEBOUNCE_MS      : 2_800,
+  BATCH_CONCURRENCY: 3,
+  MAX_RETRY        : 2,
   RETRY_DELAY_MS   : 1_500,
 };
 
-/* ════════════════════════════════════════════════════════════
-   STATE GLOBAL
-════════════════════════════════════════════════════════════ */
-let currentUser = "";            // nama partimer dari E8 spreadsheet
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+let currentUser = "";
 let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
-const resiDiScan  = new Set();  // deduplicate dalam satu sesi
-const domItemMap  = new Map();  // id/resi → DOM element riwayat
-let isKiriming    = false;
+const resiDiScan = new Set();
+const domItemMap = new Map();
+let isKiriming   = false;
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    AUDIO
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 let audioCtx;
 function initAudio() {
   if (audioCtx) return;
@@ -567,16 +419,15 @@ function bunyi(tipe) {
   o.start(t); o.stop(t + p.dur);
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    INDEXED DB
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 let idb;
 function initDB() {
   return new Promise((res, rej) => {
     const req = indexedDB.open(CFG.DB_NAME, CFG.DB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      // Hapus store lama jika ada
       if (db.objectStoreNames.contains("scans")) db.deleteObjectStore("scans");
       const s = db.createObjectStore("scans", { keyPath:"id", autoIncrement:true });
       s.createIndex("resi", "resi", { unique:false });
@@ -590,7 +441,6 @@ function initDB() {
     req.onerror   = () => rej(req.error);
   });
 }
-
 const idbGetAll = store => new Promise((res, rej) => {
   const r = idb.transaction(store,"readonly").objectStore(store).getAll();
   r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
@@ -620,12 +470,11 @@ function idbUpdate(store, key, fn) {
   });
 }
 
-/* ════════════════════════════════════════════════════════════
-   STATUS CACHE — deteksi BATAL secara offline
-════════════════════════════════════════════════════════════ */
-const statusCache = new Map();  // resi → { statusJ, statusL, keteranganI }
+/* ════════════════════════════════════════
+   STATUS CACHE (deteksi BATAL offline)
+════════════════════════════════════════ */
+const statusCache = new Map();
 let lastSyncAt = null;
-let syncTimer  = null;
 
 async function loadStatusCache() {
   const rows = await idbGetAll("statuscache");
@@ -638,38 +487,27 @@ function isResiBatal(resi) {
   return e && String(e.statusJ).trim() === "Batal";
 }
 
-// Sinkron status dari GAS
 async function syncStatus(manual = false) {
-  const dot  = document.getElementById("sync-dot");
-  const btn  = document.getElementById("btn-sync");
-  const lbl  = document.getElementById("sync-lbl");
+  const dot = document.getElementById("sync-dot");
+  const btn = document.getElementById("btn-sync");
+  const lbl = document.getElementById("sync-lbl");
   dot.className = "sync-dot stale";
   btn.classList.add("syncing");
   lbl.textContent = "Sync…";
   setSyncBarLoading(true);
 
   try {
-    const url  = CFG.GAS_URL + "?action=getStatus&t=" + Date.now();
-    const resp = await fetch(url, { redirect:"follow" });
+    const resp = await fetch(CFG.GAS_URL + "?action=getStatus&t=" + Date.now(), { redirect:"follow" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-
     const text = await resp.text();
     let json;
-    try { json = JSON.parse(text); }
-    catch(_) { throw new Error("Response bukan JSON — pastikan GAS sudah di-deploy ulang"); }
-
+    try { json = JSON.parse(text); } catch(_) { throw new Error("Response bukan JSON"); }
     if (json.error) throw new Error(json.error);
 
     if (Array.isArray(json)) {
       for (const row of json) {
         const key   = String(row.resi).trim().toUpperCase();
-        const entry = {
-          resi        : key,
-          statusJ     : row.statusJ     || "",
-          statusL     : row.statusL     || "",
-          keteranganI : row.keteranganI || "",
-          updatedAt   : Date.now()
-        };
+        const entry = { resi:key, statusJ:row.statusJ||"", statusL:row.statusL||"", keteranganI:row.keteranganI||"", updatedAt:Date.now() };
         statusCache.set(key, entry);
         await idbPut("statuscache", entry);
       }
@@ -693,13 +531,8 @@ async function syncStatus(manual = false) {
 }
 
 function syncManual() { syncStatus(true); }
+function startAutoSync() { syncStatus(); setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS); }
 
-function startAutoSync() {
-  syncStatus();
-  syncTimer = setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS);
-}
-
-// Jika ada scan yg sudah masuk tapi ternyata BATAL → update status lokal
 async function checkBatalPasca() {
   const scans = await idbGetAll("scans");
   for (const s of scans) {
@@ -719,14 +552,13 @@ async function checkBatalPasca() {
 function setSyncBarLoading(v) {
   document.getElementById("sbd").className = "sbd" + (v ? " loading" : "");
 }
-
 function updateSyncUI() {
   const sbd = document.getElementById("sbd");
   const sbt = document.getElementById("sbt");
   document.getElementById("sbc").textContent = statusCache.size + " resi";
   if (!lastSyncAt) {
     sbd.className   = "sbd stale";
-    sbt.textContent = "Belum disinkron — tekan tombol Sync";
+    sbt.textContent = "Belum disinkron — tekan Sync";
   } else {
     const m = Math.floor((Date.now() - lastSyncAt) / 60000);
     sbd.className   = m < 2 ? "sbd fresh" : "sbd stale";
@@ -734,9 +566,9 @@ function updateSyncUI() {
   }
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    LOGIN
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 function cekPassword() {
   const val = document.getElementById("input-password").value.trim();
   if (val === CFG.PASSWORD) {
@@ -754,40 +586,36 @@ async function onAppStart() {
   await initDB();
   await loadStatusCache();
   await initRiwayat();
-  // Fetch nama partimer SEBELUM sync dan scan agar selalu tersedia
   await fetchNamaDanTampilkan();
   startAutoSync();
-  // Warmup GAS
   fetch(CFG.GAS_URL + "?action=ping").catch(() => {});
 }
 
-/* ════════════════════════════════════════════════════════════
-   FETCH NAMA PARTIMER dari E8 spreadsheet
-   currentUser diisi sebelum scan maupun kirim dimulai
-════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   FETCH NAMA dari E8 — diisi ke kolom K
+════════════════════════════════════════ */
 async function fetchNamaDanTampilkan() {
   try {
     const resp = await fetch(CFG.GAS_URL + "?action=getNama&t=" + Date.now(), { redirect:"follow" });
     const text = await resp.text();
     const json = JSON.parse(text);
-    if (json.nama) {
-      currentUser = String(json.nama).trim();
-    } else {
-      currentUser = "";
-    }
+    currentUser = json.nama ? String(json.nama).trim() : "";
   } catch(_) {
     currentUser = "";
   }
-  // Update topbar dan user strip
-  const namaLabel = currentUser || "(nama tidak tersedia)";
-  document.getElementById("topbar-title").textContent = "📦 " + namaLabel;
-  document.getElementById("user-nama-strip").textContent = namaLabel;
-  document.getElementById("user-strip").style.display = currentUser ? "flex" : "none";
+
+  const label = currentUser || "(nama tidak tersedia)";
+  document.getElementById("topbar-title").textContent    = "📦 " + label;
+  document.getElementById("user-nama-strip").textContent = label;
+  document.getElementById("user-strip").style.display    = currentUser ? "flex" : "none";
+
+  // Preview kolom K di panel kirim
+  document.getElementById("col-k-preview").textContent = "K = " + (currentUser || "?");
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    STATS
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 function tampilStats() {
   document.getElementById("cnt-sukses").textContent   = cntSukses;
   document.getElementById("cnt-batal").textContent    = cntBatal;
@@ -818,9 +646,9 @@ async function updatePendingCount() {
   }
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    RIWAYAT DOM
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 async function initRiwayat() {
   const scans  = await idbGetAll("scans");
   const sorted = [...scans].sort((a, b) => b.ts - a.ts).slice(0, 40);
@@ -837,21 +665,18 @@ async function initRiwayat() {
 function buatItemRiwayat(resi, status, ts, id, sent) {
   const wrap = document.getElementById("riwayat");
   const el   = document.createElement("div");
-  el.dataset.id     = id || "";
-  el.dataset.status = status;
-  el.dataset.sent   = sent ? "1" : "0";
-
+  el.dataset.id   = id || "";
+  el.dataset.ts   = ts || Date.now();
+  el.dataset.sent = sent ? "1" : "0";
   _renderItem(el, resi, status, !!sent, ts);
-
   wrap.insertBefore(el, wrap.firstChild);
   while (wrap.children.length > 40) wrap.removeChild(wrap.lastChild);
-
   if (id)   domItemMap.set("id_"   + id,   el);
   if (resi) domItemMap.set("resi_" + resi, el);
 }
 
 function _renderItem(el, resi, status, sent, ts) {
-  const icon = { sukses:"✅", batal:"🚫", duplikat:"⚠️", "error-item":"❗" }[status] || "⏳";
+  const icon   = { sukses:"✅", batal:"🚫", duplikat:"⚠️", "error-item":"❗" }[status] || "⏳";
   const tagTxt = sent ? "sent" : (status === "sukses" ? "pending" : status);
   const tagCls = sent ? "tag-sent" : (
     status === "sukses"     ? "tag-pending"  :
@@ -859,9 +684,8 @@ function _renderItem(el, resi, status, sent, ts) {
     status === "duplikat"   ? "tag-duplikat" :
     status === "error-item" ? "tag-error"    : "tag-pending"
   );
-  const cls = "ritem " + (sent ? "sent" : status);
-  const t   = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  el.className = cls;
+  el.className = "ritem " + (sent ? "sent" : status);
+  const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   el.innerHTML =
     `<span class="ri-icon">${icon}</span>` +
     `<span class="ri-resi">${resi}</span>` +
@@ -874,17 +698,17 @@ function updateRiwayatDOM(idOrResi, status, sent) {
   if (!el) return;
   el.dataset.status = status;
   if (sent !== undefined) el.dataset.sent = sent ? "1" : "0";
-  const resi = el.querySelector(".ri-resi")?.textContent || "";
-  const ts   = parseInt(el.dataset.ts || Date.now());
+  const resi   = el.querySelector(".ri-resi")?.textContent || "";
+  const ts     = parseInt(el.dataset.ts || Date.now());
   const isSent = el.dataset.sent === "1";
   _renderItem(el, resi, status, isSent, ts);
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    PROSES HASIL SCAN
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
-  // Duplikat dalam sesi ini
+  // Duplikat sesi
   if (resiDiScan.has(resi)) {
     bunyi("duplikat");
     setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
@@ -895,12 +719,12 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // Cek BATAL dari cache lokal
+  // Cek BATAL dari cache
   if (isResiBatal(resi)) {
-    const e = statusCache.get(resi.toUpperCase());
+    const e   = statusCache.get(resi.toUpperCase());
     const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
     bunyi("batal");
-    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — skip!", "batal");
+    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
     cntBatal++;
     resiDiScan.add(resi);
     const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
@@ -909,7 +733,7 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // Sukses — simpan lokal, siap dikirim batch
+  // Sukses → simpan lokal, siap kirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
   setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
@@ -919,19 +743,23 @@ async function prosesHasil(resi, ts) {
   tampilStats();
 }
 
-/* ════════════════════════════════════════════════════════════
-   KIRIM KE GAS — single item dengan retry otomatis
-   PENTING: currentUser sudah diisi di onAppStart sebelum kirim
-════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   KIRIM KE GAS — isi J="Sudah", K=nama
+   Payload: { resi, mode:"packing", nama, tglScan:"", jamScan:"", ua }
+   GAS akan isi: J → "Sudah" | K → nama saja (stamp = nama)
+════════════════════════════════════════ */
 async function kirimKeGAS(item, attempt) {
   attempt = attempt || 1;
-  const tgl = new Date(item.ts);
+
+  // Payload: nama saja, tglScan & jamScan dikosongkan
+  // GAS: stamp = (nama ? nama + " | " : "") + tglScan + " " + jamScan
+  // → karena tglScan & jamScan kosong, stamp = nama saja ✓
   const payload = JSON.stringify({
     resi    : item.resi,
-    mode    : CFG.MODE,
-    nama    : currentUser,   // ← nama dari E8, sudah diambil di onAppStart
-    tglScan : tgl.toLocaleDateString("id-ID", { day:"2-digit", month:"2-digit", year:"numeric" }),
-    jamScan : tgl.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" }),
+    mode    : "packing",
+    nama    : currentUser,
+    tglScan : "",
+    jamScan : "",
     ua      : navigator.userAgent.substring(0, 100)
   });
 
@@ -942,17 +770,11 @@ async function kirimKeGAS(item, attempt) {
       headers : { "Content-Type": "text/plain;charset=utf-8" },
       redirect: "follow"
     });
-
-    // Baca sebagai text lalu parse — antisipasi GAS redirect ke error page
     const raw = await resp.text();
     let result;
-    try {
-      result = JSON.parse(raw);
-    } catch(_) {
-      throw new Error("Response bukan JSON — re-deploy GAS?");
-    }
-    return result; // { status, message, resi }
-
+    try { result = JSON.parse(raw); }
+    catch(_) { throw new Error("Response bukan JSON — re-deploy GAS?"); }
+    return result;
   } catch(err) {
     if (attempt < CFG.MAX_RETRY) {
       await sleep(CFG.RETRY_DELAY_MS * attempt);
@@ -964,20 +786,15 @@ async function kirimKeGAS(item, attempt) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/* ════════════════════════════════════════════════════════════
-   BATCH KIRIM SEMUA PENDING
-════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   BATCH KIRIM
+════════════════════════════════════════ */
 async function kirimSemua() {
   if (isKiriming) return;
 
-  // Pastikan nama sudah ada — jika belum, fetch ulang sebelum kirim
   if (!currentUser) {
     showToast("⏳ Mengambil nama petugas…", "");
     await fetchNamaDanTampilkan();
-    if (!currentUser) {
-      showToast("⚠️ Nama petugas tidak tersedia, kirim tanpa nama?", "y");
-      // Tetap lanjutkan — tidak blokir pengiriman
-    }
   }
 
   const scans   = await idbGetAll("scans");
@@ -991,7 +808,6 @@ async function kirimUlangError() {
   const scans  = await idbGetAll("scans");
   const errors = scans.filter(s => s.status === "error-item");
   if (errors.length === 0) { showToast("Tidak ada paket error.", "y"); return; }
-
   for (const s of errors) {
     await idbUpdate("scans", s.id, r => ({ ...r, status:"sukses", sent:false }));
     updateRiwayatDOM(s.id, "sukses", false);
@@ -1036,6 +852,7 @@ async function jalankanBatch(pending) {
         updateRiwayatDOM(item.id, "duplikat", true);
         cntSukses = Math.max(0, cntSukses - 1); cntDuplikat++;
         tampilStats();
+        showToast("⚠️ " + item.resi + " sudah pernah di-packing.", "y");
 
       } else if (st === "not_found") {
         rDupli++;
@@ -1043,15 +860,8 @@ async function jalankanBatch(pending) {
         updateRiwayatDOM(item.id, "duplikat", true);
         showToast("⚠️ " + item.resi + " tidak ada di data Sheets!", "y");
 
-      } else if (st === "belum_packing") {
-        // Mode kirim: resi belum di-packing — tandai error agar bisa dicek
-        rError++;
-        await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
-        updateRiwayatDOM(item.id, "error-item", false);
-        showToast("📦 " + item.resi + " belum di-packing!", "r");
-
       } else {
-        // status error atau tidak dikenal
+        // error / unknown
         rError++;
         await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
         updateRiwayatDOM(item.id, "error-item", false);
@@ -1063,16 +873,14 @@ async function jalankanBatch(pending) {
     }
 
     done++;
-    document.getElementById("prog-bar").style.width  = Math.round((done / pending.length) * 100) + "%";
-    document.getElementById("prog-txt").textContent  = done + " / " + pending.length + " dikirim";
+    document.getElementById("prog-bar").style.width = Math.round((done / pending.length) * 100) + "%";
+    document.getElementById("prog-txt").textContent = done + " / " + pending.length + " dikirim";
   };
 
-  // Kirim dengan concurrency limit
   for (let i = 0; i < pending.length; i += CFG.BATCH_CONCURRENCY) {
     await Promise.all(pending.slice(i, i + CFG.BATCH_CONCURRENCY).map(kirimSatu));
   }
 
-  // Selesai
   document.getElementById("progress-wrap").style.display = "none";
   document.getElementById("kirim-result").style.display  = "flex";
   document.getElementById("res-sukses").textContent = rSukses;
@@ -1092,9 +900,9 @@ async function jalankanBatch(pending) {
   isKiriming = false;
 }
 
-/* ════════════════════════════════════════════════════════════
-   SCANNER ENGINE
-════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   SCANNER
+════════════════════════════════════════ */
 let codeReader = null, scanning = false;
 let resiTerakhir = "", waktuTerakhir = 0;
 
@@ -1102,10 +910,10 @@ function mulaiScan() {
   if (audioCtx?.state === "suspended") audioCtx.resume();
   initAudio();
   setStatus("⏳ Mengaktifkan kamera…", "proses");
-  document.getElementById("btn-mulai").style.display  = "none";
-  document.getElementById("btn-stop").style.display   = "inline-flex";
-  document.getElementById("scan-line").style.display  = "block";
-  document.getElementById("scanner-idle").style.display = "none";
+  document.getElementById("btn-mulai").style.display     = "none";
+  document.getElementById("btn-stop").style.display      = "inline-flex";
+  document.getElementById("scan-line").style.display     = "block";
+  document.getElementById("scanner-idle").style.display  = "none";
   scanning = true;
 
   codeReader = new ZXing.BrowserMultiFormatReader();
@@ -1120,21 +928,14 @@ function mulaiScan() {
   codeReader.hints = hints;
 
   codeReader.decodeFromConstraints(
-    {
-      video: {
-        facingMode: { ideal:"environment" },
-        width:     { ideal:640 },
-        height:    { ideal:480 },
-        frameRate: { ideal:30 }
-      }
-    },
+    { video: { facingMode:{ ideal:"environment" }, width:{ ideal:640 }, height:{ ideal:480 }, frameRate:{ ideal:30 } } },
     "video",
     (result, err) => {
       if (!result || !scanning) return;
       const resi = result.getText().trim().toUpperCase();
       const now  = Date.now();
       if (resi === resiTerakhir && now - waktuTerakhir < CFG.DEBOUNCE_MS) return;
-      resiTerakhir = resi;
+      resiTerakhir  = resi;
       waktuTerakhir = now;
       bunyi("beep");
       prosesHasil(resi, now);
@@ -1152,14 +953,14 @@ function stopScan() {
   setStatus("⏹ Scanner dihentikan. Tekan Mulai untuk lanjut.");
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    UI HELPERS
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 let resetTimer;
 function setStatus(html, kelas) {
   const el = document.getElementById("status-box");
-  el.innerHTML   = html;
-  el.className   = "status-box " + (kelas || "");
+  el.innerHTML = html;
+  el.className = "status-box " + (kelas || "");
   clearTimeout(resetTimer);
   if (kelas && kelas !== "proses") {
     resetTimer = setTimeout(() => {
@@ -1182,9 +983,9 @@ function fmtWaktu(d) {
   return d.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
 }
 
-/* ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    MODAL & RESET
-════════════════════════════════════════════════════════════ */
+════════════════════════════════════════ */
 const showModal = id => document.getElementById(id).classList.add("open");
 const hideModal = id => document.getElementById(id).classList.remove("open");
 const showResetModal = () => showModal("modal-reset");
@@ -1210,23 +1011,20 @@ async function clearRiwayat() {
   await resetSemua();
 }
 
-/* ════════════════════════════════════════════════════════════
-   PWA MANIFEST + SERVICE WORKER
-════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   PWA
+════════════════════════════════════════ */
 const manifest = {
   name:"Scan Packing", short_name:"Packing",
   start_url:"./scan-packing.html", display:"standalone",
   background_color:"#080c14", theme_color:"#111827",
-  icons:[{
-    src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",
-    sizes:"any", type:"image/svg+xml"
-  }]
+  icons:[{ src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>", sizes:"any", type:"image/svg+xml" }]
 };
 document.getElementById("manifest-link").href =
   URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type:"application/manifest+json" }));
 
 if ("serviceWorker" in navigator) {
-  const sw = `const V="sp-v7";
+  const sw = `const V="sp-v8";
 self.addEventListener("install",e=>e.waitUntil(caches.open(V).then(c=>c.addAll([location.href]))));
 self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   navigator.serviceWorker.register(
