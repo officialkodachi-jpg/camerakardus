@@ -284,7 +284,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
     <div class="status-box" id="status-box">Siap — tekan Mulai Scan.</div>
 
-    <!-- Stats: 5 kotak (tambah Sudah Pack) -->
+    <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card"><div class="stat-num g" id="cnt-sukses">0</div><div class="stat-lbl">Berhasil</div></div>
       <div class="stat-card"><div class="stat-num r" id="cnt-batal">0</div><div class="stat-lbl">Batal</div></div>
@@ -360,7 +360,7 @@ const CFG = {
   PASSWORD         : "kodachi123",
   MODE             : "packing",
   DB_NAME          : "ScanPackingDB",
-  DB_VERSION       : 7,              // naik versi agar schema diperbarui
+  DB_VERSION       : 7,
   SYNC_INTERVAL_MS : 60_000,
   DEBOUNCE_MS      : 2_800,
   BATCH_CONCURRENCY: 3,
@@ -372,7 +372,6 @@ const CFG = {
    STATE
 ════════════════════════════════════════ */
 let currentUser = "";
-// cntSudahPack: resi yang di cache sudah berstatus J="Sudah" (bukan dari sesi ini)
 let cntSukses = 0, cntBatal = 0, cntSudahPack = 0, cntDuplikat = 0;
 const resiDiScan = new Set();
 const domItemMap = new Map();
@@ -461,10 +460,6 @@ function idbUpdate(store, key, fn) {
 
 /* ════════════════════════════════════════
    STATUS CACHE
-   Digunakan untuk deteksi BATAL dan SUDAH-PACKING secara offline.
-   - statusJ = "Batal"  → tolak, pesanan batal
-   - statusJ = "Sudah"  → tolak, sudah pernah di-packing (duplikat)
-   - statusJ = ""       → belum packing, boleh proses
 ════════════════════════════════════════ */
 const statusCache = new Map();
 let lastSyncAt = null;
@@ -479,13 +474,11 @@ function getCacheEntry(resi) {
   return statusCache.get(resi.toUpperCase());
 }
 
-// Resi dibatalkan → kolom J = "Batal"
 function isResiBatal(resi) {
   const e = getCacheEntry(resi);
   return e && String(e.statusJ).trim() === "Batal";
 }
 
-// ★ BARU: Resi sudah pernah di-packing → kolom J = "Sudah"
 function isResiSudahPacking(resi) {
   const e = getCacheEntry(resi);
   return e && String(e.statusJ).trim() === "Sudah";
@@ -543,7 +536,6 @@ async function syncStatus(manual = false) {
 function syncManual() { syncStatus(true); }
 function startAutoSync() { syncStatus(); setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS); }
 
-// Koreksi pasca-sync: resi yang sebelumnya sukses, ternyata BATAL di Sheets
 async function checkBatalPasca() {
   const scans = await idbGetAll("scans");
   for (const s of scans) {
@@ -729,10 +721,12 @@ function updateRiwayatDOM(idOrResi, status, sent) {
    PROSES HASIL SCAN
 
    Urutan prioritas:
-   1. Resi BATAL (J = "Batal")  → tolak langsung
-   2. Resi SUDAH PACKING di Sheets (J = "Sudah") → duplikat dari server
-   3. Duplikat sesi ini (resiDiScan)  → duplikat lokal
-   4. Sukses → simpan lokal, antri kirim
+   1. Resi BATAL (J = "Batal")
+      - Sudah pernah discan sesi ini → peringatan saja, counter TIDAK nambah
+      - Pertama kali discan → catat & hitung 1x
+   2. Resi SUDAH PACKING di Sheets (J = "Sudah")
+   3. Duplikat sesi ini
+   4. Sukses
 ════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
 
@@ -741,6 +735,15 @@ async function prosesHasil(resi, ts) {
     const e   = getCacheEntry(resi);
     const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
     bunyi("batal");
+
+    // Sudah pernah discan di sesi ini → peringatan saja, TANPA tambah counter & riwayat
+    if (resiDiScan.has(resi)) {
+      setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — sudah tercatat, dilewati.", "batal");
+      return;
+    }
+
+    // Pertama kali discan → catat & hitung 1x
+    resiDiScan.add(resi);
     setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
     cntBatal++;
     const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
@@ -750,12 +753,10 @@ async function prosesHasil(resi, ts) {
   }
 
   // ② Sudah di-packing sebelumnya (dari cache Sheets, J = "Sudah")
-  //    Ditampilkan meski belum pernah discan di sesi ini agar petugas tahu
   if (isResiSudahPacking(resi)) {
     bunyi("duplikat");
     setStatus("📦 <b>" + resi + "</b> sudah di-packing sebelumnya (dari Sheets)!", "sudah-packing");
     cntSudahPack++;
-    // Tetap masukkan ke resiDiScan agar scan berikutnya masuk ke cek ③ (duplikat sesi)
     resiDiScan.add(resi);
     const id = await idbAdd("scans", { resi, status:"sudah-packing", ts, mode:CFG.MODE, sent:false });
     buatItemRiwayat(resi, "sudah-packing", ts, id, false);
@@ -763,7 +764,7 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // ③ Duplikat sesi ini (sudah discan tadi, tapi bukan batal/sudah-pack)
+  // ③ Duplikat sesi ini
   if (resiDiScan.has(resi)) {
     bunyi("duplikat");
     setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
@@ -774,7 +775,7 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // ④ Sukses → simpan lokal, siap kirim batch
+  // ④ Sukses
   resiDiScan.add(resi);
   bunyi("sukses");
   setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
@@ -785,7 +786,7 @@ async function prosesHasil(resi, ts) {
 }
 
 /* ════════════════════════════════════════
-   KIRIM KE GAS — isi J="Sudah", K=nama
+   KIRIM KE GAS
 ════════════════════════════════════════ */
 async function kirimKeGAS(item, attempt) {
   attempt = attempt || 1;
@@ -882,7 +883,6 @@ async function jalankanBatch(pending) {
         showToast("🚫 " + item.resi + " BATAL!", "r");
 
       } else if (st === "duplikat") {
-        // Server konfirmasi: sudah packing sebelumnya
         rDupli++;
         await idbUpdate("scans", item.id, r => ({ ...r, status:"sudah-packing", sent:true }));
         updateRiwayatDOM(item.id, "sudah-packing", true);
