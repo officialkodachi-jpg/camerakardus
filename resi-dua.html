@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Scan Kirim</title>
+  <title>Scan Packing</title>
   <meta name="theme-color" content="#080c14">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,21 +14,20 @@
 
 <style>
 /* ════════════════════════════════════════
-   TOKENS  — scan-kirim memakai aksen HIJAU
-   (untuk membedakan visual dari scan-packing yang biru)
+   TOKENS
 ════════════════════════════════════════ */
 :root {
   --bg      : #080c14;
   --bg2     : #0d1220;
-  --surface : #0e1a14;   /* sedikit lebih hijau gelap */
-  --surf2   : #152019;
-  --surf3   : #1d2e22;
-  --border  : #1c2e22;
-  --border2 : #2a4030;
+  --surface : #111827;
+  --surf2   : #1a2338;
+  --surf3   : #222d45;
+  --border  : #1e2d47;
+  --border2 : #2a3d5c;
 
-  --accent  : #22c55e;   /* GREEN sebagai aksen utama */
-  --accent2 : #4ade80;
-  --adim    : rgba(34,197,94,.12);
+  --accent  : #3b82f6;
+  --accent2 : #60a5fa;
+  --adim    : rgba(59,130,246,.12);
 
   --green   : #22c55e;
   --gdim    : rgba(34,197,94,.10);
@@ -38,8 +37,6 @@
   --odim    : rgba(249,115,22,.10);
   --yellow  : #eab308;
   --ydim    : rgba(234,179,8,.10);
-  --blue    : #3b82f6;
-  --bdim    : rgba(59,130,246,.10);
 
   --text    : #e2e8f0;
   --text2   : #94a3b8;
@@ -58,23 +55,30 @@
 html { font-size: 16px; }
 body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; }
 
-/* ════════════════════════════════════════ LOGIN ════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════════ */
 #login-screen {
   display: flex; align-items: center; justify-content: center;
   min-height: 100dvh; padding: 24px;
-  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34,197,94,.15) 0%, var(--bg) 65%);
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,.18) 0%, var(--bg) 65%);
 }
 .login-card {
-  width: 100%; max-width: 380px; background: var(--surface);
-  border: 1px solid var(--border); border-radius: var(--r-xl);
-  padding: 40px 32px; box-shadow: 0 40px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(34,197,94,.08);
+  width: 100%; max-width: 380px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 40px 32px;
+  box-shadow: 0 40px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(59,130,246,.08);
 }
 .login-logo {
-  width: 56px; height: 56px; border-radius: 16px; background: var(--adim);
-  border: 1px solid var(--border2); display: flex; align-items: center;
-  justify-content: center; font-size: 28px; margin-bottom: 20px;
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--adim); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin-bottom: 20px;
 }
-.login-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+.login-badge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
+}
 .login-title { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
 .login-sub   { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
 .login-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; letter-spacing: .5px; }
@@ -87,24 +91,28 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--adim); }
 .login-input::placeholder { color: var(--text3); }
 .login-btn {
-  width: 100%; background: var(--accent); color: #000; border: none;
-  border-radius: var(--r-md); padding: 15px; font-size: 15px; font-weight: 800;
-  cursor: pointer; font-family: var(--sans); transition: opacity .15s, transform .1s;
+  width: 100%; background: var(--accent); color: white; border: none;
+  border-radius: var(--r-md); padding: 15px; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: var(--sans); letter-spacing: .3px;
+  transition: opacity .15s, transform .1s;
 }
 .login-btn:active { opacity: .85; transform: scale(.98); }
 .login-error { margin-top: 12px; color: var(--red); font-size: 13px; text-align: center; }
 
-/* ════════════════════════════════════════ APP SHELL ════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   APP SHELL
+════════════════════════════════════════ */
 #app { display: none; }
 
 .topbar {
   position: sticky; top: 0; z-index: 20;
-  background: rgba(8,12,14,.92); backdrop-filter: blur(12px);
+  background: rgba(8,12,20,.92); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   padding: 10px 16px;
   display: grid; grid-template-columns: 1fr auto auto;
   align-items: center; gap: 12px;
 }
+.topbar-info {}
 .topbar-badge { font-family: var(--mono); font-size: 9px; letter-spacing: 2.5px; color: var(--accent); text-transform: uppercase; margin-bottom: 2px; }
 .topbar-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -112,8 +120,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   display: flex; align-items: center; gap: 6px;
   padding: 7px 11px; background: var(--surf2); border: 1px solid var(--border2);
   border-radius: var(--r-sm); color: var(--text2); font-size: 11px;
-  font-family: var(--mono); cursor: pointer; white-space: nowrap;
+  font-family: var(--mono); cursor: pointer;
   transition: border-color .2s, color .2s;
+  white-space: nowrap;
 }
 .sync-btn:hover { border-color: var(--accent); color: var(--accent2); }
 .sync-btn.syncing .si { animation: spin .7s linear infinite; }
@@ -124,21 +133,24 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .topbar-counter { text-align: right; }
-.counter-num { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1; }
-.counter-lbl { font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
+.counter-num  { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent2); line-height: 1; }
+.counter-lbl  { font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
 
 .content { padding: 14px 16px 110px; }
 
-/* Scanner */
+/* ════════════════════════════════════════
+   SCANNER
+════════════════════════════════════════ */
 .scanner-wrap {
   position: relative; width: 100%; border-radius: var(--r-lg);
   overflow: hidden; background: #000; border: 1px solid var(--border);
   aspect-ratio: 4/3; max-height: 240px;
 }
 #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .scan-frame {
-  width: 180px; height: 140px; border: 2px solid rgba(34,197,94,.5);
+  width: 180px; height: 140px; border: 2px solid rgba(59,130,246,.5);
   border-radius: var(--r-sm); position: relative;
 }
 .scan-frame::before, .scan-frame::after {
@@ -154,7 +166,8 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   box-shadow: 0 0 10px var(--accent2);
   animation: scanline 2s ease-in-out infinite; display: none;
 }
-@keyframes scanline { 0%,100% { top:8%; } 50% { top:90%; } }
+@keyframes scanline { 0%,100% { top: 8%; } 50% { top: 90%; } }
+
 .scanner-idle {
   position: absolute; inset: 0; display: flex;
   flex-direction: column; align-items: center; justify-content: center;
@@ -163,49 +176,58 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .scanner-idle-icon { font-size: 42px; margin-bottom: 8px; }
 .scanner-idle-text { color: var(--text2); font-size: 13px; }
 
-/* Buttons */
+/* ════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════ */
 .btn-row { display: flex; gap: 8px; margin-top: 12px; }
 .btn {
   flex: 1; padding: 12px 14px; border: none; border-radius: var(--r-md);
   font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
-  transition: opacity .15s, transform .1s;
+  letter-spacing: .2px; transition: opacity .15s, transform .1s;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .btn:active { opacity: .75; transform: scale(.97); }
-.btn-start { background: var(--accent); color: #000; }
-.btn-stop  { background: var(--red); color: white; display: none; }
-.btn-icon  { flex: 0 0 44px; background: var(--surf2); color: var(--text2); border: 1px solid var(--border2); font-size: 18px; }
+.btn-start  { background: var(--accent); color: white; }
+.btn-stop   { background: var(--red); color: white; display: none; }
+.btn-icon   { flex: 0 0 44px; background: var(--surf2); color: var(--text2); border: 1px solid var(--border2); font-size: 18px; }
 
-/* Status Box */
+/* ════════════════════════════════════════
+   STATUS BOX
+════════════════════════════════════════ */
 .status-box {
   margin-top: 12px; background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: 14px 16px; min-height: 58px;
   display: flex; align-items: center; font-size: 14px; line-height: 1.5;
   transition: border-color .15s, background .15s; font-family: var(--mono);
 }
-.status-box.sukses          { border-color: var(--green);  background: var(--gdim); color: #86efac; }
-.status-box.batal           { border-color: var(--orange); background: var(--odim); color: #fdba74; }
-.status-box.duplikat        { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
-.status-box.belum_packing   { border-color: var(--blue);   background: var(--bdim); color: #93c5fd; }
-.status-box.proses          { border-color: var(--accent); background: var(--adim); color: #86efac; }
-.status-box.error           { border-color: var(--red);    background: var(--rdim); color: #fca5a5; }
+.status-box.sukses   { border-color: var(--green);  background: var(--gdim); color: #86efac; }
+.status-box.batal    { border-color: var(--orange); background: var(--odim); color: #fdba74; }
+.status-box.duplikat { border-color: var(--yellow); background: var(--ydim); color: #fde047; }
+.status-box.proses   { border-color: var(--accent); background: var(--adim); color: #93c5fd; }
+.status-box.error    { border-color: var(--red);    background: var(--rdim); color: #fca5a5; }
 
-/* Stats */
+/* ════════════════════════════════════════
+   STATS ROW
+════════════════════════════════════════ */
 .stats-row { display: flex; gap: 8px; margin-top: 10px; }
 .stat-card {
   flex: 1; background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: 11px 8px; text-align: center;
 }
 .stat-num { font-family: var(--mono); font-size: 22px; font-weight: 700; line-height: 1; }
-.stat-num.g  { color: var(--green); }
-.stat-num.r  { color: var(--red); }
-.stat-num.y  { color: var(--yellow); }
-.stat-num.bl { color: var(--blue); }
-.stat-num.a  { color: var(--accent2); }
-.stat-lbl    { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.stat-num.g { color: var(--green); }
+.stat-num.r { color: var(--red); }
+.stat-num.y { color: var(--yellow); }
+.stat-num.a { color: var(--accent2); }
+.stat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
 
-/* Batch kirim */
-.section-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px; }
+/* ════════════════════════════════════════
+   BATCH KIRIM PANEL
+════════════════════════════════════════ */
+.section-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 18px 0 10px;
+}
 .section-title { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
 .txt-btn { font-size: 11px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 0; }
 .txt-btn:hover { color: var(--red); }
@@ -220,7 +242,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .batch-desc b { color: var(--text); font-weight: 700; }
 
 .btn-kirim {
-  width: 100%; padding: 15px; background: var(--accent); color: #000;
+  width: 100%; padding: 15px; background: var(--green); color: #000;
   border: none; border-radius: var(--r-md); font-size: 15px; font-weight: 800;
   cursor: pointer; font-family: var(--sans); letter-spacing: .3px;
   transition: opacity .15s, transform .1s;
@@ -235,6 +257,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   border: 1px solid var(--orange); border-radius: var(--r-md);
   font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--sans);
   display: none; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity .15s;
 }
 .btn-retry:active { opacity: .7; }
 .btn-retry.visible { display: flex; }
@@ -245,11 +268,13 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .prog-txt    { font-family: var(--mono); font-size: 11px; color: var(--text2); text-align: center; }
 
 .kirim-result { display: none; gap: 8px; margin-top: 12px; }
-.kres-card { flex: 1; text-align: center; background: var(--surf2); border-radius: var(--r-sm); padding: 8px 4px; }
-.kres-num  { font-family: var(--mono); font-size: 18px; font-weight: 700; }
-.kres-lbl  { font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
+.kres-card  { flex: 1; text-align: center; background: var(--surf2); border-radius: var(--r-sm); padding: 8px 4px; }
+.kres-num   { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+.kres-lbl   { font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
 
-/* Sync bar */
+/* ════════════════════════════════════════
+   SYNC BAR
+════════════════════════════════════════ */
 .sync-bar {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 12px; background: var(--surf2); border: 1px solid var(--border);
@@ -264,7 +289,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .sbt { flex: 1; }
 .sbc { background: var(--surf3); border-radius: 4px; padding: 2px 7px; color: var(--text); font-size: 10px; }
 
-/* Riwayat */
+/* ════════════════════════════════════════
+   RIWAYAT
+════════════════════════════════════════ */
 #riwayat {
   display: flex; flex-direction: column; gap: 5px;
   max-height: 340px; overflow-y: auto; padding-right: 2px; padding-bottom: 4px;
@@ -278,47 +305,47 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   background: var(--surface); border: 1px solid var(--border);
   border-left: 3px solid var(--green); border-radius: var(--r-sm);
   padding: 9px 12px; font-size: 12px;
-  transition: border-left-color .2s;
+  transition: border-left-color .2s, background .2s;
 }
-.ritem.batal         { border-left-color: var(--orange); }
-.ritem.duplikat      { border-left-color: var(--yellow); }
-.ritem.belum_packing { border-left-color: var(--blue); }
-.ritem.pending       { border-left-color: var(--text3); opacity: .7; }
-.ritem.sent          { border-left-color: var(--green); }
-.ritem.error-item    { border-left-color: var(--red); }
+.ritem.batal      { border-left-color: var(--orange); }
+.ritem.duplikat   { border-left-color: var(--yellow); }
+.ritem.pending    { border-left-color: var(--text3); opacity: .7; }
+.ritem.sent       { border-left-color: var(--green); }
+.ritem.error-item { border-left-color: var(--red); }
 
 .ri-icon { font-size: 14px; flex-shrink: 0; }
 .ri-resi { font-family: var(--mono); font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ri-tags { display: flex; gap: 4px; flex-shrink: 0; }
 .ri-tag  { font-family: var(--mono); font-size: 9px; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-.tag-pending      { background: var(--surf3); color: var(--text3); }
-.tag-sent         { background: var(--gdim); color: var(--green); }
-.tag-batal        { background: var(--odim); color: var(--orange); }
-.tag-duplikat     { background: var(--ydim); color: var(--yellow); }
-.tag-belum_packing{ background: var(--bdim); color: var(--blue); }
-.tag-error        { background: var(--rdim); color: var(--red); }
+.tag-pending  { background: var(--surf3); color: var(--text3); }
+.tag-sent     { background: var(--gdim); color: var(--green); }
+.tag-batal    { background: var(--odim); color: var(--orange); }
+.tag-duplikat { background: var(--ydim); color: var(--yellow); }
+.tag-error    { background: var(--rdim); color: var(--red); }
 .ri-time { font-size: 10px; color: var(--text3); flex-shrink: 0; }
 
-/* User strip */
-.user-strip {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; background: var(--adim);
-  border: 1px solid rgba(34,197,94,.2); border-radius: var(--r-sm);
-  margin-bottom: 12px; font-size: 12px; font-family: var(--mono); color: var(--accent2);
+/* ════════════════════════════════════════
+   MODAL
+════════════════════════════════════════ */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100;
+  align-items: flex-end; justify-content: center; display: none;
 }
-.user-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
-
-/* Modal */
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; align-items: flex-end; justify-content: center; display: none; }
 .modal-bg.open { display: flex; }
-.modal { background: var(--surface); border-top: 1px solid var(--border); border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 24px 24px 36px; width: 100%; max-width: 480px; }
+.modal {
+  background: var(--surface); border-top: 1px solid var(--border);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 24px 24px 36px; width: 100%; max-width: 480px;
+}
 .modal h3  { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
 .modal p   { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
 .modal-act { display: flex; gap: 10px; }
-.m-cancel  { flex:1; padding:13px; background:var(--surf2); border:1px solid var(--border2); border-radius:var(--r-md); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
-.m-confirm { flex:1; padding:13px; background:var(--red); border:none; border-radius:var(--r-md); color:white; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
+.m-cancel  { flex: 1; padding: 13px; background: var(--surf2); border: 1px solid var(--border2); border-radius: var(--r-md); color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
+.m-confirm { flex: 1; padding: 13px; background: var(--red); border: none; border-radius: var(--r-md); color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
 
-/* Toast */
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
 #toast {
   position: fixed; bottom: 24px; left: 50%;
   transform: translateX(-50%) translateY(80px);
@@ -328,22 +355,34 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   opacity: 0; transition: all .25s; max-width: 92vw; text-align: center;
   box-shadow: 0 8px 32px rgba(0,0,0,.6);
 }
-#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.show   { opacity: 1; transform: translateX(-50%) translateY(0); }
 #toast.tg { border-color: var(--green); color: #86efac; }
 #toast.tr { border-color: var(--red);   color: #fca5a5; }
 #toast.ty { border-color: var(--yellow);color: #fde047; }
-#toast.tb { border-color: var(--blue);  color: #93c5fd; }
+
+/* ════════════════════════════════════════
+   USER INFO STRIP
+════════════════════════════════════════ */
+.user-strip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--adim);
+  border: 1px solid rgba(59,130,246,.2); border-radius: var(--r-sm);
+  margin-bottom: 12px; font-size: 12px; font-family: var(--mono); color: var(--accent2);
+}
+.user-strip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ═══════════════════════════════════════════
+     LOGIN
+═══════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">🚚</div>
-    <div class="login-badge">Scan System · Kirim</div>
-    <div class="login-title">Scan Kirim</div>
-    <div class="login-sub">Masuk untuk mulai sesi scan pengiriman</div>
+    <div class="login-logo">📦</div>
+    <div class="login-badge">Scan System · Packing</div>
+    <div class="login-title">Scan Packing</div>
+    <div class="login-sub">Masuk untuk mulai sesi scan packing</div>
     <label class="login-label">Password Petugas</label>
     <input class="login-input" type="password" id="input-password"
            placeholder="••••••••••"
@@ -353,13 +392,16 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   </div>
 </div>
 
-<!-- APP -->
+<!-- ═══════════════════════════════════════════
+     APP
+═══════════════════════════════════════════ -->
 <div id="app">
 
+  <!-- Topbar -->
   <div class="topbar">
-    <div>
-      <div class="topbar-badge">Scan Kirim</div>
-      <div class="topbar-title" id="topbar-title">🚚 Memuat nama…</div>
+    <div class="topbar-info">
+      <div class="topbar-badge">Scan Packing</div>
+      <div class="topbar-title" id="topbar-title">📦 Memuat nama…</div>
     </div>
     <button class="sync-btn" id="btn-sync" onclick="syncManual()">
       <span class="sync-dot" id="sync-dot"></span>
@@ -374,12 +416,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 
   <div class="content">
 
+    <!-- User strip -->
     <div class="user-strip" id="user-strip" style="display:none">
       <span class="user-strip-dot"></span>
       <span id="user-nama-strip">Memuat…</span>
       <span style="color:var(--text3);margin-left:auto">Petugas Aktif</span>
     </div>
 
+    <!-- Scanner -->
     <div class="scanner-wrap">
       <video id="video" autoplay playsinline muted></video>
       <div id="scan-line"></div>
@@ -396,22 +440,26 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
       <button class="btn btn-icon"  title="Reset sesi" onclick="showResetModal()">↺</button>
     </div>
 
+    <!-- Status -->
     <div class="status-box" id="status-box">Siap — tekan Mulai Scan.</div>
 
+    <!-- Stats -->
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-num g"  id="cnt-sukses">0</div><div class="stat-lbl">Berhasil</div></div>
-      <div class="stat-card"><div class="stat-num r"  id="cnt-batal">0</div><div class="stat-lbl">Batal</div></div>
-      <div class="stat-card"><div class="stat-num bl" id="cnt-blm">0</div><div class="stat-lbl">Blm Pack</div></div>
-      <div class="stat-card"><div class="stat-num a"  id="cnt-pending">0</div><div class="stat-lbl">Belum Kirim</div></div>
+      <div class="stat-card"><div class="stat-num g" id="cnt-sukses">0</div><div class="stat-lbl">Berhasil</div></div>
+      <div class="stat-card"><div class="stat-num r" id="cnt-batal">0</div><div class="stat-lbl">Batal</div></div>
+      <div class="stat-card"><div class="stat-num y" id="cnt-duplikat">0</div><div class="stat-lbl">Duplikat</div></div>
+      <div class="stat-card"><div class="stat-num a" id="cnt-pending">0</div><div class="stat-lbl">Belum Kirim</div></div>
     </div>
 
+    <!-- Batch Kirim -->
     <div class="section-row">
       <div class="section-title">Kirim ke Google Sheets</div>
     </div>
     <div class="batch-panel">
       <div class="batch-info">
         <div class="batch-count" id="batch-count">0</div>
-        <div class="batch-desc">paket <b>siap dikirim</b> ke Google Sheets.<br>Scan dulu semua, kirim sekaligus.</div>
+        <div class="batch-desc">paket <b>siap dikirim</b> ke Google Sheets.<br>
+          Scan dulu semua paket, lalu kirim sekaligus.</div>
       </div>
       <button class="btn-kirim" id="btn-kirim" onclick="kirimSemua()" disabled>
         <span>📤</span><span id="btn-kirim-txt">Kirim Semua</span>
@@ -431,21 +479,24 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
       </div>
     </div>
 
+    <!-- Sync Bar -->
     <div class="sync-bar">
       <div class="sbd" id="sbd"></div>
       <div class="sbt" id="sbt">Status pesanan belum disinkron</div>
       <div class="sbc" id="sbc">0 resi</div>
     </div>
 
+    <!-- Riwayat -->
     <div class="section-row">
       <div class="section-title">Riwayat Scan</div>
       <button class="txt-btn" onclick="clearRiwayat()">Hapus riwayat</button>
     </div>
     <div id="riwayat"></div>
 
-  </div>
-</div>
+  </div><!-- /content -->
+</div><!-- /app -->
 
+<!-- Modal Reset -->
 <div class="modal-bg" id="modal-reset">
   <div class="modal">
     <h3>Reset Sesi?</h3>
@@ -464,24 +515,27 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
    KONFIGURASI
 ════════════════════════════════════════════════════════════ */
 const CFG = {
+  // !! Ganti GAS_URL setelah re-deploy !!
   GAS_URL          : "https://script.google.com/macros/s/AKfycbxomJnDBUB-1XZtnkc5asQdIn7tV742lv0MSGRD8zDH-TWRw3p873jbJIgHjncMty8/exec",
   PASSWORD         : "kodachi123",
-  MODE             : "kirim",          // mode untuk GAS
-  DB_NAME          : "ScanKirimDB",    // IndexedDB tersendiri agar tidak campur dengan scan-packing
+  MODE             : "packing",        // mode untuk GAS
+  DB_NAME          : "ScanPackingDB",
   DB_VERSION       : 5,
   SYNC_INTERVAL_MS : 60_000,
-  DEBOUNCE_MS      : 2_800,
-  BATCH_CONCURRENCY: 3,
-  MAX_RETRY        : 2,
+  DEBOUNCE_MS      : 2_800,           // jeda scan ulang resi sama
+  BATCH_CONCURRENCY: 3,               // kirim 3 resi paralel
+  MAX_RETRY        : 2,               // retry otomatis jika gagal
   RETRY_DELAY_MS   : 1_500,
 };
 
-/* STATE */
-let currentUser = "";
-let cntSukses = 0, cntBatal = 0, cntBlm = 0;
-const resiDiScan = new Set();
-const domItemMap = new Map();
-let isKiriming   = false;
+/* ════════════════════════════════════════════════════════════
+   STATE GLOBAL
+════════════════════════════════════════════════════════════ */
+let currentUser = "";            // nama partimer dari E8 spreadsheet
+let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
+const resiDiScan  = new Set();  // deduplicate dalam satu sesi
+const domItemMap  = new Map();  // id/resi → DOM element riwayat
+let isKiriming    = false;
 
 /* ════════════════════════════════════════════════════════════
    AUDIO
@@ -500,7 +554,6 @@ function bunyi(tipe) {
     sukses  : { type:"sine",     freqs:[[1000,0],[1400,.07]], dur:.14, g:.4  },
     batal   : { type:"square",   freqs:[[260,0]],             dur:.3,  g:.25 },
     duplikat: { type:"triangle", freqs:[[700,0]],             dur:.15, g:.2  },
-    warn    : { type:"triangle", freqs:[[500,0],[300,.1]],    dur:.2,  g:.2  },
     beep    : { type:"sine",     freqs:[[880,0]],             dur:.07, g:.15 },
   };
   const p = cfg[tipe] || cfg.beep;
@@ -523,10 +576,12 @@ function initDB() {
     const req = indexedDB.open(CFG.DB_NAME, CFG.DB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
+      // Hapus store lama jika ada
       if (db.objectStoreNames.contains("scans")) db.deleteObjectStore("scans");
       const s = db.createObjectStore("scans", { keyPath:"id", autoIncrement:true });
-      s.createIndex("resi","resi",{unique:false});
-      s.createIndex("ts",  "ts",  {unique:false});
+      s.createIndex("resi", "resi", { unique:false });
+      s.createIndex("ts",   "ts",   { unique:false });
+      s.createIndex("sent", "sent", { unique:false });
       if (!db.objectStoreNames.contains("statuscache")) {
         db.createObjectStore("statuscache", { keyPath:"resi" });
       }
@@ -535,55 +590,59 @@ function initDB() {
     req.onerror   = () => rej(req.error);
   });
 }
-const idbGetAll = store => new Promise((res,rej) => {
+
+const idbGetAll = store => new Promise((res, rej) => {
   const r = idb.transaction(store,"readonly").objectStore(store).getAll();
-  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
 });
-const idbAdd = (store,data) => new Promise((res,rej) => {
+const idbAdd = (store, data) => new Promise((res, rej) => {
   const r = idb.transaction(store,"readwrite").objectStore(store).add(data);
-  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
 });
-const idbPut = (store,data) => new Promise((res,rej) => {
+const idbPut = (store, data) => new Promise((res, rej) => {
   const r = idb.transaction(store,"readwrite").objectStore(store).put(data);
-  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
 });
-const idbClear = store => new Promise((res,rej) => {
+const idbClear = store => new Promise((res, rej) => {
   const r = idb.transaction(store,"readwrite").objectStore(store).clear();
-  r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);
+  r.onsuccess = () => res(); r.onerror = () => rej(r.error);
 });
 function idbUpdate(store, key, fn) {
-  return new Promise((res,rej) => {
-    const tx = idb.transaction(store,"readwrite"), os = tx.objectStore(store);
+  return new Promise((res, rej) => {
+    const tx = idb.transaction(store,"readwrite");
+    const os = tx.objectStore(store);
     const gr = os.get(key);
-    gr.onsuccess = () => { const pr = os.put(fn(gr.result)); pr.onsuccess=()=>res(); pr.onerror=()=>rej(pr.error); };
+    gr.onsuccess = () => {
+      const pr = os.put(fn(gr.result));
+      pr.onsuccess = () => res(); pr.onerror = () => rej(pr.error);
+    };
     gr.onerror = () => rej(gr.error);
   });
 }
 
 /* ════════════════════════════════════════════════════════════
-   STATUS CACHE
+   STATUS CACHE — deteksi BATAL secara offline
 ════════════════════════════════════════════════════════════ */
-const statusCache = new Map();
+const statusCache = new Map();  // resi → { statusJ, statusL, keteranganI }
 let lastSyncAt = null;
+let syncTimer  = null;
 
 async function loadStatusCache() {
   const rows = await idbGetAll("statuscache");
   rows.forEach(r => statusCache.set(r.resi, r));
   updateSyncUI();
 }
+
 function isResiBatal(resi) {
   const e = statusCache.get(resi.toUpperCase());
   return e && String(e.statusJ).trim() === "Batal";
 }
-function isResiSudahPacking(resi) {
-  const e = statusCache.get(resi.toUpperCase());
-  return e && String(e.statusJ).trim() === "Sudah";
-}
 
+// Sinkron status dari GAS
 async function syncStatus(manual = false) {
-  const dot = document.getElementById("sync-dot");
-  const btn = document.getElementById("btn-sync");
-  const lbl = document.getElementById("sync-lbl");
+  const dot  = document.getElementById("sync-dot");
+  const btn  = document.getElementById("btn-sync");
+  const lbl  = document.getElementById("sync-lbl");
   dot.className = "sync-dot stale";
   btn.classList.add("syncing");
   lbl.textContent = "Sync…";
@@ -593,23 +652,33 @@ async function syncStatus(manual = false) {
     const url  = CFG.GAS_URL + "?action=getStatus&t=" + Date.now();
     const resp = await fetch(url, { redirect:"follow" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
+
     const text = await resp.text();
     let json;
     try { json = JSON.parse(text); }
-    catch(_) { throw new Error("Response bukan JSON — re-deploy GAS?"); }
+    catch(_) { throw new Error("Response bukan JSON — pastikan GAS sudah di-deploy ulang"); }
+
     if (json.error) throw new Error(json.error);
 
     if (Array.isArray(json)) {
       for (const row of json) {
         const key   = String(row.resi).trim().toUpperCase();
-        const entry = { resi:key, statusJ:row.statusJ||"", statusL:row.statusL||"", keteranganI:row.keteranganI||"", updatedAt:Date.now() };
+        const entry = {
+          resi        : key,
+          statusJ     : row.statusJ     || "",
+          statusL     : row.statusL     || "",
+          keteranganI : row.keteranganI || "",
+          updatedAt   : Date.now()
+        };
         statusCache.set(key, entry);
         await idbPut("statuscache", entry);
       }
     }
+
     lastSyncAt = new Date();
     dot.className   = "sync-dot fresh";
     lbl.textContent = fmtWaktu(lastSyncAt);
+    await checkBatalPasca();
     if (manual) showToast("✅ Sync OK — " + statusCache.size + " resi", "g");
 
   } catch(err) {
@@ -622,17 +691,46 @@ async function syncStatus(manual = false) {
     updateSyncUI();
   }
 }
+
 function syncManual() { syncStatus(true); }
-function startAutoSync() { syncStatus(); setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS); }
-function setSyncBarLoading(v) { document.getElementById("sbd").className = "sbd" + (v ? " loading" : ""); }
+
+function startAutoSync() {
+  syncStatus();
+  syncTimer = setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS);
+}
+
+// Jika ada scan yg sudah masuk tapi ternyata BATAL → update status lokal
+async function checkBatalPasca() {
+  const scans = await idbGetAll("scans");
+  for (const s of scans) {
+    if (s.status === "sukses" && isResiBatal(s.resi)) {
+      s.status = "batal";
+      await idbPut("scans", s);
+      updateRiwayatDOM(s.id, "batal", false);
+      cntSukses = Math.max(0, cntSukses - 1);
+      cntBatal++;
+      tampilStats();
+      showToast("🚫 " + s.resi + " ternyata BATAL!", "r");
+      bunyi("batal");
+    }
+  }
+}
+
+function setSyncBarLoading(v) {
+  document.getElementById("sbd").className = "sbd" + (v ? " loading" : "");
+}
+
 function updateSyncUI() {
-  const sbd = document.getElementById("sbd"), sbt = document.getElementById("sbt");
+  const sbd = document.getElementById("sbd");
+  const sbt = document.getElementById("sbt");
   document.getElementById("sbc").textContent = statusCache.size + " resi";
-  if (!lastSyncAt) { sbd.className="sbd stale"; sbt.textContent="Belum disinkron — tekan Sync"; }
-  else {
-    const m = Math.floor((Date.now()-lastSyncAt)/60000);
-    sbd.className   = m<2 ? "sbd fresh":"sbd stale";
-    sbt.textContent = "Sync "+(m===0?"baru saja":m+"min lalu")+" — deteksi aktif";
+  if (!lastSyncAt) {
+    sbd.className   = "sbd stale";
+    sbt.textContent = "Belum disinkron — tekan tombol Sync";
+  } else {
+    const m = Math.floor((Date.now() - lastSyncAt) / 60000);
+    sbd.className   = m < 2 ? "sbd fresh" : "sbd stale";
+    sbt.textContent = "Sync " + (m === 0 ? "baru saja" : m + "min lalu") + " — deteksi batal aktif";
   }
 }
 
@@ -656,20 +754,33 @@ async function onAppStart() {
   await initDB();
   await loadStatusCache();
   await initRiwayat();
+  // Fetch nama partimer SEBELUM sync dan scan agar selalu tersedia
   await fetchNamaDanTampilkan();
   startAutoSync();
-  fetch(CFG.GAS_URL + "?action=ping").catch(()=>{});
+  // Warmup GAS
+  fetch(CFG.GAS_URL + "?action=ping").catch(() => {});
 }
 
+/* ════════════════════════════════════════════════════════════
+   FETCH NAMA PARTIMER dari E8 spreadsheet
+   currentUser diisi sebelum scan maupun kirim dimulai
+════════════════════════════════════════════════════════════ */
 async function fetchNamaDanTampilkan() {
   try {
     const resp = await fetch(CFG.GAS_URL + "?action=getNama&t=" + Date.now(), { redirect:"follow" });
     const text = await resp.text();
     const json = JSON.parse(text);
-    currentUser = json.nama ? String(json.nama).trim() : "";
-  } catch(_) { currentUser = ""; }
+    if (json.nama) {
+      currentUser = String(json.nama).trim();
+    } else {
+      currentUser = "";
+    }
+  } catch(_) {
+    currentUser = "";
+  }
+  // Update topbar dan user strip
   const namaLabel = currentUser || "(nama tidak tersedia)";
-  document.getElementById("topbar-title").textContent = "🚚 " + namaLabel;
+  document.getElementById("topbar-title").textContent = "📦 " + namaLabel;
   document.getElementById("user-nama-strip").textContent = namaLabel;
   document.getElementById("user-strip").style.display = currentUser ? "flex" : "none";
 }
@@ -678,26 +789,33 @@ async function fetchNamaDanTampilkan() {
    STATS
 ════════════════════════════════════════════════════════════ */
 function tampilStats() {
-  document.getElementById("cnt-sukses").textContent = cntSukses;
-  document.getElementById("cnt-batal").textContent  = cntBatal;
-  document.getElementById("cnt-blm").textContent    = cntBlm;
+  document.getElementById("cnt-sukses").textContent   = cntSukses;
+  document.getElementById("cnt-batal").textContent    = cntBatal;
+  document.getElementById("cnt-duplikat").textContent = cntDuplikat;
   updatePendingCount();
 }
+
 async function updatePendingCount() {
   const scans   = await idbGetAll("scans");
   const pending = scans.filter(s => !s.sent && s.status === "sukses").length;
   const errors  = scans.filter(s => s.status === "error-item").length;
-  document.getElementById("cnt-pending").textContent  = pending;
-  document.getElementById("batch-count").textContent  = pending;
-  document.getElementById("total-count").textContent  = scans.length;
+
+  document.getElementById("cnt-pending").textContent = pending;
+  document.getElementById("batch-count").textContent = pending;
+  document.getElementById("total-count").textContent = scans.length;
+
   const btnKirim = document.getElementById("btn-kirim");
   btnKirim.disabled = pending === 0;
-  document.getElementById("btn-kirim-txt").textContent = pending > 0 ? "Kirim " + pending + " Paket ke Sheets" : "Kirim Semua";
+  document.getElementById("btn-kirim-txt").textContent =
+    pending > 0 ? "Kirim " + pending + " Paket ke Sheets" : "Kirim Semua";
+
   const btnRetry = document.getElementById("btn-retry");
   if (errors > 0) {
     btnRetry.classList.add("visible");
     document.getElementById("btn-retry-txt").textContent = "Kirim Ulang " + errors + " Gagal";
-  } else { btnRetry.classList.remove("visible"); }
+  } else {
+    btnRetry.classList.remove("visible");
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -705,149 +823,184 @@ async function updatePendingCount() {
 ════════════════════════════════════════════════════════════ */
 async function initRiwayat() {
   const scans  = await idbGetAll("scans");
-  const sorted = [...scans].sort((a,b)=>b.ts-a.ts).slice(0,40);
-  sorted.forEach(s => { buatItemRiwayat(s.resi,s.status,s.ts,s.id,s.sent); resiDiScan.add(s.resi); });
-  cntSukses = scans.filter(s=>s.status==="sukses").length;
-  cntBatal  = scans.filter(s=>s.status==="batal").length;
-  cntBlm    = scans.filter(s=>s.status==="belum_packing").length;
+  const sorted = [...scans].sort((a, b) => b.ts - a.ts).slice(0, 40);
+  sorted.forEach(s => {
+    buatItemRiwayat(s.resi, s.status, s.ts, s.id, s.sent);
+    resiDiScan.add(s.resi);
+  });
+  cntSukses   = scans.filter(s => s.status === "sukses").length;
+  cntBatal    = scans.filter(s => s.status === "batal").length;
+  cntDuplikat = scans.filter(s => s.status === "duplikat").length;
   tampilStats();
 }
-function buatItemRiwayat(resi,status,ts,id,sent) {
+
+function buatItemRiwayat(resi, status, ts, id, sent) {
   const wrap = document.getElementById("riwayat");
   const el   = document.createElement("div");
-  el.dataset.id=id||""; el.dataset.status=status; el.dataset.sent=sent?"1":"0"; el.dataset.ts=ts||"";
-  _renderItem(el,resi,status,!!sent,ts);
+  el.dataset.id     = id || "";
+  el.dataset.status = status;
+  el.dataset.sent   = sent ? "1" : "0";
+
+  _renderItem(el, resi, status, !!sent, ts);
+
   wrap.insertBefore(el, wrap.firstChild);
   while (wrap.children.length > 40) wrap.removeChild(wrap.lastChild);
-  if (id)   domItemMap.set("id_"+id,el);
-  if (resi) domItemMap.set("resi_"+resi,el);
+
+  if (id)   domItemMap.set("id_"   + id,   el);
+  if (resi) domItemMap.set("resi_" + resi, el);
 }
-function _renderItem(el,resi,status,sent,ts) {
-  const icons = { sukses:"✅", batal:"🚫", duplikat:"⚠️", belum_packing:"📦", "error-item":"❗" };
-  const icon  = icons[status] || "⏳";
-  const tagTxt = sent ? "sent" : (status==="sukses"?"pending":status);
+
+function _renderItem(el, resi, status, sent, ts) {
+  const icon = { sukses:"✅", batal:"🚫", duplikat:"⚠️", "error-item":"❗" }[status] || "⏳";
+  const tagTxt = sent ? "sent" : (status === "sukses" ? "pending" : status);
   const tagCls = sent ? "tag-sent" : (
-    status==="sukses"        ? "tag-pending"       :
-    status==="batal"         ? "tag-batal"          :
-    status==="duplikat"      ? "tag-duplikat"       :
-    status==="belum_packing" ? "tag-belum_packing"  :
-    status==="error-item"    ? "tag-error"          : "tag-pending"
+    status === "sukses"     ? "tag-pending"  :
+    status === "batal"      ? "tag-batal"    :
+    status === "duplikat"   ? "tag-duplikat" :
+    status === "error-item" ? "tag-error"    : "tag-pending"
   );
-  const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  el.className = "ritem " + (sent?"sent":status);
-  el.innerHTML = `<span class="ri-icon">${icon}</span><span class="ri-resi">${resi}</span><span class="ri-tags"><span class="ri-tag ${tagCls}">${tagTxt}</span></span><span class="ri-time">${t}</span>`;
+  const cls = "ritem " + (sent ? "sent" : status);
+  const t   = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  el.className = cls;
+  el.innerHTML =
+    `<span class="ri-icon">${icon}</span>` +
+    `<span class="ri-resi">${resi}</span>` +
+    `<span class="ri-tags"><span class="ri-tag ${tagCls}">${tagTxt}</span></span>` +
+    `<span class="ri-time">${t}</span>`;
 }
-function updateRiwayatDOM(idOrResi,status,sent) {
-  const el = domItemMap.get("id_"+idOrResi) || domItemMap.get("resi_"+idOrResi);
+
+function updateRiwayatDOM(idOrResi, status, sent) {
+  const el = domItemMap.get("id_" + idOrResi) || domItemMap.get("resi_" + idOrResi);
   if (!el) return;
-  el.dataset.status=status;
-  if (sent!==undefined) el.dataset.sent=sent?"1":"0";
-  const resi   = el.querySelector(".ri-resi")?.textContent||"";
-  const ts     = parseInt(el.dataset.ts||Date.now());
-  _renderItem(el, resi, status, el.dataset.sent==="1", ts);
+  el.dataset.status = status;
+  if (sent !== undefined) el.dataset.sent = sent ? "1" : "0";
+  const resi = el.querySelector(".ri-resi")?.textContent || "";
+  const ts   = parseInt(el.dataset.ts || Date.now());
+  const isSent = el.dataset.sent === "1";
+  _renderItem(el, resi, status, isSent, ts);
 }
 
 /* ════════════════════════════════════════════════════════════
    PROSES HASIL SCAN
 ════════════════════════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
+  // Duplikat dalam sesi ini
   if (resiDiScan.has(resi)) {
     bunyi("duplikat");
     setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
+    cntDuplikat++;
     const id = await idbAdd("scans", { resi, status:"duplikat", ts, mode:CFG.MODE, sent:false });
-    buatItemRiwayat(resi,"duplikat",ts,id,false);
+    buatItemRiwayat(resi, "duplikat", ts, id, false);
     tampilStats();
     return;
   }
+
+  // Cek BATAL dari cache lokal
   if (isResiBatal(resi)) {
     const e = statusCache.get(resi.toUpperCase());
     const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
     bunyi("batal");
-    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — tidak dikirim!", "batal");
+    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — skip!", "batal");
     cntBatal++;
     resiDiScan.add(resi);
     const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
-    buatItemRiwayat(resi,"batal",ts,id,false);
+    buatItemRiwayat(resi, "batal", ts, id, false);
     tampilStats();
     return;
   }
-  // Peringatan: jika cache tersedia dan statusJ bukan "Sudah" = belum di-packing
-  if (statusCache.size > 0 && !isResiSudahPacking(resi)) {
-    bunyi("warn");
-    setStatus("📦 <b>" + resi + "</b> — belum di-packing! Tetap disimpan, server akan verifikasi.", "belum_packing");
-    cntBlm++;
-    // Tetap simpan agar server yang validasi — petugas cukup tahu adanya peringatan
-    resiDiScan.add(resi);
-    const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
-    buatItemRiwayat(resi,"sukses",ts,id,false);
-    cntSukses++;
-    tampilStats();
-    return;
-  }
+
+  // Sukses — simpan lokal, siap dikirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
   setStatus("✅ <b>" + resi + "</b> — tersimpan, siap kirim ke Sheets.", "sukses");
   cntSukses++;
   const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
-  buatItemRiwayat(resi,"sukses",ts,id,false);
+  buatItemRiwayat(resi, "sukses", ts, id, false);
   tampilStats();
 }
 
 /* ════════════════════════════════════════════════════════════
-   KIRIM KE GAS
+   KIRIM KE GAS — single item dengan retry otomatis
+   PENTING: currentUser sudah diisi di onAppStart sebelum kirim
 ════════════════════════════════════════════════════════════ */
 async function kirimKeGAS(item, attempt) {
-  attempt = attempt||1;
+  attempt = attempt || 1;
   const tgl = new Date(item.ts);
   const payload = JSON.stringify({
     resi    : item.resi,
     mode    : CFG.MODE,
-    nama    : currentUser,   // ← nama dari E8 spreadsheet
+    nama    : currentUser,   // ← nama dari E8, sudah diambil di onAppStart
     tglScan : tgl.toLocaleDateString("id-ID", { day:"2-digit", month:"2-digit", year:"numeric" }),
     jamScan : tgl.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" }),
-    ua      : navigator.userAgent.substring(0,100)
+    ua      : navigator.userAgent.substring(0, 100)
   });
+
   try {
     const resp = await fetch(CFG.GAS_URL, {
-      method:"POST", body:payload,
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      redirect:"follow"
+      method  : "POST",
+      body    : payload,
+      headers : { "Content-Type": "text/plain;charset=utf-8" },
+      redirect: "follow"
     });
+
+    // Baca sebagai text lalu parse — antisipasi GAS redirect ke error page
     const raw = await resp.text();
     let result;
-    try { result = JSON.parse(raw); }
-    catch(_) { throw new Error("Response bukan JSON — re-deploy GAS?"); }
-    return result;
+    try {
+      result = JSON.parse(raw);
+    } catch(_) {
+      throw new Error("Response bukan JSON — re-deploy GAS?");
+    }
+    return result; // { status, message, resi }
+
   } catch(err) {
-    if (attempt < CFG.MAX_RETRY) { await sleep(CFG.RETRY_DELAY_MS * attempt); return kirimKeGAS(item, attempt+1); }
+    if (attempt < CFG.MAX_RETRY) {
+      await sleep(CFG.RETRY_DELAY_MS * attempt);
+      return kirimKeGAS(item, attempt + 1);
+    }
     throw err;
   }
 }
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* ════════════════════════════════════════════════════════════
-   BATCH KIRIM
+   BATCH KIRIM SEMUA PENDING
 ════════════════════════════════════════════════════════════ */
 async function kirimSemua() {
   if (isKiriming) return;
-  if (!currentUser) { await fetchNamaDanTampilkan(); }
+
+  // Pastikan nama sudah ada — jika belum, fetch ulang sebelum kirim
+  if (!currentUser) {
+    showToast("⏳ Mengambil nama petugas…", "");
+    await fetchNamaDanTampilkan();
+    if (!currentUser) {
+      showToast("⚠️ Nama petugas tidak tersedia, kirim tanpa nama?", "y");
+      // Tetap lanjutkan — tidak blokir pengiriman
+    }
+  }
+
   const scans   = await idbGetAll("scans");
   const pending = scans.filter(s => !s.sent && s.status === "sukses");
   if (pending.length === 0) { showToast("Tidak ada paket yang perlu dikirim.", "y"); return; }
   await jalankanBatch(pending);
 }
+
 async function kirimUlangError() {
   if (isKiriming) return;
   const scans  = await idbGetAll("scans");
   const errors = scans.filter(s => s.status === "error-item");
   if (errors.length === 0) { showToast("Tidak ada paket error.", "y"); return; }
+
   for (const s of errors) {
-    await idbUpdate("scans", s.id, r => ({...r, status:"sukses", sent:false}));
-    updateRiwayatDOM(s.id,"sukses",false); cntSukses++;
+    await idbUpdate("scans", s.id, r => ({ ...r, status:"sukses", sent:false }));
+    updateRiwayatDOM(s.id, "sukses", false);
+    cntSukses++;
   }
   tampilStats();
   await kirimSemua();
 }
+
 async function jalankanBatch(pending) {
   isKiriming = true;
   document.getElementById("btn-kirim").disabled = true;
@@ -857,56 +1010,69 @@ async function jalankanBatch(pending) {
   document.getElementById("kirim-result").style.display  = "none";
   document.getElementById("prog-bar").style.width = "0%";
 
-  let done=0, rSukses=0, rBatal=0, rDupli=0, rError=0;
+  let done = 0, rSukses = 0, rBatal = 0, rDupli = 0, rError = 0;
 
   const kirimSatu = async (item) => {
     try {
       const hasil = await kirimKeGAS(item);
-      const st = hasil.status||"error";
+      const st = hasil.status || "error";
+
       if (st === "sukses") {
         rSukses++;
-        await idbUpdate("scans",item.id,r=>({...r,sent:true}));
-        updateRiwayatDOM(item.id,"sukses",true);
+        await idbUpdate("scans", item.id, r => ({ ...r, sent:true }));
+        updateRiwayatDOM(item.id, "sukses", true);
+
       } else if (st === "batal") {
         rBatal++;
-        await idbUpdate("scans",item.id,r=>({...r,status:"batal",sent:true}));
-        updateRiwayatDOM(item.id,"batal",true);
-        cntSukses=Math.max(0,cntSukses-1); cntBatal++;
-        tampilStats(); showToast("🚫 "+item.resi+" BATAL!","r");
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"batal", sent:true }));
+        updateRiwayatDOM(item.id, "batal", true);
+        cntSukses = Math.max(0, cntSukses - 1); cntBatal++;
+        tampilStats();
+        showToast("🚫 " + item.resi + " BATAL!", "r");
+
       } else if (st === "duplikat") {
         rDupli++;
-        await idbUpdate("scans",item.id,r=>({...r,status:"duplikat",sent:true}));
-        updateRiwayatDOM(item.id,"duplikat",true);
-        cntSukses=Math.max(0,cntSukses-1); tampilStats();
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"duplikat", sent:true }));
+        updateRiwayatDOM(item.id, "duplikat", true);
+        cntSukses = Math.max(0, cntSukses - 1); cntDuplikat++;
+        tampilStats();
+
       } else if (st === "not_found") {
         rDupli++;
-        await idbUpdate("scans",item.id,r=>({...r,status:"duplikat",sent:true}));
-        updateRiwayatDOM(item.id,"duplikat",true);
-        showToast("⚠️ "+item.resi+" tidak ada di data Sheets!","y");
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"duplikat", sent:true }));
+        updateRiwayatDOM(item.id, "duplikat", true);
+        showToast("⚠️ " + item.resi + " tidak ada di data Sheets!", "y");
+
       } else if (st === "belum_packing") {
+        // Mode kirim: resi belum di-packing — tandai error agar bisa dicek
         rError++;
-        await idbUpdate("scans",item.id,r=>({...r,status:"error-item",sent:false}));
-        updateRiwayatDOM(item.id,"error-item",false);
-        showToast("📦 "+item.resi+" belum di-packing!","r");
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
+        updateRiwayatDOM(item.id, "error-item", false);
+        showToast("📦 " + item.resi + " belum di-packing!", "r");
+
       } else {
+        // status error atau tidak dikenal
         rError++;
-        await idbUpdate("scans",item.id,r=>({...r,status:"error-item",sent:false}));
-        updateRiwayatDOM(item.id,"error-item",false);
+        await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
+        updateRiwayatDOM(item.id, "error-item", false);
       }
     } catch(e) {
       rError++;
-      await idbUpdate("scans",item.id,r=>({...r,status:"error-item",sent:false}));
-      updateRiwayatDOM(item.id,"error-item",false);
+      await idbUpdate("scans", item.id, r => ({ ...r, status:"error-item", sent:false }));
+      updateRiwayatDOM(item.id, "error-item", false);
     }
+
     done++;
-    document.getElementById("prog-bar").style.width = Math.round((done/pending.length)*100)+"%";
-    document.getElementById("prog-txt").textContent = done+" / "+pending.length+" dikirim";
+    document.getElementById("prog-bar").style.width  = Math.round((done / pending.length) * 100) + "%";
+    document.getElementById("prog-txt").textContent  = done + " / " + pending.length + " dikirim";
   };
 
-  for (let i=0; i<pending.length; i+=CFG.BATCH_CONCURRENCY) {
-    await Promise.all(pending.slice(i,i+CFG.BATCH_CONCURRENCY).map(kirimSatu));
+  // Kirim dengan concurrency limit
+  for (let i = 0; i < pending.length; i += CFG.BATCH_CONCURRENCY) {
+    await Promise.all(pending.slice(i, i + CFG.BATCH_CONCURRENCY).map(kirimSatu));
   }
 
+  // Selesai
   document.getElementById("progress-wrap").style.display = "none";
   document.getElementById("kirim-result").style.display  = "flex";
   document.getElementById("res-sukses").textContent = rSukses;
@@ -914,8 +1080,11 @@ async function jalankanBatch(pending) {
   document.getElementById("res-dupli").textContent  = rDupli;
   document.getElementById("res-error").textContent  = rError;
 
-  if (rError > 0) showToast("⚠️ "+rError+" paket gagal — tekan Kirim Ulang.","y");
-  else showToast("✅ Semua "+rSukses+" paket berhasil dikirim!","g");
+  if (rError > 0) {
+    showToast("⚠️ " + rError + " paket gagal — tekan Kirim Ulang.", "y");
+  } else {
+    showToast("✅ Semua " + rSukses + " paket berhasil dikirim!", "g");
+  }
 
   document.getElementById("btn-kirim-txt").textContent = "Kirim Semua";
   await updatePendingCount();
@@ -924,45 +1093,63 @@ async function jalankanBatch(pending) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   SCANNER
+   SCANNER ENGINE
 ════════════════════════════════════════════════════════════ */
-let codeReader=null, scanning=false, resiTerakhir="", waktuTerakhir=0;
+let codeReader = null, scanning = false;
+let resiTerakhir = "", waktuTerakhir = 0;
 
 function mulaiScan() {
-  if (audioCtx?.state==="suspended") audioCtx.resume();
+  if (audioCtx?.state === "suspended") audioCtx.resume();
   initAudio();
-  setStatus("⏳ Mengaktifkan kamera…","proses");
-  document.getElementById("btn-mulai").style.display="none";
-  document.getElementById("btn-stop").style.display="inline-flex";
-  document.getElementById("scan-line").style.display="block";
-  document.getElementById("scanner-idle").style.display="none";
-  scanning=true;
-  codeReader=new ZXing.BrowserMultiFormatReader();
-  const hints=new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.DATA_MATRIX]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  codeReader.hints=hints;
+  setStatus("⏳ Mengaktifkan kamera…", "proses");
+  document.getElementById("btn-mulai").style.display  = "none";
+  document.getElementById("btn-stop").style.display   = "inline-flex";
+  document.getElementById("scan-line").style.display  = "block";
+  document.getElementById("scanner-idle").style.display = "none";
+  scanning = true;
+
+  codeReader = new ZXing.BrowserMultiFormatReader();
+  const hints = new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+    ZXing.BarcodeFormat.CODE_128,
+    ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.QR_CODE,
+    ZXing.BarcodeFormat.DATA_MATRIX,
+  ]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  codeReader.hints = hints;
+
   codeReader.decodeFromConstraints(
-    {video:{facingMode:{ideal:"environment"},width:{ideal:640},height:{ideal:480},frameRate:{ideal:30}}},
+    {
+      video: {
+        facingMode: { ideal:"environment" },
+        width:     { ideal:640 },
+        height:    { ideal:480 },
+        frameRate: { ideal:30 }
+      }
+    },
     "video",
-    (result,err)=>{
-      if(!result||!scanning) return;
-      const resi=result.getText().trim().toUpperCase();
-      const now=Date.now();
-      if(resi===resiTerakhir&&now-waktuTerakhir<CFG.DEBOUNCE_MS) return;
-      resiTerakhir=resi; waktuTerakhir=now;
-      bunyi("beep"); prosesHasil(resi,now);
+    (result, err) => {
+      if (!result || !scanning) return;
+      const resi = result.getText().trim().toUpperCase();
+      const now  = Date.now();
+      if (resi === resiTerakhir && now - waktuTerakhir < CFG.DEBOUNCE_MS) return;
+      resiTerakhir = resi;
+      waktuTerakhir = now;
+      bunyi("beep");
+      prosesHasil(resi, now);
     }
   );
 }
+
 function stopScan() {
-  scanning=false;
-  if(codeReader){codeReader.reset();codeReader=null;}
-  document.getElementById("scan-line").style.display="none";
-  document.getElementById("btn-mulai").style.display="inline-flex";
-  document.getElementById("btn-stop").style.display="none";
-  document.getElementById("scanner-idle").style.display="flex";
-  setStatus("⏹ Scanner dihentikan.");
+  scanning = false;
+  if (codeReader) { codeReader.reset(); codeReader = null; }
+  document.getElementById("scan-line").style.display    = "none";
+  document.getElementById("btn-mulai").style.display    = "inline-flex";
+  document.getElementById("btn-stop").style.display     = "none";
+  document.getElementById("scanner-idle").style.display = "flex";
+  setStatus("⏹ Scanner dihentikan. Tekan Mulai untuk lanjut.");
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -970,49 +1157,81 @@ function stopScan() {
 ════════════════════════════════════════════════════════════ */
 let resetTimer;
 function setStatus(html, kelas) {
-  const el=document.getElementById("status-box");
-  el.innerHTML=html; el.className="status-box "+(kelas||"");
+  const el = document.getElementById("status-box");
+  el.innerHTML   = html;
+  el.className   = "status-box " + (kelas || "");
   clearTimeout(resetTimer);
-  if(kelas&&kelas!=="proses") resetTimer=setTimeout(()=>{el.className="status-box";el.innerHTML="Siap scan berikutnya…";},2500);
+  if (kelas && kelas !== "proses") {
+    resetTimer = setTimeout(() => {
+      el.className = "status-box";
+      el.innerHTML = "Siap scan berikutnya…";
+    }, 2500);
+  }
 }
-let toastTimer;
-function showToast(msg,type) {
-  const el=document.getElementById("toast");
-  el.textContent=msg; el.className="show t"+(type||"");
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{el.className="";},5000);
-}
-function fmtWaktu(d){return d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});}
 
-const showModal=id=>document.getElementById(id).classList.add("open");
-const hideModal=id=>document.getElementById(id).classList.remove("open");
-const showResetModal=()=>showModal("modal-reset");
+let toastTimer;
+function showToast(msg, type) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className   = "show t" + (type || "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ""; }, 5000);
+}
+
+function fmtWaktu(d) {
+  return d.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
+}
+
+/* ════════════════════════════════════════════════════════════
+   MODAL & RESET
+════════════════════════════════════════════════════════════ */
+const showModal = id => document.getElementById(id).classList.add("open");
+const hideModal = id => document.getElementById(id).classList.remove("open");
+const showResetModal = () => showModal("modal-reset");
 
 async function resetSemua() {
   stopScan();
   await idbClear("scans");
-  cntSukses=0; cntBatal=0; cntBlm=0;
-  resiDiScan.clear(); domItemMap.clear();
-  document.getElementById("riwayat").innerHTML="";
-  document.getElementById("kirim-result").style.display="none";
-  document.getElementById("progress-wrap").style.display="none";
+  cntSukses = 0; cntBatal = 0; cntDuplikat = 0;
+  resiDiScan.clear();
+  domItemMap.clear();
+  document.getElementById("riwayat").innerHTML = "";
+  document.getElementById("kirim-result").style.display  = "none";
+  document.getElementById("progress-wrap").style.display = "none";
   document.getElementById("btn-retry").classList.remove("visible");
   tampilStats();
   hideModal("modal-reset");
   setStatus("Reset selesai. Siap scan baru.");
-  showToast("Sesi di-reset.","y");
+  showToast("Sesi di-reset.", "y");
 }
+
 async function clearRiwayat() {
-  if(!confirm("Hapus riwayat tampilan? Data pending yang belum dikirim juga akan hilang.")) return;
+  if (!confirm("Hapus riwayat tampilan? Data pending yang belum dikirim juga akan hilang.")) return;
   await resetSemua();
 }
 
-/* PWA */
-const manifest={name:"Scan Kirim",short_name:"Kirim",start_url:"./scan-kirim.html",display:"standalone",background_color:"#080c14",theme_color:"#0e1a14",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>",sizes:"any",type:"image/svg+xml"}]};
-document.getElementById("manifest-link").href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"}));
-if("serviceWorker" in navigator){
-  const sw=`const V="sk-v7";self.addEventListener("install",e=>e.waitUntil(caches.open(V).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
-  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
+/* ════════════════════════════════════════════════════════════
+   PWA MANIFEST + SERVICE WORKER
+════════════════════════════════════════════════════════════ */
+const manifest = {
+  name:"Scan Packing", short_name:"Packing",
+  start_url:"./scan-packing.html", display:"standalone",
+  background_color:"#080c14", theme_color:"#111827",
+  icons:[{
+    src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",
+    sizes:"any", type:"image/svg+xml"
+  }]
+};
+document.getElementById("manifest-link").href =
+  URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type:"application/manifest+json" }));
+
+if ("serviceWorker" in navigator) {
+  const sw = `const V="sp-v7";
+self.addEventListener("install",e=>e.waitUntil(caches.open(V).then(c=>c.addAll([location.href]))));
+self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  navigator.serviceWorker.register(
+    URL.createObjectURL(new Blob([sw], { type:"application/javascript" }))
+  ).catch(() => {});
 }
 </script>
 </body>
