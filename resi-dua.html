@@ -67,6 +67,11 @@
     .stat-num{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--text)}
     .stat-num.green{color:var(--green)}.stat-num.orange{color:var(--orange)}
     .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+    /* Queue indicator */
+    .queue-indicator{display:none;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
+    .queue-indicator.active{display:block;color:var(--yellow)}
+
     .section-header{display:flex;justify-content:space-between;align-items:center;margin:20px 0 10px}
     .section-title{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
     .clear-btn{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:4px 8px}
@@ -77,6 +82,7 @@
     #riwayat::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
     .item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:8px;padding:10px 12px;font-size:13px}
     .item.batal{border-left-color:var(--orange)}.item.duplikat{border-left-color:var(--yellow)}
+    .item.pending{border-left-color:var(--muted);opacity:0.7}
     .item-icon{font-size:16px;flex-shrink:0}
     .item-resi{font-family:var(--mono);font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .item-time{font-size:11px;color:var(--muted);flex-shrink:0}
@@ -131,6 +137,7 @@
       <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
       <button class="btn btn-reset" onclick="showResetModal()">↺</button>
     </div>
+    <div id="queue-indicator" class="queue-indicator">⏳ Mengirim ke server…</div>
     <div class="status-box" id="status">Siap — tekan Mulai Scan.</div>
     <div class="stats-row">
       <div class="stat-card"><div class="stat-num green" id="count-sukses">0</div><div class="stat-label">Berhasil</div></div>
@@ -163,16 +170,19 @@
   const MODE     = "packing";
   const DB_NAME  = "ScanPackingDB";
 
-  // Warmup GAS
+  // ─────────────────────────────────────────────
+  // WARMUP — panasin koneksi ke GAS sebelum scan
+  // Kirim GET request agar GAS tidak cold start
+  // ─────────────────────────────────────────────
   fetch(GAS_URL + "?ping=1").catch(() => {});
 
-  // ── AUDIO — inisialisasi sekarang agar bunyi tidak delay ──
-  // Bunyi langsung dibunyikan sebelum fetch agar tidak menunggu response server
+  // ─────────────────────────────────────────────
+  // AUDIO
+  // ─────────────────────────────────────────────
   let audioCtx;
   function inisialisasiAudio() {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Buat dan buang oscillator kosong agar context aktif dan siap
     const o = audioCtx.createOscillator();
     o.connect(audioCtx.destination);
     o.start(); o.stop(audioCtx.currentTime + 0.001);
@@ -198,19 +208,18 @@
       o.frequency.setValueAtTime(700, t);
       g.gain.setValueAtTime(0.2, t); g.gain.linearRampToValueAtTime(0, t + 0.15);
       o.start(t); o.stop(t + 0.15);
-    } else {
-      o.type = "square";
-      o.frequency.setValueAtTime(200, t);
-      g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t + 0.3);
-      o.start(t); o.stop(t + 0.3);
+    } else { // nada netral saat baca barcode
+      o.type = "sine";
+      o.frequency.setValueAtTime(900, t);
+      g.gain.setValueAtTime(0.15, t); g.gain.linearRampToValueAtTime(0, t + 0.06);
+      o.start(t); o.stop(t + 0.06);
     }
   }
 
-  // ── COUNTER — hanya di memory, bukan dari DB ──
-  // DB hanya untuk riwayat tampilan, BUKAN sumber kebenaran status resi
-  // Status batal selalu dikonfirmasi ulang ke server — tidak pernah di-cache
+  // ─────────────────────────────────────────────
+  // COUNTER
+  // ─────────────────────────────────────────────
   let cntSukses = 0, cntBatal = 0, cntDuplikat = 0;
-  // Set resi batal HANYA untuk deduplikasi counter (bukan untuk blok scan ke server)
   const resiBatalUnik = new Set();
 
   function tampilStats() {
@@ -220,14 +229,15 @@
     document.getElementById("total-count").textContent    = cntSukses + cntBatal + cntDuplikat;
   }
 
-  // ── INDEXEDDB — hanya untuk riwayat tampilan ──
+  // ─────────────────────────────────────────────
+  // INDEXEDDB — hanya untuk riwayat tampilan
+  // ─────────────────────────────────────────────
   let db;
   function initDB() {
     return new Promise((res, rej) => {
       const req = indexedDB.open(DB_NAME, 2);
       req.onupgradeneeded = e => {
         const d = e.target.result;
-        // Hapus store lama yang mungkin menyimpan status batal (penyebab bug)
         if (d.objectStoreNames.contains("scans")) d.deleteObjectStore("scans");
         const s = d.createObjectStore("scans", { keyPath: "id", autoIncrement: true });
         s.createIndex("ts", "ts", { unique: false });
@@ -236,68 +246,163 @@
       req.onerror   = () => rej(req.error);
     });
   }
-
-  function dbWrite(data) {
-    if (!db) return;
-    db.transaction("scans", "readwrite").objectStore("scans").add(data);
-  }
-
+  function dbWrite(data) { if (!db) return; db.transaction("scans","readwrite").objectStore("scans").add(data); }
   function dbClear() {
     return new Promise((res, rej) => {
       if (!db) return res();
-      const r = db.transaction("scans", "readwrite").objectStore("scans").clear();
+      const r = db.transaction("scans","readwrite").objectStore("scans").clear();
       r.onsuccess = () => res(); r.onerror = () => rej(r.error);
     });
   }
-
   function dbGetAll() {
     return new Promise((res, rej) => {
       if (!db) return res([]);
-      const r = db.transaction("scans", "readonly").objectStore("scans").getAll();
+      const r = db.transaction("scans","readonly").objectStore("scans").getAll();
       r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
     });
   }
 
-  // Load hanya riwayat tampilan — counter dimulai dari 0 tiap sesi
   async function initRiwayat() {
     const all    = await dbGetAll();
-    const sorted = all.sort((a, b) => b.ts - a.ts).slice(0, 30);
+    const sorted = all.sort((a,b) => b.ts - a.ts).slice(0,30);
     sorted.forEach(s => tambahRiwayatDOM(s.resi, s.status, s.ts));
-    // Bangun resiBatalUnik dari riwayat untuk deduplikasi counter sesi ini
     all.forEach(s => { if (s.status === "batal") resiBatalUnik.add(s.resi); });
-    // Hitung counter dari riwayat
     all.forEach(s => {
       if (s.status === "sukses")        cntSukses++;
       else if (s.status === "duplikat") cntDuplikat++;
-      else if (s.status === "batal")    { /* sudah lewat resiBatalUnik */ }
     });
     cntBatal = resiBatalUnik.size;
     tampilStats();
   }
 
-  // ── TOAST ──
+  // ─────────────────────────────────────────────
+  // SCAN QUEUE — kirim ke server tanpa blok UI
+  // Satu item diproses per satu (tidak parallel)
+  // agar urutan di sheet tetap benar
+  // ─────────────────────────────────────────────
+  const sendQueue = [];         // antrian item yang belum terkirim
+  let queueRunning = false;     // flag apakah worker sedang jalan
+
+  function enqueueScan(item) {
+    sendQueue.push(item);
+    updateQueueBadge();
+    if (!queueRunning) runQueue();
+  }
+
+  async function runQueue() {
+    if (queueRunning || sendQueue.length === 0) return;
+    queueRunning = true;
+    while (sendQueue.length > 0) {
+      const item = sendQueue[0]; // peek — jangan hapus dulu
+      const ok = await kirimKeServer(item);
+      if (ok) {
+        sendQueue.shift(); // hapus hanya setelah berhasil
+      } else {
+        // Gagal — tunggu 3 detik lalu coba lagi (tanpa hapus dari queue)
+        await sleep(3000);
+      }
+      updateQueueBadge();
+    }
+    queueRunning = false;
+  }
+
+  function updateQueueBadge() {
+    const el = document.getElementById("queue-indicator");
+    if (sendQueue.length > 0) {
+      el.className = "queue-indicator active";
+      el.textContent = "⏳ Mengirim ke server… (" + sendQueue.length + " antri)";
+    } else {
+      el.className = "queue-indicator";
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ─────────────────────────────────────────────
+  // KIRIM KE SERVER — return true jika sukses
+  // ─────────────────────────────────────────────
+  async function kirimKeServer(item) {
+    try {
+      const resp = await fetch(GAS_URL, {
+        method : "POST",
+        keepalive: true,  // jaga koneksi agar tidak cold start tiap request
+        body   : JSON.stringify({
+          resi    : item.resi,
+          mode    : MODE,
+          tsScan  : new Date(item.ts).toISOString(),
+          tglScan : new Date(item.ts).toLocaleDateString("id-ID"),
+          jamScan : new Date(item.ts).toLocaleTimeString("id-ID"),
+          ua      : navigator.userAgent
+        }),
+        headers: { "Content-Type": "text/plain" }
+      });
+
+      const pesan   = await resp.text();
+      const isBatal = pesan.includes("🚫") || pesan.toLowerCase().includes("batal");
+      const isDupli = pesan.includes("⚠️");
+
+      // ── KOREKSI jika server bilang batal / duplikat ──
+      // (Optimistic UI sudah anggap sukses — perlu koreksi counter)
+      if (isBatal) {
+        // Koreksi: kurangi sukses, tambah batal
+        if (!resiBatalUnik.has(item.resi)) {
+          cntSukses = Math.max(0, cntSukses - 1);
+          resiBatalUnik.add(item.resi);
+          cntBatal = resiBatalUnik.size;
+          tampilStats();
+          // Update tampilan item di riwayat
+          updateRiwayatItem(item.resi, "batal", pesan);
+          showToast("🚫 " + item.resi + " ternyata BATAL! Sudah dikoreksi.");
+          bunyi("batal");
+        }
+      } else if (isDupli) {
+        // Koreksi: kurangi sukses, tambah duplikat
+        cntSukses = Math.max(0, cntSukses - 1);
+        cntDuplikat++;
+        tampilStats();
+        updateRiwayatItem(item.resi, "duplikat", pesan);
+        // Tidak perlu toast — duplikat normal saja
+      }
+      // Jika server sukses → tidak perlu koreksi apapun (sudah benar dari optimistic)
+      return true;
+
+    } catch(e) {
+      // Network error — akan retry otomatis lewat runQueue
+      return false;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // TOAST
+  // ─────────────────────────────────────────────
   let toastTimer;
   function showToast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove("show"), 4000);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
   }
 
-  // ── LOGIN ──
+  // ─────────────────────────────────────────────
+  // LOGIN
+  // ─────────────────────────────────────────────
   function cekPassword() {
     if (document.getElementById("input-password").value === PASSWORD) {
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app").style.display = "block";
       inisialisasiAudio();
       initDB().then(initRiwayat);
+      // Warmup ulang setelah login agar GAS warm saat scan pertama
+      setTimeout(() => fetch(GAS_URL + "?ping=1").catch(() => {}), 500);
     } else {
       document.getElementById("login-error").textContent = "❌ Password salah.";
       document.getElementById("input-password").value = "";
     }
   }
 
-  // ── STATUS ──
+  // ─────────────────────────────────────────────
+  // STATUS BOX
+  // ─────────────────────────────────────────────
   const statusDiv = document.getElementById("status");
   let resetTimer = null;
   function setStatus(pesan, kelas) {
@@ -310,28 +415,51 @@
     }, 2000);
   }
 
-  // ── RIWAYAT DOM ──
+  // ─────────────────────────────────────────────
+  // RIWAYAT DOM
+  // ─────────────────────────────────────────────
+  // Simpan referensi DOM item per resi untuk koreksi
+  const itemElMap = new Map(); // resi -> element
+
   function tambahRiwayatDOM(resi, status, ts) {
     const div = document.getElementById("riwayat");
     const el  = document.createElement("div");
-    el.className = "item" + (status === "batal" ? " batal" : status === "duplikat" ? " duplikat" : "");
+    el.className = "item " + (status === "batal" ? "batal" : status === "duplikat" ? "duplikat" : "");
     const icon = status === "sukses" ? "✅" : status === "batal" ? "🚫" : "⚠️";
-    const t = new Date(ts).toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+    const t = new Date(ts).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
     el.innerHTML = `<span class="item-icon">${icon}</span><span class="item-resi">${resi}</span><span class="item-time">${t}</span>`;
     div.insertBefore(el, div.firstChild);
     while (div.children.length > 30) div.removeChild(div.lastChild);
+    // Simpan referensi untuk koreksi nanti
+    itemElMap.set(resi, el);
+  }
+
+  function updateRiwayatItem(resi, statusBaru, pesan) {
+    const el = itemElMap.get(resi);
+    if (!el) return;
+    const icon = statusBaru === "batal" ? "🚫" : "⚠️";
+    el.className = "item " + statusBaru;
+    const resiSpan = el.querySelector(".item-resi");
+    const iconSpan = el.querySelector(".item-icon");
+    if (iconSpan) iconSpan.textContent = icon;
+    if (resiSpan) resiSpan.textContent = resi;
   }
 
   async function clearRiwayat() {
     if (!confirm("Hapus semua riwayat? Data di Google Sheets tetap aman.")) return;
     await dbClear();
-    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear();
+    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear(); itemElMap.clear();
     tampilStats();
     document.getElementById("riwayat").innerHTML = "";
   }
 
-  // ── SCANNER ──
-  let codeReader = null, scanning = false, resiTerakhir = "", waktuTerakhir = 0, sedangKirim = false;
+  // ─────────────────────────────────────────────
+  // SCANNER
+  // ─────────────────────────────────────────────
+  let codeReader = null, scanning = false, resiTerakhir = "", waktuTerakhir = 0;
+
+  // Set resi yang sudah di-scan di sesi ini (dedup lokal sebelum nanya server)
+  const resiDiprosesLokal = new Set();
 
   function mulaiScan() {
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
@@ -353,79 +481,60 @@
     codeReader.hints = hints;
 
     codeReader.decodeFromConstraints({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
+      video: { facingMode:{ideal:"environment"}, width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:30} }
     }, "video", (result, err) => {
-      if (!result || !scanning || sedangKirim) return;
+      if (!result || !scanning) return;
       const resi = result.getText().trim().toUpperCase();
       const now  = Date.now();
+      // Debounce: abaikan scan sama dalam 3 detik
       if (resi === resiTerakhir && now - waktuTerakhir < 3000) return;
       resiTerakhir = resi; waktuTerakhir = now;
       prosesHasil(resi, now);
     });
   }
 
-  async function prosesHasil(resi, ts) {
-    sedangKirim = true;
-
-    // Bunyi "proses" langsung — tidak tunggu server
-    // Ini memberi feedback instan ke operator
-    bunyi("duplikat"); // nada netral sebagai tanda "terbaca"
-    setStatus("⏳ <b>" + resi + "</b>…", "proses");
-
-    try {
-      const resp  = await fetch(GAS_URL, {
-        method : "POST",
-        body   : JSON.stringify({
-          resi, mode: MODE,
-          tsScan  : new Date(ts).toISOString(),
-          tglScan : new Date(ts).toLocaleDateString("id-ID"),
-          jamScan : new Date(ts).toLocaleTimeString("id-ID"),
-          ua      : navigator.userAgent
-        }),
-        headers: { "Content-Type": "text/plain" }
-      });
-      const pesan   = await resp.text();
-      const ok      = pesan.includes("✅");
-      const isBatal = pesan.includes("🚫") || pesan.toLowerCase().includes("batal");
-
-      let stat;
-      if (ok) {
-        stat = "sukses";
-        cntSukses++;
-        // Kalau resi ini pernah tercatat batal di sesi ini, koreksi counter
-        if (resiBatalUnik.has(resi)) {
-          resiBatalUnik.delete(resi);
-          cntBatal = resiBatalUnik.size;
-        }
-      } else if (isBatal) {
-        stat = "batal";
-        // Tambah counter hanya jika resi ini belum dihitung batal
-        if (!resiBatalUnik.has(resi)) {
-          resiBatalUnik.add(resi);
-          cntBatal = resiBatalUnik.size;
-        }
-      } else {
-        stat = "duplikat";
-        cntDuplikat++;
-      }
-
-      // Bunyi hasil sebenarnya (menggantikan bunyi tanda baca sebelumnya)
-      bunyi(stat);
+  // ─────────────────────────────────────────────
+  // PROSES HASIL — OPTIMISTIC UI
+  //
+  // Alur:
+  // 1. Tampilkan sukses LANGSUNG (tanpa tunggu server)
+  // 2. Bunyikan bunyi sukses LANGSUNG
+  // 3. Masukkan ke queue → kirim ke GAS di background
+  // 4. Jika server balas batal/duplikat → koreksi counter & tampilan
+  //
+  // Efek untuk operator: TIDAK ADA TUNGGU sama sekali
+  // ─────────────────────────────────────────────
+  function prosesHasil(resi, ts) {
+    // Cek dedup lokal — resi yang sama di sesi ini
+    // (server tetap dicek untuk memastikan, tapi UI langsung tampil)
+    if (resiDiprosesLokal.has(resi)) {
+      // Sudah pernah scan di sesi ini → tampil duplikat langsung
+      bunyi("duplikat");
+      setStatus("⚠️ <b>" + resi + "</b> sudah di-scan!", "duplikat");
+      cntDuplikat++;
       tampilStats();
-      setStatus(pesan, stat === "sukses" ? "sukses" : stat === "batal" ? "batal" : "duplikat");
-      tambahRiwayatDOM(resi, stat, ts);
-      dbWrite({ resi, status: stat, pesan, ts, mode: MODE }); // non-blocking
-
-    } catch(e) {
-      showToast("❌ Gagal konek — " + resi + " belum tercatat!");
-      setStatus("Siap scan berikutnya…");
+      tambahRiwayatDOM(resi, "duplikat", ts);
+      dbWrite({ resi, status:"duplikat", ts, mode:MODE });
+      // Tetap kirim ke server untuk dicatat di log
+      enqueueScan({ resi, ts });
+      return;
     }
 
-    sedangKirim = false;
+    // ── OPTIMISTIC: Anggap sukses dulu ──
+    resiDiprosesLokal.add(resi);
+    bunyi("sukses");   // bunyi sukses LANGSUNG
+    setStatus("✅ <b>" + resi + "</b> berhasil!", "sukses");
+    cntSukses++;
+    tampilStats();
+    tambahRiwayatDOM(resi, "sukses", ts);
+    dbWrite({ resi, status:"sukses", ts, mode:MODE });
+
+    // ── Kirim ke server di background (tidak blok UI) ──
+    enqueueScan({ resi, ts });
   }
 
   function stopScan() {
-    scanning = false; sedangKirim = false;
+    scanning = false;
     if (codeReader) { codeReader.reset(); codeReader = null; }
     document.getElementById("scan-line").style.display  = "none";
     document.getElementById("btn-mulai").style.display  = "inline-flex";
@@ -438,17 +547,20 @@
   function hideResetModal() { document.getElementById("modal-reset").classList.remove("open"); }
   async function resetSemua() {
     await dbClear();
-    cntSukses = 0; cntBatal = 0; cntDuplikat = 0; resiBatalUnik.clear();
+    cntSukses = 0; cntBatal = 0; cntDuplikat = 0;
+    resiBatalUnik.clear(); itemElMap.clear(); resiDiprosesLokal.clear();
     tampilStats();
     document.getElementById("riwayat").innerHTML = "";
     hideResetModal();
   }
 
-  // ── PWA ──
-  const mf = { name:"Scan Packing", short_name:"Packing", start_url:"./scan-packing.html", display:"standalone", background_color:"#0f0f1a", theme_color:"#1a1a2e", icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}] };
+  // ─────────────────────────────────────────────
+  // PWA
+  // ─────────────────────────────────────────────
+  const mf = {name:"Scan Packing",short_name:"Packing",start_url:"./scan-packing.html",display:"standalone",background_color:"#0f0f1a",theme_color:"#1a1a2e",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>",sizes:"any",type:"image/svg+xml"}]};
   document.getElementById("manifest-link").href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
   if ("serviceWorker" in navigator) {
-    const sw = `const C="sp-v3";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+    const sw = `const C="sp-v4";self.addEventListener("install",e=>e.waitUntil(caches.open(C).then(c=>c.addAll([location.href]))));self.addEventListener("fetch",e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
   }
 </script>
