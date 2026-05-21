@@ -323,18 +323,22 @@
   // ─────────────────────────────────────────────
   async function kirimKeServer(item) {
     try {
+      // PENTING: GAS pakai redirect (302) saat POST
+      // keepalive:true tidak bisa follow redirect → request gagal diam-diam
+      // Solusi: hapus keepalive, biarkan browser follow redirect otomatis
+      const payload = JSON.stringify({
+        resi    : item.resi,
+        mode    : MODE,
+        tsScan  : new Date(item.ts).toISOString(),
+        tglScan : new Date(item.ts).toLocaleDateString("id-ID"),
+        jamScan : new Date(item.ts).toLocaleTimeString("id-ID"),
+        ua      : navigator.userAgent
+      });
       const resp = await fetch(GAS_URL, {
-        method : "POST",
-        keepalive: true,  // jaga koneksi agar tidak cold start tiap request
-        body   : JSON.stringify({
-          resi    : item.resi,
-          mode    : MODE,
-          tsScan  : new Date(item.ts).toISOString(),
-          tglScan : new Date(item.ts).toLocaleDateString("id-ID"),
-          jamScan : new Date(item.ts).toLocaleTimeString("id-ID"),
-          ua      : navigator.userAgent
-        }),
-        headers: { "Content-Type": "text/plain" }
+        method   : "POST",
+        body     : payload,
+        headers  : { "Content-Type": "text/plain;charset=utf-8" },
+        redirect : "follow"   // ikuti redirect 302 dari GAS
       });
 
       const pesan   = await resp.text();
