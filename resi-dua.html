@@ -708,7 +708,22 @@ function updateRiwayatDOM(idOrResi, status, sent) {
    PROSES HASIL SCAN
 ════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
-  // Duplikat sesi
+
+  // ① Cek BATAL dulu — prioritas tertinggi, selalu tampil meski sudah pernah discan
+  if (isResiBatal(resi)) {
+    const e   = statusCache.get(resi.toUpperCase());
+    const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
+    bunyi("batal");
+    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
+    // Tidak masukkan ke resiDiScan → scan ulang tetap tampil BATAL terus
+    cntBatal++;
+    const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
+    buatItemRiwayat(resi, "batal", ts, id, false);
+    tampilStats();
+    return;
+  }
+
+  // ② Cek duplikat sesi (hanya untuk resi non-batal)
   if (resiDiScan.has(resi)) {
     bunyi("duplikat");
     setStatus("⚠️ <b>" + resi + "</b> sudah di-scan sesi ini!", "duplikat");
@@ -719,24 +734,10 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // Cek BATAL dari cache
-  if (isResiBatal(resi)) {
-    const e   = statusCache.get(resi.toUpperCase());
-    const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
-    bunyi("batal");
-    setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
-    cntBatal++;
-    resiDiScan.add(resi);
-    const id = await idbAdd("scans", { resi, status:"batal", ts, mode:CFG.MODE, sent:false });
-    buatItemRiwayat(resi, "batal", ts, id, false);
-    tampilStats();
-    return;
-  }
-
-  // Sukses → simpan lokal, siap kirim batch
+  // ③ Sukses → simpan lokal, siap kirim batch
   resiDiScan.add(resi);
   bunyi("sukses");
-  setStatus("✅ <b>" + resi + "</b> — tersimpan.", "sukses");
+  setStatus("✅ <b>" + resi + "</b> — tersimpan!", "sukses");
   cntSukses++;
   const id = await idbAdd("scans", { resi, status:"sukses", ts, mode:CFG.MODE, sent:false });
   buatItemRiwayat(resi, "sukses", ts, id, false);
