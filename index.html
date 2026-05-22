@@ -8,22 +8,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ScanProduk">
   <meta name="theme-color" content="#7c6af7">
-  <title>Scanner Produk v3</title>
+  <title>Scanner Produk v4</title>
 
-  <!-- PWA Manifest (inline via JS — biar tetap single file) -->
   <script>
     const manifest = {
-      name: "Scanner Produk v3",
-      short_name: "ScanProduk",
-      description: "Scanner Produk OCR + Barcode + Gemini AI",
-      start_url: "./",
-      display: "standalone",
-      orientation: "portrait",
-      background_color: "#0b0c10",
-      theme_color: "#7c6af7",
+      name: "Scanner Produk v4", short_name: "ScanProduk",
+      description: "Scanner Produk OCR + Barcode + Gemini AI + Cek Stok",
+      start_url: "./", display: "standalone", orientation: "portrait",
+      background_color: "#0b0c10", theme_color: "#7c6af7",
       icons: [
-        { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%237c6af7'/><text y='130' x='96' text-anchor='middle' font-size='110'>🔬</text></svg>", sizes: "192x192", type: "image/svg+xml" },
-        { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%237c6af7'/><text y='360' x='256' text-anchor='middle' font-size='300'>🔬</text></svg>", sizes: "512x512", type: "image/svg+xml" }
+        { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%237c6af7'/><text y='130' x='96' text-anchor='middle' font-size='110'>&#128302;</text></svg>", sizes: "192x192", type: "image/svg+xml" }
       ]
     };
     const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
@@ -38,296 +32,304 @@
 
   <style>
     :root {
-      --bg:    #0b0c10; --s1: #13151f; --s2: #1a1d2e; --s3: #22263a;
-      --acc:   #7c6af7; --acc2: #a594f9;
-      --green: #22d3a0; --red: #f43f5e; --amber: #fbbf24;
-      --ai:    #e879f9; --ai-dim: rgba(232,121,249,.12);
-      --text:  #e8eaf6; --muted: #5b6080; --muted2: #8890b8;
-      --brd:   rgba(255,255,255,.06);
-      --mono:  'Fira Code', monospace; --sans: 'Syne', sans-serif;
-      --r: 12px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bot: env(safe-area-inset-bottom, 0px);
+      --bg:#0b0c10; --s1:#13151f; --s2:#1a1d2e; --s3:#22263a;
+      --acc:#7c6af7; --acc2:#a594f9;
+      --green:#22d3a0; --red:#f43f5e; --amber:#fbbf24;
+      --ai:#e879f9; --ai-dim:rgba(232,121,249,.12);
+      --text:#e8eaf6; --muted:#5b6080; --muted2:#8890b8;
+      --brd:rgba(255,255,255,.06);
+      --mono:'Fira Code',monospace; --sans:'Syne',sans-serif;
+      --r:12px;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bot:env(safe-area-inset-bottom,0px);
     }
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-
-    html, body { height:100%; overflow:hidden; font-family:var(--sans); background:var(--bg); color:var(--text); }
-
-    body::after {
-      content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--bg);color:var(--text)}
+    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
       background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      background-size:200px; opacity:.4;
-    }
+      background-size:200px;opacity:.4}
 
     /* LOGIN */
-    #login-screen {
-      position:fixed; inset:0; z-index:500;
-      display:flex; align-items:center; justify-content:center; padding:24px;
-      background: radial-gradient(ellipse at 30% 20%, rgba(124,106,247,.15) 0%, transparent 60%),
-                  radial-gradient(ellipse at 80% 80%, rgba(34,211,160,.08) 0%, transparent 50%), var(--bg);
-    }
-    #login-screen.hidden { display:none; }
-    .lcard {
-      width:100%; max-width:360px; background:var(--s1); border:1px solid var(--brd);
-      border-radius:20px; padding:36px 28px; position:relative;
-    }
-    .lcard::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:3px;
-      background:linear-gradient(90deg, var(--acc), var(--ai), var(--green));
-      border-radius:20px 20px 0 0;
-    }
-    .l-eye { font-size:40px; margin-bottom:16px; display:block; }
-    .l-chip {
-      display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:2px;
-      color:var(--acc2); background:rgba(124,106,247,.12); border:1px solid rgba(124,106,247,.25);
-      border-radius:99px; padding:3px 10px; margin-bottom:14px; text-transform:uppercase;
-    }
-    .l-title { font-size:26px; font-weight:800; margin-bottom:6px; }
-    .l-sub   { font-size:13px; color:var(--muted2); margin-bottom:28px; }
-    .l-input {
-      width:100%; background:var(--s2); border:1.5px solid var(--brd); border-radius:10px;
-      padding:14px 16px; font-size:15px; color:var(--text); font-family:var(--sans);
-      outline:none; transition:border-color .2s; margin-bottom:12px;
-    }
-    .l-input:focus { border-color:var(--acc); }
-    .l-input::placeholder { color:var(--muted); }
-    .l-btn {
-      width:100%; background:var(--acc); color:#fff; border:none; border-radius:10px;
-      padding:15px; font-size:15px; font-weight:700; cursor:pointer; font-family:var(--sans);
-      transition:opacity .15s, transform .1s;
-    }
-    .l-btn:active { opacity:.85; transform:scale(.98); }
-    .l-err { margin-top:12px; color:var(--red); font-size:13px; text-align:center; min-height:18px; }
+    #login-screen{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;
+      background:radial-gradient(ellipse at 30% 20%,rgba(124,106,247,.15) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 80%,rgba(34,211,160,.08) 0%,transparent 50%),var(--bg)}
+    #login-screen.hidden{display:none}
+    .lcard{width:100%;max-width:360px;background:var(--s1);border:1px solid var(--brd);border-radius:20px;padding:36px 28px;position:relative}
+    .lcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,var(--acc),var(--ai),var(--green));border-radius:20px 20px 0 0}
+    .l-eye{font-size:40px;margin-bottom:16px;display:block}
+    .l-chip{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--acc2);
+      background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.25);border-radius:99px;padding:3px 10px;margin-bottom:14px;text-transform:uppercase}
+    .l-title{font-size:26px;font-weight:800;margin-bottom:6px}
+    .l-sub{font-size:13px;color:var(--muted2);margin-bottom:28px}
+    .l-input{width:100%;background:var(--s2);border:1.5px solid var(--brd);border-radius:10px;padding:14px 16px;
+      font-size:15px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s;margin-bottom:12px}
+    .l-input:focus{border-color:var(--acc)}
+    .l-input::placeholder{color:var(--muted)}
+    .l-btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:15px;
+      font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:opacity .15s,transform .1s}
+    .l-btn:active{opacity:.85;transform:scale(.98)}
+    .l-err{margin-top:12px;color:var(--red);font-size:13px;text-align:center;min-height:18px}
 
-    /* APP — FIXED FULL HEIGHT FLEX COLUMN */
-    #app {
-      display:none; height:100%; flex-direction:column; overflow:hidden;
-      padding-top:var(--safe-top); padding-bottom:var(--safe-bot);
-    }
-    #app.visible { display:flex; }
+    /* APP */
+    #app{display:none;height:100%;flex-direction:column;overflow:hidden;
+      padding-top:var(--safe-top);padding-bottom:var(--safe-bot)}
+    #app.visible{display:flex}
 
     /* TOPBAR */
-    .topbar {
-      flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
-      padding:12px 18px 10px;
-      background:rgba(11,12,16,.9); backdrop-filter:blur(16px);
-      border-bottom:1px solid var(--brd); z-index:50;
-    }
-    .tb-left { display:flex; align-items:center; gap:12px; }
-    .tb-icon {
-      width:36px; height:36px; background:linear-gradient(135deg, var(--acc), #4e6cf7);
-      border-radius:10px; display:flex; align-items:center; justify-content:center;
-      font-size:19px; flex-shrink:0;
-    }
-    .tb-chip { font-family:var(--mono); font-size:9px; letter-spacing:2px; color:var(--acc2); text-transform:uppercase; }
-    .tb-name { font-size:14px; font-weight:700; line-height:1.2; margin-top:1px; }
-    .tb-right { display:flex; align-items:center; gap:8px; }
-    .tb-badge { background:var(--s2); border:1px solid var(--brd); border-radius:10px; padding:5px 12px; text-align:center; }
-    .badge-n { font-family:var(--mono); font-size:20px; font-weight:600; color:var(--acc2); line-height:1; }
-    .badge-l { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:1px; }
-    .offline-pill {
-      font-family:var(--mono); font-size:9px; letter-spacing:1px; color:var(--amber);
-      background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.25);
-      border-radius:99px; padding:3px 8px; display:none;
-    }
-    .offline-pill.show { display:block; }
+    .topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+      padding:12px 18px 10px;background:rgba(11,12,16,.9);backdrop-filter:blur(16px);
+      border-bottom:1px solid var(--brd);z-index:50}
+    .tb-left{display:flex;align-items:center;gap:12px}
+    .tb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),#4e6cf7);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+    .tb-chip{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase}
+    .tb-name{font-size:14px;font-weight:700;line-height:1.2;margin-top:1px}
+    .tb-right{display:flex;align-items:center;gap:8px}
+    .tb-badge{background:var(--s2);border:1px solid var(--brd);border-radius:10px;padding:5px 12px;text-align:center}
+    .badge-n{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--acc2);line-height:1}
+    .badge-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+    .offline-pill{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--amber);
+      background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);border-radius:99px;padding:3px 8px;display:none}
+    .offline-pill.show{display:block}
 
     /* INSTALL BANNER */
-    #install-banner {
-      display:none; align-items:center; justify-content:space-between;
-      background:rgba(124,106,247,.1); border-bottom:1px solid rgba(124,106,247,.2);
-      padding:8px 16px; flex-shrink:0;
-    }
-    #install-banner.show { display:flex; }
-    .install-text { font-size:12px; color:var(--acc2); }
-    .install-text b { color:var(--text); }
-    .btn-install { background:var(--acc); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans); }
-    .btn-install-x { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:0 2px; line-height:1; }
+    #install-banner{display:none;align-items:center;justify-content:space-between;
+      background:rgba(124,106,247,.1);border-bottom:1px solid rgba(124,106,247,.2);padding:8px 16px;flex-shrink:0}
+    #install-banner.show{display:flex}
+    .install-text{font-size:12px;color:var(--acc2)}
+    .install-text b{color:var(--text)}
+    .btn-install{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+    .btn-install-x{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px;line-height:1}
 
-    /* TOP CONTROLS — fixed, tidak scroll */
-    .top-controls { flex-shrink:0; padding:10px 14px 0; display:flex; flex-direction:column; gap:8px; background:var(--bg); }
+    /* TAB BAR */
+    .tab-bar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;
+      background:var(--s1);border-bottom:1px solid var(--brd);padding:5px 5px 0;gap:4px}
+    .tab-btn{padding:10px 8px;border:none;border-radius:9px 9px 0 0;font-family:var(--sans);font-size:12px;
+      font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;
+      gap:5px;background:transparent;color:var(--muted2);border-bottom:2px solid transparent}
+    .tab-btn.active{background:rgba(124,106,247,.15);color:var(--acc2);border-bottom-color:var(--acc)}
 
-    /* MODE TOGGLE */
-    .mode-toggle {
-      display:grid; grid-template-columns:1fr 1fr;
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r); padding:4px; gap:4px;
-    }
-    .mode-btn {
-      padding:9px; border:none; border-radius:9px; font-family:var(--sans); font-size:13px;
-      font-weight:600; cursor:pointer; transition:all .2s;
-      display:flex; align-items:center; justify-content:center; gap:6px;
-      background:transparent; color:var(--muted2);
-    }
-    .mode-btn.active { background:var(--acc); color:#fff; box-shadow:0 0 16px rgba(124,106,247,.35); }
+    /* PANELS */
+    .tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+    .tab-panel.active{display:flex}
 
-    /* CAMERA */
-    .cam-card { background:var(--s1); border:1px solid var(--brd); border-radius:var(--r); overflow:hidden; }
-    .cam-header { display:flex; align-items:center; justify-content:space-between; padding:9px 14px 7px; }
-    .cam-status { display:flex; align-items:center; gap:8px; }
-    .cam-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); transition:all .3s; }
-    .cam-dot.live { background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.5s ease-in-out infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
-    .cam-label { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--muted2); text-transform:uppercase; }
-    .ai-badge-top {
-      font-family:var(--mono); font-size:9px; letter-spacing:1px; color:var(--ai);
-      background:var(--ai-dim); border:1px solid rgba(232,121,249,.2); border-radius:99px; padding:2px 8px;
-    }
-    .cam-wrap { position:relative; width:100%; height:190px; background:#000; overflow:hidden; }
-    #video { width:100%; height:100%; object-fit:cover; display:block; }
-    .aim-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
-    .aim-box { width:180px; height:130px; position:relative; }
-    .aim-c { position:absolute; width:20px; height:20px; }
-    .aim-c svg { width:100%; height:100%; }
-    .aim-c.tl{top:0;left:0} .aim-c.tr{top:0;right:0;transform:scaleX(-1)}
-    .aim-c.bl{bottom:0;left:0;transform:scaleY(-1)} .aim-c.br{bottom:0;right:0;transform:scale(-1,-1)}
-    .scan-line {
-      position:absolute; left:8%; width:84%; height:2px;
+    /* SCAN PANEL - original styles */
+    .top-controls{flex-shrink:0;padding:10px 14px 0;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+    .mode-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:4px;gap:4px}
+    .mode-btn{padding:9px;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;
+      cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:var(--muted2)}
+    .mode-btn.active{background:var(--acc);color:#fff;box-shadow:0 0 16px rgba(124,106,247,.35)}
+    .cam-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden}
+    .cam-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 7px}
+    .cam-status{display:flex;align-items:center;gap:8px}
+    .cam-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s}
+    .cam-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+    .cam-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase}
+    .ai-badge-top{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--ai);
+      background:var(--ai-dim);border:1px solid rgba(232,121,249,.2);border-radius:99px;padding:2px 8px}
+    .cam-wrap{position:relative;width:100%;height:190px;background:#000;overflow:hidden}
+    #video{width:100%;height:100%;object-fit:cover;display:block}
+    .aim-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .aim-box{width:180px;height:130px;position:relative}
+    .aim-c{position:absolute;width:20px;height:20px}
+    .aim-c svg{width:100%;height:100%}
+    .aim-c.tl{top:0;left:0}.aim-c.tr{top:0;right:0;transform:scaleX(-1)}
+    .aim-c.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c.br{bottom:0;right:0;transform:scale(-1,-1)}
+    .scan-line{position:absolute;left:8%;width:84%;height:2px;
       background:linear-gradient(90deg,transparent,var(--acc),transparent);
-      box-shadow:0 0 10px var(--acc); display:none; animation:sline 2s ease-in-out infinite;
-    }
+      box-shadow:0 0 10px var(--acc);display:none;animation:sline 2s ease-in-out infinite}
     @keyframes sline{0%,100%{top:12%}50%{top:86%}}
-    .cam-idle {
-      position:absolute; inset:0; background:rgba(0,0,0,.7);
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-    }
-    .idle-icon { font-size:38px; }
-    .idle-text { font-size:12px; color:var(--muted2); }
+    .cam-idle{position:absolute;inset:0;background:rgba(0,0,0,.7);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .idle-icon{font-size:38px}
+    .idle-text{font-size:12px;color:var(--muted2)}
+    .btn-row{display:flex;gap:8px;padding:10px 12px 12px}
+    .btn{flex:1;padding:12px 8px;border:none;border-radius:10px;font-size:13px;font-weight:700;
+      cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;
+      gap:6px;transition:opacity .15s,transform .1s;letter-spacing:.2px}
+    .btn:active{opacity:.75;transform:scale(.97)}
+    .btn-start{background:var(--acc);color:#fff;box-shadow:0 4px 20px rgba(124,106,247,.3)}
+    .btn-stop{background:var(--red);color:#fff;display:none}
+    .btn-cap{background:var(--green);color:#0b0c10;display:none}
+    .btn-reset{flex:0 0 auto;width:46px;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);font-size:16px}
+    .status-box{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+      padding:11px 14px;font-size:13px;line-height:1.5;transition:all .2s;flex-shrink:0}
+    .status-box.ok{border-color:var(--green);background:rgba(34,211,160,.08);color:#6effd6}
+    .status-box.err{border-color:var(--red);background:rgba(244,63,94,.08);color:#fca5a5}
+    .status-box.loading{border-color:var(--acc);background:rgba(124,106,247,.08);color:var(--acc2)}
+    .status-box.ai{border-color:var(--ai);background:var(--ai-dim);color:#f0abfc}
+    .status-box.warn{border-color:var(--amber);background:rgba(251,191,36,.08);color:var(--amber)}
+    .koreksi-wrap{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+      padding:12px 14px;display:none;flex-direction:column;gap:8px;flex-shrink:0}
+    .koreksi-wrap.visible{display:flex}
+    .koreksi-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--amber);
+      text-transform:uppercase;display:flex;align-items:center;gap:8px}
+    .koreksi-input{background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;
+      padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;width:100%;transition:border-color .2s}
+    .koreksi-input:focus{border-color:var(--amber)}
+    .koreksi-input::placeholder{color:var(--muted)}
+    .koreksi-row{display:flex;gap:8px}
+    .btn-koreksi-ok{flex:1;padding:10px;background:var(--amber);color:#0b0c10;border:none;
+      border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+    .btn-koreksi-batal{padding:10px 14px;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);
+      border-radius:9px;font-size:13px;cursor:pointer;font-family:var(--sans)}
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex-shrink:0}
+    .stat-card{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:9px 8px;text-align:center}
+    .stat-n{font-family:var(--mono);font-size:19px;font-weight:600;line-height:1}
+    .stat-n.green{color:var(--green)}.stat-n.ai{color:var(--ai)}.stat-n.red{color:var(--red)}
+    .stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+    .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 14px 16px}
+    .scroll-area::-webkit-scrollbar{width:3px}
+    .scroll-area::-webkit-scrollbar-track{background:transparent}
+    .scroll-area::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+    .sec-header{display:flex;justify-content:space-between;align-items:center;
+      padding:10px 0 6px;position:sticky;top:0;background:var(--bg);z-index:2}
+    .sec-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+    .sec-right{display:flex;gap:8px;align-items:center}
+    .db-chip{font-family:var(--mono);font-size:8px;letter-spacing:1px;color:var(--green);
+      background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 7px}
+    .hist-count{font-family:var(--mono);font-size:9px;color:var(--muted)}
+    .btn-clear{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:4px 8px}
+    .btn-clear:hover{color:var(--red)}
+    #riwayat{display:flex;flex-direction:column;gap:5px}
+    .hist-item{display:grid;grid-template-columns:20px 1fr auto auto;align-items:center;gap:8px;
+      background:var(--s1);border:1px solid var(--brd);border-left:3px solid var(--green);
+      border-radius:9px;padding:8px 12px;font-size:13px;animation:fadeup .2s ease}
+    @keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .hist-item.err{border-left-color:var(--red)}
+    .hist-item.ai{border-left-color:var(--ai);background:rgba(232,121,249,.04)}
+    .hist-item.warn{border-left-color:var(--amber)}
+    .hist-icon{font-size:14px;text-align:center}
+    .hist-name{font-family:var(--mono);font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hist-size{font-family:var(--mono);font-size:10px;color:var(--acc2);flex-shrink:0}
+    .hist-time{font-size:10px;color:var(--muted);flex-shrink:0}
+    .hist-empty{text-align:center;padding:24px 0;color:var(--muted);font-size:13px;font-family:var(--mono)}
 
-    /* BUTTONS */
-    .btn-row { display:flex; gap:8px; padding:10px 12px 12px; }
-    .btn {
-      flex:1; padding:12px 8px; border:none; border-radius:10px; font-size:13px; font-weight:700;
-      cursor:pointer; font-family:var(--sans); display:flex; align-items:center; justify-content:center;
-      gap:6px; transition:opacity .15s, transform .1s; letter-spacing:.2px;
-    }
-    .btn:active { opacity:.75; transform:scale(.97); }
-    .btn-start { background:var(--acc); color:#fff; box-shadow:0 4px 20px rgba(124,106,247,.3); }
-    .btn-stop  { background:var(--red); color:#fff; display:none; }
-    .btn-cap   { background:var(--green); color:#0b0c10; display:none; }
-    .btn-reset { flex:0 0 auto; width:46px; background:var(--s2); color:var(--muted2); border:1px solid var(--brd); font-size:16px; }
-
-    /* STATUS */
-    .status-box {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      padding:11px 14px; font-size:13px; line-height:1.5; transition:all .2s; flex-shrink:0;
-    }
-    .status-box.ok      { border-color:var(--green); background:rgba(34,211,160,.08); color:#6effd6; }
-    .status-box.err     { border-color:var(--red);   background:rgba(244,63,94,.08);  color:#fca5a5; }
-    .status-box.loading { border-color:var(--acc);   background:rgba(124,106,247,.08); color:var(--acc2); }
-    .status-box.ai      { border-color:var(--ai);    background:var(--ai-dim);         color:#f0abfc; }
-    .status-box.warn    { border-color:var(--amber);  background:rgba(251,191,36,.08);  color:var(--amber); }
-
-    /* KOREKSI */
-    .koreksi-wrap {
-      background:var(--s1); border:1px solid var(--brd); border-radius:var(--r);
-      padding:12px 14px; display:none; flex-direction:column; gap:8px; flex-shrink:0;
-    }
-    .koreksi-wrap.visible { display:flex; }
-    .koreksi-title {
-      font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--amber);
-      text-transform:uppercase; display:flex; align-items:center; gap:8px;
-    }
-    .koreksi-input {
-      background:var(--s2); border:1.5px solid var(--brd); border-radius:9px;
-      padding:11px 14px; font-size:14px; color:var(--text); font-family:var(--sans);
-      outline:none; width:100%; transition:border-color .2s;
-    }
-    .koreksi-input:focus { border-color:var(--amber); }
-    .koreksi-input::placeholder { color:var(--muted); }
-    .koreksi-row { display:flex; gap:8px; }
-    .btn-koreksi-ok {
-      flex:1; padding:10px; background:var(--amber); color:#0b0c10; border:none;
-      border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans);
-    }
-    .btn-koreksi-batal {
-      padding:10px 14px; background:var(--s2); color:var(--muted2); border:1px solid var(--brd);
-      border-radius:9px; font-size:13px; cursor:pointer; font-family:var(--sans);
-    }
-
-    /* STATS */
-    .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex-shrink:0; }
-    .stat-card { background:var(--s1); border:1px solid var(--brd); border-radius:10px; padding:9px 8px; text-align:center; }
-    .stat-n { font-family:var(--mono); font-size:19px; font-weight:600; line-height:1; }
-    .stat-n.green { color:var(--green); } .stat-n.ai { color:var(--ai); } .stat-n.red { color:var(--red); }
-    .stat-l { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
-
-    /* SCROLL AREA — hanya ini yang scroll */
-    .scroll-area {
-      flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
-      padding:0 14px 16px;
-    }
-    .scroll-area::-webkit-scrollbar { width:3px; }
-    .scroll-area::-webkit-scrollbar-track { background:transparent; }
-    .scroll-area::-webkit-scrollbar-thumb { background:var(--s3); border-radius:4px; }
-
-    /* HISTORY */
-    .sec-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:10px 0 6px; position:sticky; top:0; background:var(--bg); z-index:2;
-    }
-    .sec-title { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-    .sec-right { display:flex; gap:8px; align-items:center; }
-    .db-chip {
-      font-family:var(--mono); font-size:8px; letter-spacing:1px; color:var(--green);
-      background:rgba(34,211,160,.1); border:1px solid rgba(34,211,160,.2); border-radius:99px; padding:2px 7px;
-    }
-    .hist-count { font-family:var(--mono); font-size:9px; color:var(--muted); }
-    .btn-clear { font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:4px 8px; }
-    .btn-clear:hover { color:var(--red); }
-
-    #riwayat { display:flex; flex-direction:column; gap:5px; }
-    .hist-item {
-      display:grid; grid-template-columns:20px 1fr auto auto;
-      align-items:center; gap:8px;
-      background:var(--s1); border:1px solid var(--brd); border-left:3px solid var(--green);
-      border-radius:9px; padding:8px 12px; font-size:13px; animation:fadeup .2s ease;
-    }
-    @keyframes fadeup { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-    .hist-item.err  { border-left-color:var(--red); }
-    .hist-item.ai   { border-left-color:var(--ai); background:rgba(232,121,249,.04); }
-    .hist-item.warn { border-left-color:var(--amber); }
-    .hist-icon { font-size:14px; text-align:center; }
-    .hist-name { font-family:var(--mono); font-size:11px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .hist-size { font-family:var(--mono); font-size:10px; color:var(--acc2); flex-shrink:0; }
-    .hist-time { font-size:10px; color:var(--muted); flex-shrink:0; }
-    .hist-empty { text-align:center; padding:24px 0; color:var(--muted); font-size:13px; font-family:var(--mono); }
+    /* CEK STOK PANEL */
+    .stok-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 14px 20px}
+    .stok-scroll::-webkit-scrollbar{width:3px}
+    .stok-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+    .size-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:10px}
+    .size-card-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--acc2);
+      text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .size-input{width:100%;background:var(--s2);border:2px solid var(--brd);border-radius:10px;
+      padding:12px;font-size:24px;font-weight:800;color:var(--green);font-family:var(--mono);
+      outline:none;text-align:center;transition:border-color .2s;letter-spacing:3px}
+    .size-input:focus{border-color:var(--green)}
+    .size-input::placeholder{color:var(--muted);font-size:14px;font-weight:400;letter-spacing:0}
+    .size-chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+    .size-chip{padding:5px 12px;background:var(--s2);border:1px solid var(--brd);border-radius:7px;
+      font-family:var(--mono);font-size:12px;color:var(--muted2);cursor:pointer;transition:all .15s;user-select:none}
+    .size-chip.on{background:var(--green);color:#0b0c10;border-color:var(--green);font-weight:700}
+    .scan2-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+    .scan2-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 7px}
+    .cam-dot2{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s;flex-shrink:0}
+    .cam-dot2.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s ease-in-out infinite}
+    .cam-label2{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase}
+    .cam-wrap2{position:relative;width:100%;height:155px;background:#000;overflow:hidden}
+    #video2{width:100%;height:100%;object-fit:cover;display:block}
+    .scan-line2{position:absolute;left:8%;width:84%;height:2px;
+      background:linear-gradient(90deg,transparent,var(--green),transparent);
+      box-shadow:0 0 10px var(--green);display:none;animation:sline2 2s ease-in-out infinite}
+    @keyframes sline2{0%,100%{top:12%}50%{top:86%}}
+    .aim-overlay2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .aim-box2{width:160px;height:95px;position:relative}
+    .aim-c2{position:absolute;width:18px;height:18px}
+    .aim-c2 svg{width:100%;height:100%}
+    .aim-c2.tl{top:0;left:0}.aim-c2.tr{top:0;right:0;transform:scaleX(-1)}
+    .aim-c2.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c2.br{bottom:0;right:0;transform:scale(-1,-1)}
+    .cam-idle2{position:absolute;inset:0;background:rgba(0,0,0,.75);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+    .btn-row2{display:flex;gap:8px;padding:8px 10px 10px}
+    .btn2{flex:1;padding:11px 8px;border:none;border-radius:10px;font-size:12px;font-weight:700;
+      cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
+    .btn2:active{opacity:.75}
+    .btn2-start{background:var(--green);color:#0b0c10}
+    .btn2-stop{background:var(--red);color:#fff;display:none}
+    .btn2-foto{background:var(--acc);color:#fff;display:none}
+    .btn2-manual{flex:0 0 auto;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);padding:11px 13px}
+    .manual-wrap{background:var(--s2);border-radius:var(--r);padding:10px;margin-bottom:10px;display:none}
+    .manual-wrap.show{display:block}
+    .manual-inp{width:100%;background:var(--s1);border:1.5px solid var(--brd);border-radius:9px;
+      padding:11px 13px;font-size:13px;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .2s}
+    .manual-inp:focus{border-color:var(--acc)}
+    .manual-inp::placeholder{color:var(--muted)}
+    .manual-btn{margin-top:7px;width:100%;background:var(--acc);color:#fff;border:none;border-radius:9px;
+      padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+    .detected-bar{background:var(--s2);border:1px solid var(--brd);border-radius:var(--r);
+      padding:10px 14px;margin-bottom:10px;display:none}
+    .detected-bar.show{display:block}
+    .det-label{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--muted);
+      text-transform:uppercase;margin-bottom:4px}
+    .det-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)}
+    .hero-box{border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:none}
+    .hero-box.show{display:block}
+    .hero-box.ready{background:rgba(34,211,160,.12);border:2px solid var(--green)}
+    .hero-box.habis{background:rgba(244,63,94,.1);border:2px solid var(--red)}
+    .hero-box.loading{background:rgba(124,106,247,.08);border:2px solid var(--acc)}
+    .hero-status{font-size:20px;font-weight:800}
+    .hero-status.ready{color:var(--green)}
+    .hero-status.habis{color:var(--red)}
+    .hero-status.loading{color:var(--acc2)}
+    .hero-sub{font-size:12px;color:var(--muted2);margin-top:4px}
+    .stok-tbl-wrap{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;display:none}
+    .stok-tbl-wrap.show{display:block}
+    .stok-tbl-hdr{padding:9px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd)}
+    .stok-tbl-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+    .stok-tbl-sub{font-family:var(--mono);font-size:10px;color:var(--acc2)}
+    .stok-tbl{width:100%;border-collapse:collapse;font-size:11px}
+    .stok-tbl th{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+      padding:7px 10px;text-align:left;border-bottom:1px solid var(--brd);background:var(--s2)}
+    .stok-tbl th.tc{text-align:center}
+    .stok-tbl th.tgt{color:var(--green)}
+    .stok-tbl td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.02)}
+    .stok-tbl tr:last-child td{border-bottom:none}
+    .stok-tbl tr.hl td{background:rgba(34,211,160,.05)}
+    .td-nm{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)}
+    .td-sz{font-family:var(--mono);font-size:12px;font-weight:700;text-align:center}
+    .td-sz.tgt{color:var(--green)}
+    .td-sz.near{color:var(--acc2)}
+    .td-sz.zero{color:var(--s3)}
+    .stok-empty{text-align:center;padding:20px;color:var(--muted);font-family:var(--mono);font-size:12px}
+    .loading-dots::after{content:'';animation:dots 1.2s infinite}
+    @keyframes dots{0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}}
 
     /* MODAL */
-    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:200; align-items:flex-end; justify-content:center; display:none; }
-    .modal-bg.open { display:flex; }
-    .modal { background:var(--s1); border-top:1px solid var(--brd); border-radius:18px 18px 0 0; padding:24px 24px calc(24px + var(--safe-bot)); width:100%; max-width:480px; }
-    .modal h3 { font-size:16px; font-weight:700; margin-bottom:6px; }
-    .modal p { font-size:13px; color:var(--muted2); margin-bottom:20px; line-height:1.6; }
-    .modal-actions { display:flex; gap:10px; }
-    .modal-cancel  { flex:1; padding:13px; background:var(--s2); border:1px solid var(--brd); border-radius:10px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
-    .modal-confirm { flex:1; padding:13px; background:var(--red); border:none; border-radius:10px; color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); }
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center;display:none}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--s1);border-top:1px solid var(--brd);border-radius:18px 18px 0 0;
+      padding:24px 24px calc(24px + var(--safe-bot));width:100%;max-width:480px}
+    .modal h3{font-size:16px;font-weight:700;margin-bottom:6px}
+    .modal p{font-size:13px;color:var(--muted2);margin-bottom:20px;line-height:1.6}
+    .modal-actions{display:flex;gap:10px}
+    .modal-cancel{flex:1;padding:13px;background:var(--s2);border:1px solid var(--brd);border-radius:10px;
+      color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+    .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;
+      color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
 
     /* TOAST */
-    #toast {
-      position:fixed; bottom:calc(24px + var(--safe-bot)); left:50%;
-      transform:translateX(-50%) translateY(80px);
-      background:var(--s1); border:1px solid var(--brd);
-      color:var(--text); font-size:13px; padding:12px 20px;
-      border-radius:12px; z-index:400; opacity:0; transition:all .25s;
-      max-width:90vw; text-align:center; pointer-events:none;
-    }
-    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-    #toast.err  { border-color:var(--red); color:#fca5a5; }
-
-    canvas { display:none; }
+    #toast{position:fixed;bottom:calc(24px + var(--safe-bot));left:50%;
+      transform:translateX(-50%) translateY(80px);background:var(--s1);border:1px solid var(--brd);
+      color:var(--text);font-size:13px;padding:12px 20px;border-radius:12px;z-index:400;opacity:0;
+      transition:all .25s;max-width:90vw;text-align:center;pointer-events:none}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #toast.err{border-color:var(--red);color:#fca5a5}
+    canvas{display:none}
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN - SAMA PERSIS DENGAN V3 -->
 <div id="login-screen">
   <div class="lcard">
-    <span class="l-eye">🔬</span>
+    <span class="l-eye">&#128302;</span>
     <div class="l-chip">Scanner System v4 · PWA</div>
     <div class="l-title">Scan Produk</div>
-    <div class="l-sub">OCR + Fuzzy Match + Gemini AI</div>
+    <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok</div>
     <input class="l-input" type="password" id="inp-pw" placeholder="Password" autocomplete="current-password">
-    <button class="l-btn" onclick="doLogin()">Masuk →</button>
+    <button class="l-btn" onclick="doLogin()">Masuk &rarr;</button>
     <div class="l-err" id="l-err"></div>
   </div>
 </div>
@@ -337,14 +339,14 @@
 
   <div class="topbar">
     <div class="tb-left">
-      <div class="tb-icon">🔬</div>
+      <div class="tb-icon">&#128302;</div>
       <div>
         <div class="tb-chip">Scanner Produk</div>
         <div class="tb-name">Sepatu &amp; Aksesoris</div>
       </div>
     </div>
     <div class="tb-right">
-      <span class="offline-pill" id="offline-pill">✕ OFFLINE</span>
+      <span class="offline-pill" id="offline-pill">&#10005; OFFLINE</span>
       <div class="tb-badge">
         <div class="badge-n" id="total-count">0</div>
         <div class="badge-l">Total Scan</div>
@@ -352,99 +354,175 @@
     </div>
   </div>
 
-  <!-- PWA Install Banner -->
   <div id="install-banner">
-    <div class="install-text"><b>Install Aplikasi</b> — buka tanpa browser</div>
+    <div class="install-text"><b>Install Aplikasi</b></div>
     <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn-install" onclick="doInstall()">⬇ Install</button>
-      <button class="btn-install-x" onclick="closeBanner()">×</button>
+      <button class="btn-install" onclick="doInstall()">&#8615; Install</button>
+      <button class="btn-install-x" onclick="closeBanner()">&#215;</button>
     </div>
   </div>
 
-  <!-- FIXED TOP CONTROLS -->
-  <div class="top-controls">
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabbtn-scan" onclick="switchTab('scan')">&#128247; Scan Produk</button>
+    <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">&#128230; Cek Stok Size</button>
+  </div>
 
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="btn-mode-foto" onclick="setMode('foto')">
-        📷 Mode Foto <small style="font-size:10px;opacity:.7">(OCR)</small>
-      </button>
-      <button class="mode-btn" id="btn-mode-barcode" onclick="setMode('barcode')">
-        📲 Mode Barcode
-      </button>
-    </div>
-
-    <div class="cam-card">
-      <div class="cam-header">
-        <div class="cam-status">
-          <div class="cam-dot" id="cam-dot"></div>
-          <span class="cam-label" id="cam-label">Kamera tidak aktif</span>
-        </div>
-        <span class="ai-badge-top">✦ Gemini Flash</span>
+  <!-- ===== TAB SCAN (v3 ASLI) ===== -->
+  <div class="tab-panel active" id="panel-scan">
+    <div class="top-controls">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-mode-foto" onclick="setMode('foto')">
+          &#128247; Mode Foto <small style="font-size:10px;opacity:.7">(OCR)</small>
+        </button>
+        <button class="mode-btn" id="btn-mode-barcode" onclick="setMode('barcode')">
+          &#128242; Mode Barcode
+        </button>
       </div>
-      <div class="cam-wrap">
-        <video id="video" autoplay playsinline muted></video>
-        <div id="scan-line" class="scan-line"></div>
-        <div class="aim-overlay">
-          <div class="aim-box">
-            <div class="aim-c tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="aim-c tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="cam-card">
+        <div class="cam-header">
+          <div class="cam-status">
+            <div class="cam-dot" id="cam-dot"></div>
+            <span class="cam-label" id="cam-label">Kamera tidak aktif</span>
+          </div>
+          <span class="ai-badge-top">&#10022; Gemini Flash</span>
+        </div>
+        <div class="cam-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <div id="scan-line" class="scan-line"></div>
+          <div class="aim-overlay">
+            <div class="aim-box">
+              <div class="aim-c tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+          </div>
+          <div class="cam-idle" id="idle-screen">
+            <div class="idle-icon">&#128302;</div>
+            <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
           </div>
         </div>
-        <div class="cam-idle" id="idle-screen">
-          <div class="idle-icon">🔬</div>
-          <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
+        <div class="btn-row">
+          <button class="btn btn-start" id="btn-start" onclick="mulaiScan()">&#9654; Mulai</button>
+          <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">&#9209; Stop</button>
+          <button class="btn btn-cap"   id="btn-cap"   onclick="ambilFoto()">&#128247; Foto</button>
+          <button class="btn btn-reset" onclick="showResetModal()" title="Reset">&#8635;</button>
         </div>
       </div>
-      <div class="btn-row">
-        <button class="btn btn-start" id="btn-start" onclick="mulaiScan()">▶ Mulai</button>
-        <button class="btn btn-stop"  id="btn-stop"  onclick="stopScan()">⏹ Stop</button>
-        <button class="btn btn-cap"   id="btn-cap"   onclick="ambilFoto()">📷 Foto</button>
-        <button class="btn btn-reset" onclick="showResetModal()" title="Reset">↺</button>
+      <div class="status-box" id="status-box">Siap &mdash; pilih mode lalu tekan Mulai.</div>
+      <div class="koreksi-wrap" id="koreksi-wrap">
+        <div class="koreksi-title"><span>&#9998;</span> Koreksi Hasil (Ajarkan AI)</div>
+        <div style="font-size:12px;color:var(--muted2)">Hasil terdeteksi: <b id="hasil-terdeteksi" style="color:var(--amber)">&mdash;</b></div>
+        <input class="koreksi-input" id="inp-koreksi" placeholder="Ketik nama produk yang benar..."/>
+        <div class="koreksi-row">
+          <button class="btn-koreksi-ok" onclick="kirimKoreksi()">&#10003; Simpan Koreksi</button>
+          <button class="btn-koreksi-batal" onclick="tutupKoreksi()">Batal</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-n green" id="cnt-ok">0</div><div class="stat-l">Fuzzy</div></div>
+        <div class="stat-card"><div class="stat-n ai" id="cnt-ai">0</div><div class="stat-l">Gemini AI</div></div>
+        <div class="stat-card"><div class="stat-n red" id="cnt-miss">0</div><div class="stat-l">Gagal</div></div>
       </div>
     </div>
-
-    <div class="status-box" id="status-box">Siap — pilih mode lalu tekan Mulai.</div>
-
-    <div class="koreksi-wrap" id="koreksi-wrap">
-      <div class="koreksi-title"><span>✏️</span> Koreksi Hasil (Ajarkan AI)</div>
-      <div style="font-size:12px;color:var(--muted2)">
-        Hasil terdeteksi: <b id="hasil-terdeteksi" style="color:var(--amber)">—</b>
+    <div class="scroll-area">
+      <div class="sec-header">
+        <div class="sec-title">Riwayat Scan</div>
+        <div class="sec-right">
+          <span class="db-chip" id="db-status">IndexedDB</span>
+          <span class="hist-count" id="hist-count">0 item</span>
+          <button class="btn-clear" onclick="clearHistory()">Hapus</button>
+        </div>
       </div>
-      <input class="koreksi-input" id="inp-koreksi" placeholder="Ketik nama produk yang benar..."/>
-      <div class="koreksi-row">
-        <button class="btn-koreksi-ok" onclick="kirimKoreksi()">✓ Simpan Koreksi</button>
-        <button class="btn-koreksi-batal" onclick="tutupKoreksi()">Batal</button>
+      <div id="riwayat"><div class="hist-empty">Belum ada hasil scan</div></div>
+    </div>
+  </div>
+
+  <!-- ===== TAB CEK STOK ===== -->
+  <div class="tab-panel" id="panel-stok">
+    <div class="stok-scroll">
+
+      <!-- Input Size -->
+      <div class="size-card">
+        <div class="size-card-title">&#128241; Ukuran yang Dicari</div>
+        <input class="size-input" type="number" id="inp-size" placeholder="Ketik size..." min="30" max="50" oninput="onSizeInput()">
+        <div class="size-chips">
+          <span class="size-chip" onclick="setSize(39)">39</span>
+          <span class="size-chip" onclick="setSize(40)">40</span>
+          <span class="size-chip" onclick="setSize(41)">41</span>
+          <span class="size-chip" onclick="setSize(42)">42</span>
+          <span class="size-chip" onclick="setSize(43)">43</span>
+          <span class="size-chip" onclick="setSize(44)">44</span>
+          <span class="size-chip" onclick="setSize(45)">45</span>
+        </div>
       </div>
-    </div>
 
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-n green" id="cnt-ok">0</div><div class="stat-l">Fuzzy</div></div>
-      <div class="stat-card"><div class="stat-n ai"    id="cnt-ai">0</div><div class="stat-l">Gemini AI</div></div>
-      <div class="stat-card"><div class="stat-n red"   id="cnt-miss">0</div><div class="stat-l">Gagal</div></div>
-    </div>
-
-  </div><!-- /top-controls -->
-
-  <!-- SCROLLABLE HISTORY -->
-  <div class="scroll-area">
-    <div class="sec-header">
-      <div class="sec-title">Riwayat Scan</div>
-      <div class="sec-right">
-        <span class="db-chip" id="db-status">IndexedDB</span>
-        <span class="hist-count" id="hist-count">0 item</span>
-        <button class="btn-clear" onclick="clearHistory()">Hapus</button>
+      <!-- Kamera Scan -->
+      <div class="scan2-card">
+        <div class="scan2-hdr">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="cam-dot2" id="cam-dot2"></div>
+            <span class="cam-label2" id="cam-label2">Kamera tidak aktif</span>
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 8px">&#128230; Cek Stok</span>
+        </div>
+        <div class="cam-wrap2">
+          <video id="video2" autoplay playsinline muted></video>
+          <div id="scan-line2" class="scan-line2"></div>
+          <div class="aim-overlay2">
+            <div class="aim-box2">
+              <div class="aim-c2 tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c2 tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c2 bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="aim-c2 br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+          </div>
+          <div class="cam-idle2" id="idle2">
+            <div style="font-size:30px">&#128230;</div>
+            <div style="font-size:12px;color:var(--muted2)">Scan barcode produk</div>
+          </div>
+        </div>
+        <div class="btn-row2">
+          <button class="btn2 btn2-start" id="btn2-start" onclick="mulaiScan2()">&#9654; Mulai Scan</button>
+          <button class="btn2 btn2-stop"  id="btn2-stop"  onclick="stopScan2()">&#9209; Stop</button>
+          <button class="btn2 btn2-foto"  id="btn2-foto"  onclick="ambilFoto2()">&#128247; Foto</button>
+          <button class="btn2 btn2-manual" onclick="toggleManual()">&#9000;</button>
+        </div>
       </div>
-    </div>
-    <div id="riwayat">
-      <div class="hist-empty">Belum ada hasil scan</div>
+
+      <!-- Manual Input -->
+      <div class="manual-wrap" id="manual-wrap">
+        <input class="manual-inp" type="text" id="inp-manual" placeholder="Ketik kode seri (misal: 8111, SPARTA HC)..." onkeydown="if(event.key==='Enter')submitManual()">
+        <button class="manual-btn" onclick="submitManual()">&#128269; Cari Stok</button>
+      </div>
+
+      <!-- Detected -->
+      <div class="detected-bar" id="detected-bar">
+        <div class="det-label">Produk Terdeteksi</div>
+        <div class="det-val" id="det-val">-</div>
+      </div>
+
+      <!-- Hero Status -->
+      <div class="hero-box" id="hero-box">
+        <div class="hero-status" id="hero-status">-</div>
+        <div class="hero-sub" id="hero-sub">-</div>
+      </div>
+
+      <!-- Table -->
+      <div class="stok-tbl-wrap" id="stok-tbl-wrap">
+        <div class="stok-tbl-hdr">
+          <span class="stok-tbl-title" id="stok-tbl-title">Stok</span>
+          <span class="stok-tbl-sub" id="stok-tbl-sub"></span>
+        </div>
+        <div id="stok-tbl-body"><div class="stok-empty">Scan produk untuk melihat stok</div></div>
+      </div>
+
     </div>
   </div>
 
 </div><!-- /app -->
 
-<!-- MODAL -->
 <div class="modal-bg" id="modal-reset">
   <div class="modal">
     <h3>Reset Counter?</h3>
@@ -458,122 +536,90 @@
 
 <div id="toast"></div>
 <canvas id="canvas"></canvas>
+<canvas id="canvas2"></canvas>
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-const PASSWORD = "kodachi123";
-const GAS_URL  = "https://script.google.com/macros/s/AKfycbxgh5lx4V2Zdd0jJF1kjo-4qcKRtBbk5CTIMJqLzEkzhUdPjyffShD9N6xaEf1vnMrD/exec";
+// CONFIG
+var PASSWORD = "kodachi123";
+var GAS_URL  = "https://script.google.com/macros/s/AKfycbxgh5lx4V2Zdd0jJF1kjo-4qcKRtBbk5CTIMJqLzEkzhUdPjyffShD9N6xaEf1vnMrD/exec";
 
-// ─── PWA: Service Worker via Blob (single-file trick) ────────────────────────
+// PWA Service Worker
 if ('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE = 'scanner-v3';
-const OFFLINE_ASSETS = [self.location.href];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_ASSETS).catch(()=>{})));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  if (e.request.url.includes('script.google.com')) {
-    e.respondWith(fetch(e.request).catch(() => new Response('error',{status:503})));
-    return;
-  }
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-    if (res && res.ok) { const c = res.clone(); caches.open(CACHE).then(cache => cache.put(e.request, c)); }
-    return res;
-  })));
-});
-`;
-  const swBlob = new Blob([swCode], {type: 'application/javascript'});
-  const swURL  = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swURL, {scope: './'}).catch(()=>{});
+  var swCode = "const CACHE='scanner-v4';const OFFLINE_ASSETS=[self.location.href];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(OFFLINE_ASSETS).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{if(e.request.url.includes('script.google.com')){e.respondWith(fetch(e.request).catch(()=>new Response('error',{status:503})));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res&&res.ok){var c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return res;})));});";
+  var swBlob = new Blob([swCode], {type: 'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob), {scope: './'}).catch(function(){});
 }
 
-// ─── PWA: Install prompt ──────────────────────────────────────────────────────
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
+// PWA Install
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault(); deferredPrompt = e;
   document.getElementById('install-banner').classList.add('show');
 });
-window.addEventListener('appinstalled', () => {
-  document.getElementById('install-banner').classList.remove('show');
-  deferredPrompt = null;
+window.addEventListener('appinstalled', function() {
+  document.getElementById('install-banner').classList.remove('show'); deferredPrompt = null;
 });
 function doInstall() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => {
-    deferredPrompt = null;
-    document.getElementById('install-banner').classList.remove('show');
-  });
+  deferredPrompt.userChoice.then(function() { deferredPrompt = null; document.getElementById('install-banner').classList.remove('show'); });
 }
 function closeBanner() { document.getElementById('install-banner').classList.remove('show'); }
 
-// ─── OFFLINE INDICATOR ───────────────────────────────────────────────────────
+// Offline
 function updateOnline() { document.getElementById('offline-pill').classList.toggle('show', !navigator.onLine); }
-window.addEventListener('online', updateOnline);
-window.addEventListener('offline', updateOnline);
-updateOnline();
+window.addEventListener('online', updateOnline); window.addEventListener('offline', updateOnline); updateOnline();
 
-// ─── INDEXEDDB ───────────────────────────────────────────────────────────────
-const DB_NAME = 'ScannerProdukDB', DB_VER = 1, STORE = 'history';
-let db = null;
-
+// IndexedDB
+var DB_NAME = 'ScannerProdukDB', DB_VER = 1, STORE = 'history';
+var db = null;
 function initDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
+  return new Promise(function(res, rej) {
+    var req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = function(e) {
+      var d = e.target.result;
       if (!d.objectStoreNames.contains(STORE)) {
-        const s = d.createObjectStore(STORE, {keyPath:'id', autoIncrement:true});
+        var s = d.createObjectStore(STORE, {keyPath:'id', autoIncrement:true});
         s.createIndex('waktu', 'waktu', {unique:false});
       }
     };
-    req.onsuccess = e => { db = e.target.result; res(db); };
-    req.onerror   = () => rej(req.error);
+    req.onsuccess = function(e) { db = e.target.result; res(db); };
+    req.onerror = function() { rej(req.error); };
   });
 }
 function dbAdd(item) {
   if (!db) return Promise.resolve();
-  return new Promise((res,rej) => {
-    const tx = db.transaction(STORE,'readwrite');
+  return new Promise(function(res,rej) {
+    var tx = db.transaction(STORE,'readwrite');
     tx.objectStore(STORE).add(item);
     tx.oncomplete = res; tx.onerror = rej;
   });
 }
 function dbGetAll() {
   if (!db) return Promise.resolve([]);
-  return new Promise((res,rej) => {
-    const tx = db.transaction(STORE,'readonly');
-    const req = tx.objectStore(STORE).index('waktu').getAll();
-    req.onsuccess = () => res(req.result.reverse());
-    req.onerror   = () => rej(req.error);
+  return new Promise(function(res,rej) {
+    var tx = db.transaction(STORE,'readonly');
+    var req = tx.objectStore(STORE).index('waktu').getAll();
+    req.onsuccess = function() { res(req.result.reverse()); };
+    req.onerror = function() { rej(req.error); };
   });
 }
 function dbClear() {
   if (!db) return Promise.resolve();
-  return new Promise((res,rej) => {
-    const tx = db.transaction(STORE,'readwrite');
+  return new Promise(function(res,rej) {
+    var tx = db.transaction(STORE,'readwrite');
     tx.objectStore(STORE).clear();
     tx.oncomplete = res; tx.onerror = rej;
   });
 }
-
 async function loadHistoryFromDB() {
   try {
-    const items = await dbGetAll();
+    var items = await dbGetAll();
     cntOk = 0; cntAI = 0; cntMiss = 0;
-    const wrap = document.getElementById('riwayat');
+    var wrap = document.getElementById('riwayat');
     wrap.innerHTML = '';
-    if (!items.length) {
-      wrap.innerHTML = '<div class="hist-empty">Belum ada hasil scan</div>';
-      updateStats(); updateHistCount(0); return;
-    }
-    items.slice(0,100).forEach(item => {
+    if (!items.length) { wrap.innerHTML = '<div class="hist-empty">Belum ada hasil scan</div>'; updateStats(); updateHistCount(0); return; }
+    items.slice(0,100).forEach(function(item) {
       renderHistItem(item, false);
       if (item.tipe === 'ok') cntOk++;
       else if (item.tipe === 'ai') cntAI++;
@@ -584,69 +630,80 @@ async function loadHistoryFromDB() {
 }
 function updateHistCount(n) { document.getElementById('hist-count').textContent = n + ' item'; }
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let mode='foto', scanning=false, sedangKirim=false, stream=null, codeReader=null;
-let lastScan='', lastScanTime=0;
-let cntOk=0, cntAI=0, cntMiss=0;
-let hasilTerakhirModel='';
+// State
+var mode='foto', scanning=false, sedangKirim=false, stream=null, codeReader=null;
+var lastScan='', lastScanTime=0;
+var cntOk=0, cntAI=0, cntMiss=0;
+var hasilTerakhirModel='';
 
-// ─── AUDIO ───────────────────────────────────────────────────────────────────
-let audioCtx;
+// Audio
+var audioCtx;
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const o = audioCtx.createOscillator();
+  var o = audioCtx.createOscillator();
   o.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.001);
 }
 function bunyi(tipe) {
   if (!audioCtx) return;
-  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  var o=audioCtx.createOscillator(), g=audioCtx.createGain();
   o.connect(g); g.connect(audioCtx.destination);
-  const t=audioCtx.currentTime;
-  const c={ok:{type:'sine',freqs:[[880,0],[1200,.07]],dur:.12,gain:.35},ai:{type:'sine',freqs:[[700,0],[950,.06],[1100,.12]],dur:.18,gain:.3},miss:{type:'square',freqs:[[280,0]],dur:.25,gain:.18},read:{type:'triangle',freqs:[[600,0]],dur:.08,gain:.2}}[tipe]||{type:'triangle',freqs:[[600,0]],dur:.08,gain:.2};
+  var t=audioCtx.currentTime;
+  var cfg={ok:{type:'sine',freqs:[[880,0],[1200,.07]],dur:.12,gain:.35},ai:{type:'sine',freqs:[[700,0],[950,.06],[1100,.12]],dur:.18,gain:.3},miss:{type:'square',freqs:[[280,0]],dur:.25,gain:.18},read:{type:'triangle',freqs:[[600,0]],dur:.08,gain:.2}};
+  var c=cfg[tipe]||cfg.read;
   o.type=c.type;
-  c.freqs.forEach(([f,dt])=>o.frequency.setValueAtTime(f,t+dt));
+  c.freqs.forEach(function(f){o.frequency.setValueAtTime(f[0],t+f[1]);});
   g.gain.setValueAtTime(c.gain,t); g.gain.linearRampToValueAtTime(0,t+c.dur);
   o.start(t); o.stop(t+c.dur);
 }
 
-// ─── LOGIN ───────────────────────────────────────────────────────────────────
+// LOGIN
 function doLogin() {
   if (document.getElementById('inp-pw').value === PASSWORD) {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('app').classList.add('visible');
     initAudio();
-    fetch(GAS_URL+'?ping=1').catch(()=>{});
-    initDB().then(()=>loadHistoryFromDB());
+    fetch(GAS_URL+'?ping=1').catch(function(){});
+    initDB().then(function(){loadHistoryFromDB();});
   } else {
-    document.getElementById('l-err').textContent = '❌ Password salah.';
+    document.getElementById('l-err').textContent = 'Password salah.';
     document.getElementById('inp-pw').value = '';
   }
 }
-document.getElementById('inp-pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('inp-pw').addEventListener('keydown', function(e) { if(e.key==='Enter') doLogin(); });
 
-// ─── MODE ────────────────────────────────────────────────────────────────────
+// TAB SWITCH
+function switchTab(tab) {
+  document.getElementById('panel-scan').classList.toggle('active', tab==='scan');
+  document.getElementById('panel-stok').classList.toggle('active', tab==='stok');
+  document.getElementById('tabbtn-scan').classList.toggle('active', tab==='scan');
+  document.getElementById('tabbtn-stok').classList.toggle('active', tab==='stok');
+  if (tab==='scan' && stok2Running) stopScan2();
+  if (tab==='stok' && scanning) stopScan();
+}
+
+// MODE
 function setMode(m) {
   if (scanning) stopScan();
   mode = m;
   document.getElementById('btn-mode-foto').classList.toggle('active', m==='foto');
   document.getElementById('btn-mode-barcode').classList.toggle('active', m==='barcode');
-  setStatus('Mode '+(m==='foto'?'Foto (OCR)':'Barcode')+' dipilih — tekan Mulai.');
+  setStatus('Mode '+(m==='foto'?'Foto (OCR)':'Barcode')+' dipilih - tekan Mulai.');
 }
 
-// ─── STATUS ──────────────────────────────────────────────────────────────────
-let statusTimer;
+// STATUS
+var statusTimer;
 function setStatus(msg, tipe) {
-  const el = document.getElementById('status-box');
+  var el = document.getElementById('status-box');
   el.innerHTML = msg;
   el.className = 'status-box'+(tipe?' '+tipe:'');
   clearTimeout(statusTimer);
-  if (tipe && tipe!=='loading') statusTimer = setTimeout(()=>{ el.className='status-box'; el.innerHTML='Siap scan berikutnya…'; }, 4000);
+  if (tipe && tipe!=='loading') statusTimer = setTimeout(function(){ el.className='status-box'; el.innerHTML='Siap scan berikutnya...'; }, 4000);
 }
 
-// ─── SCAN ────────────────────────────────────────────────────────────────────
+// SCAN (original v3)
 async function mulaiScan() {
-  if (audioCtx?.state==='suspended') audioCtx.resume();
+  if (audioCtx && audioCtx.state==='suspended') audioCtx.resume();
   scanning=true;
   document.getElementById('idle-screen').style.display='none';
   document.getElementById('btn-start').style.display='none';
@@ -657,15 +714,15 @@ async function mulaiScan() {
   if (mode==='foto') {
     document.getElementById('btn-cap').style.display='flex';
     await startCamera();
-    setStatus('📷 Kamera aktif — arahkan ke label kardus, lalu tekan Foto.','loading');
+    setStatus('Kamera aktif - arahkan ke label kardus, lalu tekan Foto.','loading');
   } else {
     await startBarcodeScanner();
-    setStatus('📲 Scanner aktif — arahkan barcode ke frame.','loading');
+    setStatus('Scanner aktif - arahkan barcode ke frame.','loading');
   }
 }
 function stopScan() {
   scanning=false; sedangKirim=false;
-  if (stream)     { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  if (stream) { stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
   if (codeReader) { codeReader.reset(); codeReader=null; }
   document.getElementById('video').srcObject=null;
   document.getElementById('scan-line').style.display='none';
@@ -675,78 +732,72 @@ function stopScan() {
   document.getElementById('idle-screen').style.display='flex';
   document.getElementById('cam-dot').classList.remove('live');
   document.getElementById('cam-label').textContent='Kamera tidak aktif';
-  setStatus('⏹ Dihentikan.');
+  setStatus('Dihentikan.');
 }
 async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
     document.getElementById('video').srcObject=stream;
-  } catch(e) { setStatus('❌ Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
+  } catch(e) { setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
 }
 async function ambilFoto() {
   if (!stream||sedangKirim) return;
   bunyi('read');
-  const video=document.getElementById('video'), canvas=document.getElementById('canvas');
+  var video=document.getElementById('video'), canvas=document.getElementById('canvas');
   canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
   canvas.getContext('2d').drawImage(video,0,0);
-  const base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
+  var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
   await kirimKeGAS({image:base64});
 }
 async function startBarcodeScanner() {
   codeReader=new ZXing.BrowserMultiFormatReader();
-  const hints=new Map();
+  var hints=new Map();
   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
   codeReader.hints=hints;
   try {
-    await codeReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video',(result,err)=>{
+    await codeReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video',function(result,err){
       if (!result||!scanning||sedangKirim) return;
-      const val=result.getText().trim().toUpperCase(), now=Date.now();
+      var val=result.getText().trim().toUpperCase(), now=Date.now();
       if (val===lastScan&&now-lastScanTime<3500) return;
       lastScan=val; lastScanTime=now;
       bunyi('read'); kirimKeGAS({barcode:val});
     });
-  } catch(e) { setStatus('❌ Scanner error: '+e.message,'err'); stopScan(); }
+  } catch(e) { setStatus('Scanner error: '+e.message,'err'); stopScan(); }
 }
-
-// ─── KIRIM KE GAS ────────────────────────────────────────────────────────────
 async function kirimKeGAS(payload) {
   sedangKirim=true;
-  setStatus('⏳ Memproses'+(payload.image?' OCR + AI…':' Barcode…'),'loading');
+  setStatus('Memproses'+(payload.image?' OCR + AI...':' Barcode...'),'loading');
   tutupKoreksi();
   try {
-    const resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
-    const teks=await resp.text();
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
+    var teks=await resp.text();
     prosesResponse(teks, payload.image?'foto':'barcode');
   } catch(e) {
     bunyi('miss');
-    setStatus('❌ Gagal koneksi — coba lagi.','err');
-    showToast('❌ Koneksi gagal — data belum tersimpan!','err');
+    setStatus('Gagal koneksi - coba lagi.','err');
+    showToast('Koneksi gagal - data belum tersimpan!','err');
   }
   sedangKirim=false;
 }
-
-// ─── PROSES RESPONSE ─────────────────────────────────────────────────────────
 function prosesResponse(teks, sumber) {
-  const isOk=teks.includes('✅'), isAI=teks.includes('(AI)'), isMiss=teks.includes('⚠️');
-  const isErr=teks.includes('❌')||teks.includes('Error');
-  let tipe, icon;
-  if (isErr||(!isOk&&!isMiss)) { tipe='err';  icon='❌'; cntMiss++; bunyi('miss'); }
-  else if (isMiss)              { tipe='warn'; icon='⚠️'; cntMiss++; bunyi('miss'); }
-  else if (isAI)                { tipe='ai';   icon='🤖'; cntAI++;   bunyi('ai');  }
-  else                          { tipe='ok';   icon='✅'; cntOk++;   bunyi('ok');  }
-  const modelMatch=teks.match(/Model:\s*(.+?)\s*\|/), sizeMatch=teks.match(/Size:\s*(\S+)/);
-  const model=modelMatch?modelMatch[1]:teks.substring(0,60);
-  const size=sizeMatch?sizeMatch[1]:'-';
+  var isOk=teks.includes('\u2705'), isAI=teks.includes('(AI)'), isMiss=teks.includes('\u26a0\ufe0f');
+  var isErr=teks.includes('\u274c')||teks.includes('Error');
+  var tipe, icon;
+  if (isErr||(!isOk&&!isMiss)) { tipe='err'; icon='\u274c'; cntMiss++; bunyi('miss'); }
+  else if (isMiss) { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
+  else if (isAI)   { tipe='ai';   icon='\ud83e\udd16'; cntAI++;   bunyi('ai'); }
+  else             { tipe='ok';   icon='\u2705'; cntOk++; bunyi('ok'); }
+  var modelMatch=teks.match(/Model:\s*(.+?)\s*\|/), sizeMatch=teks.match(/Size:\s*(\S+)/);
+  var model=modelMatch?modelMatch[1]:teks.substring(0,60);
+  var size=sizeMatch?sizeMatch[1]:'-';
   hasilTerakhirModel=model;
-  const aiBadge=isAI?'&ensp;<span style="font-size:11px;opacity:.75;color:var(--ai)">✦ Gemini</span>':'';
-  setStatus(icon+' <b>'+model+'</b>&ensp;· Size: '+size+aiBadge, tipe);
+  var aiBadge=isAI?'&ensp;<span style="font-size:11px;opacity:.75;color:var(--ai)">Gemini</span>':'';
+  setStatus(icon+' <b>'+model+'</b>&ensp;Size: '+size+aiBadge, tipe);
   if (isOk||isAI||isMiss) tampilKoreksi(model);
   updateStats();
   tambahHistory(model,size,tipe,isAI,sumber);
 }
-
-// ─── KOREKSI ─────────────────────────────────────────────────────────────────
 function tampilKoreksi(m) {
   document.getElementById('hasil-terdeteksi').textContent=m;
   document.getElementById('inp-koreksi').value='';
@@ -754,47 +805,41 @@ function tampilKoreksi(m) {
 }
 function tutupKoreksi() { document.getElementById('koreksi-wrap').classList.remove('visible'); }
 async function kirimKoreksi() {
-  const benar=document.getElementById('inp-koreksi').value.trim();
+  var benar=document.getElementById('inp-koreksi').value.trim();
   if (!benar) { showToast('Isi nama produk yang benar dulu.'); return; }
-  tutupKoreksi();
-  setStatus('⏳ Menyimpan koreksi ke AI…','loading');
+  tutupKoreksi(); setStatus('Menyimpan koreksi ke AI...','loading');
   try {
-    const resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({koreksi:true,rawText:hasilTerakhirModel,hasilSalah:hasilTerakhirModel,hasilBenar:benar}),headers:{'Content-Type':'text/plain'}});
-    const txt=await resp.text();
-    if (txt.includes('✅')) { bunyi('ok'); setStatus('✅ Koreksi tersimpan — AI akan belajar dari ini!','ok'); }
-    else setStatus('⚠️ '+txt,'warn');
-  } catch(e) { showToast('❌ Gagal simpan koreksi.','err'); setStatus('Siap scan berikutnya…'); }
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({koreksi:true,rawText:hasilTerakhirModel,hasilSalah:hasilTerakhirModel,hasilBenar:benar}),headers:{'Content-Type':'text/plain'}});
+    var txt=await resp.text();
+    if (txt.includes('\u2705')) { bunyi('ok'); setStatus('Koreksi tersimpan - AI akan belajar!','ok'); }
+    else setStatus('\u26a0\ufe0f '+txt,'warn');
+  } catch(e) { showToast('Gagal simpan koreksi.','err'); setStatus('Siap scan berikutnya...'); }
 }
-
-// ─── STATS ───────────────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('cnt-ok').textContent=cntOk;
   document.getElementById('cnt-ai').textContent=cntAI;
   document.getElementById('cnt-miss').textContent=cntMiss;
   document.getElementById('total-count').textContent=cntOk+cntAI+cntMiss;
 }
-
-// ─── HISTORY ─────────────────────────────────────────────────────────────────
-function renderHistItem(item, prepend=true) {
-  const el=document.createElement('div');
-  const kls=item.isAI?'ai':(item.tipe==='ok'?'':(item.tipe==='err'?'err':'warn'));
+function renderHistItem(item, prepend) {
+  if (prepend === undefined) prepend = true;
+  var el=document.createElement('div');
+  var kls=item.isAI?'ai':(item.tipe==='ok'?'':(item.tipe==='err'?'err':'warn'));
   el.className='hist-item '+kls;
-  const icon=item.isAI?'🤖':(item.tipe==='ok'?'✅':(item.tipe==='warn'?'⚠️':'❌'));
-  const srcBadge=item.sumber==='foto'?'📷':'📲';
-  const wStr=item.waktuStr||new Date(item.waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  el.innerHTML=`<span class="hist-icon">${icon}</span><span class="hist-name">${item.model}</span><span class="hist-size">${item.size} ${srcBadge}</span><span class="hist-time">${wStr}</span>`;
-  const wrap=document.getElementById('riwayat');
-  // Remove empty state if present
-  const empty=wrap.querySelector('.hist-empty');
-  if (empty) empty.remove();
+  var icon=item.isAI?'\ud83e\udd16':(item.tipe==='ok'?'\u2705':(item.tipe==='warn'?'\u26a0\ufe0f':'\u274c'));
+  var srcBadge=item.sumber==='foto'?'\ud83d\udcf7':'\ud83d\udcf2';
+  var wStr=item.waktuStr||new Date(item.waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  el.innerHTML='<span class="hist-icon">'+icon+'</span><span class="hist-name">'+item.model+'</span><span class="hist-size">'+item.size+' '+srcBadge+'</span><span class="hist-time">'+wStr+'</span>';
+  var wrap=document.getElementById('riwayat');
+  var empty=wrap.querySelector('.hist-empty'); if(empty) empty.remove();
   if (prepend) { wrap.insertBefore(el, wrap.firstChild); while(wrap.children.length>100) wrap.removeChild(wrap.lastChild); }
   else wrap.appendChild(el);
 }
 async function tambahHistory(model,size,tipe,isAI,sumber) {
-  const waktu=Date.now();
-  const waktuStr=new Date(waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const item={model,size,tipe,isAI,sumber,waktu,waktuStr};
-  try { await dbAdd(item); const all=await dbGetAll(); updateHistCount(all.length); } catch(e){}
+  var waktu=Date.now();
+  var waktuStr=new Date(waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var item={model:model,size:size,tipe:tipe,isAI:isAI,sumber:sumber,waktu:waktu,waktuStr:waktuStr};
+  try { await dbAdd(item); var all=await dbGetAll(); updateHistCount(all.length); } catch(e){}
   renderHistItem(item,true);
 }
 async function clearHistory() {
@@ -804,10 +849,8 @@ async function clearHistory() {
   updateHistCount(0);
   try { await dbClear(); } catch(e){}
 }
-
-// ─── MODAL ───────────────────────────────────────────────────────────────────
 function showResetModal() { document.getElementById('modal-reset').classList.add('open'); }
-function hideModal()       { document.getElementById('modal-reset').classList.remove('open'); }
+function hideModal() { document.getElementById('modal-reset').classList.remove('open'); }
 async function doReset() {
   cntOk=0; cntAI=0; cntMiss=0; updateStats();
   document.getElementById('riwayat').innerHTML='<div class="hist-empty">Belum ada hasil scan</div>';
@@ -816,13 +859,183 @@ async function doReset() {
   hideModal();
 }
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type='') {
-  const el=document.getElementById('toast');
+// TOAST
+var toastTimer;
+function showToast(msg, type) {
+  var el=document.getElementById('toast');
   el.textContent=msg; el.className='show'+(type?' '+type:'');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.className='',4000);
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.className='';},4000);
 }
+
+// ===== CEK STOK =====
+var stok2Running=false, stream2=null, codeReader2=null;
+var lastScan2='', lastScanTime2=0;
+var sizeTarget=null, seriDetected=null, sedangCariStok=false;
+
+function onSizeInput() {
+  var v=parseInt(document.getElementById('inp-size').value);
+  document.querySelectorAll('.size-chip').forEach(function(c){c.classList.remove('on');});
+  if (v>=30&&v<=50) {
+    sizeTarget=v;
+    document.querySelectorAll('.size-chip').forEach(function(c){if(parseInt(c.textContent)===v)c.classList.add('on');});
+    if (seriDetected&&!sedangCariStok) cariStok(seriDetected,v);
+  }
+}
+function setSize(n) {
+  document.getElementById('inp-size').value=n; sizeTarget=n;
+  document.querySelectorAll('.size-chip').forEach(function(c){c.classList.toggle('on',parseInt(c.textContent)===n);});
+  if (seriDetected&&!sedangCariStok) cariStok(seriDetected,n);
+}
+
+async function mulaiScan2() {
+  if (audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+  stok2Running=true;
+  document.getElementById('idle2').style.display='none';
+  document.getElementById('btn2-start').style.display='none';
+  document.getElementById('btn2-stop').style.display='flex';
+  document.getElementById('btn2-foto').style.display='flex';
+  document.getElementById('scan-line2').style.display='block';
+  document.getElementById('cam-dot2').classList.add('live');
+  document.getElementById('cam-label2').textContent='LIVE';
+  codeReader2=new ZXing.BrowserMultiFormatReader();
+  var hints=new Map();
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  codeReader2.hints=hints;
+  try {
+    await codeReader2.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video2',function(result,err){
+      if(!result||!stok2Running||sedangCariStok) return;
+      var val=result.getText().trim().toUpperCase(), now=Date.now();
+      if(val===lastScan2&&now-lastScanTime2<4000) return;
+      lastScan2=val; lastScanTime2=now;
+      bunyi('read'); prosesBarcode2(val);
+    });
+  } catch(e) {
+    // Fallback: camera only
+    try {
+      stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+      document.getElementById('video2').srcObject=stream2;
+    } catch(e2){ showToast('Kamera tidak bisa diakses'); stopScan2(); }
+  }
+}
+function stopScan2() {
+  stok2Running=false;
+  if(stream2){stream2.getTracks().forEach(function(t){t.stop();});stream2=null;}
+  if(codeReader2){codeReader2.reset();codeReader2=null;}
+  document.getElementById('video2').srcObject=null;
+  document.getElementById('scan-line2').style.display='none';
+  document.getElementById('btn2-start').style.display='flex';
+  document.getElementById('btn2-stop').style.display='none';
+  document.getElementById('btn2-foto').style.display='none';
+  document.getElementById('idle2').style.display='flex';
+  document.getElementById('cam-dot2').classList.remove('live');
+  document.getElementById('cam-label2').textContent='Kamera tidak aktif';
+}
+async function ambilFoto2() {
+  if(sedangCariStok) return;
+  bunyi('read');
+  var video=document.getElementById('video2'), canvas=document.getElementById('canvas2');
+  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
+  canvas.getContext('2d').drawImage(video,0,0);
+  var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
+  document.getElementById('cam-label2').textContent='OCR...';
+  try {
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({image:base64}),headers:{'Content-Type':'text/plain'}});
+    var teks=await resp.text();
+    document.getElementById('cam-label2').textContent='LIVE';
+    var m=teks.match(/Model:\s*(.+?)\s*\|/);
+    if(m) prosesModel2(m[1]);
+    else showToast('Produk tidak terdeteksi');
+  } catch(e){ showToast('Gagal koneksi'); document.getElementById('cam-label2').textContent='LIVE'; }
+}
+function prosesBarcode2(barcode) {
+  var seri=barcode;
+  var nm=barcode.match(/\b(8\d{3})\b/);
+  if(nm) seri=nm[1];
+  prosesModel2(seri);
+}
+function prosesModel2(model) {
+  seriDetected=model;
+  document.getElementById('detected-bar').classList.add('show');
+  document.getElementById('det-val').textContent=model;
+  if(!sizeTarget){ showToast('Isi ukuran yang dicari dulu!'); document.getElementById('inp-size').focus(); return; }
+  cariStok(model, sizeTarget);
+}
+function toggleManual() {
+  var w=document.getElementById('manual-wrap');
+  w.classList.toggle('show');
+  if(w.classList.contains('show')) document.getElementById('inp-manual').focus();
+}
+function submitManual() {
+  var v=document.getElementById('inp-manual').value.trim();
+  if(!v){showToast('Ketik kode seri dulu');return;}
+  document.getElementById('manual-wrap').classList.remove('show');
+  document.getElementById('inp-manual').value='';
+  if(!sizeTarget){ seriDetected=v.toUpperCase(); prosesModel2(v.toUpperCase()); return; }
+  prosesModel2(v.toUpperCase());
+}
+
+async function cariStok(seri, sizeTgt) {
+  if(sedangCariStok) return;
+  sedangCariStok=true;
+  var hb=document.getElementById('hero-box');
+  hb.className='hero-box show loading';
+  document.getElementById('hero-status').className='hero-status loading';
+  document.getElementById('hero-status').textContent='Mengecek stok...';
+  document.getElementById('hero-sub').textContent=seri+' - Size '+sizeTgt;
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
+  try {
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({cekStok:true,seri:seri,sizeTarget:sizeTgt,sizeRange:2}),headers:{'Content-Type':'text/plain'}});
+    var txt=await resp.text();
+    var data=JSON.parse(txt);
+    if(data.error){ hb.className='hero-box show habis'; document.getElementById('hero-status').className='hero-status habis'; document.getElementById('hero-status').textContent='Error'; document.getElementById('hero-sub').textContent=data.error; sedangCariStok=false; return; }
+    if(data.targetReady){
+      hb.className='hero-box show ready';
+      document.getElementById('hero-status').className='hero-status ready';
+      document.getElementById('hero-status').textContent='\u2705 READY - Size '+sizeTgt;
+      document.getElementById('hero-sub').textContent='Stok: '+data.targetQty+' pasang';
+      bunyi('ok');
+    } else {
+      hb.className='hero-box show habis';
+      document.getElementById('hero-status').className='hero-status habis';
+      document.getElementById('hero-status').textContent='\u274c HABIS - Size '+sizeTgt;
+      document.getElementById('hero-sub').textContent='Lihat size lain di bawah';
+      bunyi('miss');
+    }
+    renderStokTable(data, sizeTgt);
+  } catch(e){ hb.className='hero-box show habis'; document.getElementById('hero-status').className='hero-status habis'; document.getElementById('hero-status').textContent='Gagal koneksi'; document.getElementById('hero-sub').textContent=''; }
+  sedangCariStok=false;
+}
+
+function renderStokTable(data, sizeTgt) {
+  var wrap=document.getElementById('stok-tbl-wrap');
+  var tbody=document.getElementById('stok-tbl-body');
+  if(!data.rows||!data.rows.length){ wrap.classList.remove('show'); tbody.innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>'; return; }
+  wrap.classList.add('show');
+  var sizes=data.sizes||[];
+  var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
+  sizes.forEach(function(sz){ html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' *':'')+'</th>'; });
+  html+='</tr></thead><tbody>';
+  data.rows.forEach(function(row){
+    var hasTgt=row.sizes&&row.sizes[sizeTgt]>0;
+    html+='<tr'+(hasTgt?' class="hl"':'')+'>';
+    html+='<td class="td-nm">'+esc(row.seri)+(row.warna?'<br><span style="color:var(--muted2);font-size:10px">'+esc(row.warna)+'</span>':'')+'</td>';
+    sizes.forEach(function(sz){
+      var qty=(row.sizes&&row.sizes[sz])||0;
+      var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
+      html+='<td class="'+cls+'">'+( qty>0?qty:'-')+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span style="color:var(--green)">* = size target</span><span>angka = pasang</span><span>- = habis</span></div>';
+  document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
+  document.getElementById('stok-tbl-sub').textContent='+-2 dari size '+sizeTgt;
+  tbody.innerHTML=html;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 </script>
 </body>
 </html>
