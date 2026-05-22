@@ -1124,4 +1124,91 @@ function prosesHasilStok(teks, seri, sizeTarget){
   try {
     data=JSON.parse(teks);
   } catch(e){
-    tampilStokError('❌ Response tidak valid
+    tampilStokError('❌ Response tidak valid': '+teks.substring(0,60));
+    return;
+  }
+
+  if(data.error){
+    tampilStokError('❌ '+data.error);
+    return;
+  }
+
+  const hero=document.getElementById('stok-hero');
+  if(data.targetReady){
+    hero.className='stok-hero visible ready';
+    document.getElementById('hero-status-text').className='hero-status ready';
+    document.getElementById('hero-status-text').textContent='✅ READY — Size '+sizeTarget;
+    document.getElementById('hero-sub-text').textContent=
+      'Stok: '+data.targetQty+' pasang · '+seri;
+    bunyi('ok');
+  } else {
+    hero.className='stok-hero visible habis';
+    document.getElementById('hero-status-text').className='hero-status habis';
+    document.getElementById('hero-status-text').textContent='❌ HABIS — Size '+sizeTarget;
+    document.getElementById('hero-sub-text').textContent='Tidak tersedia · Lihat size lain di bawah';
+    bunyi('miss');
+  }
+
+  renderStokTable(data, sizeTarget);
+}
+
+function renderStokTable(data, sizeTarget){
+  const wrap=document.getElementById('stok-table-wrap');
+  const tbody=document.getElementById('stok-table-body');
+
+  if(!data.rows||!data.rows.length){
+    wrap.classList.remove('visible');
+    tbody.innerHTML='<div class="stok-empty">Tidak ada stok ditemukan untuk seri ini</div>';
+    return;
+  }
+
+  wrap.classList.add('visible');
+
+  const allSizes=data.sizes||[];
+
+  let html=`<table class="stok-table">
+    <thead><tr>
+      <th>Seri / Varian</th>`;
+  allSizes.forEach(sz=>{
+    const isTarget=(sz===sizeTarget);
+    html+=`<th class="size-col-header${isTarget?' target':''}">${sz}${isTarget?' ★':''}</th>`;
+  });
+  html+=`</tr></thead><tbody>`;
+
+  data.rows.forEach(row=>{
+    const hasTarget=row.sizes&&row.sizes[sizeTarget]>0;
+    html+=`<tr class="${hasTarget?'row-highlight':''}">`;
+    html+=`<td>
+      <div class="td-seri">${escHtml(row.seri)}</div>
+      <div class="td-warna">${escHtml(row.warna||'')}</div>
+    </td>`;
+    allSizes.forEach(sz=>{
+      const qty=(row.sizes&&row.sizes[sz])||0;
+      const isTarget=(sz===sizeTarget);
+      let cls='td-size';
+      if(isTarget)cls+=' target-size';
+      else if(Math.abs(sz-sizeTarget)<=1)cls+=' near-size';
+      if(qty===0)cls+=' empty';
+      html+=`<td class="${cls}">${qty>0?qty:'–'}</td>`;
+    });
+    html+=`</tr>`;
+  });
+
+  html+=`</tbody></table>`;
+
+  html+=`<div style="padding:8px 12px 10px;font-size:10px;color:var(--muted);font-family:var(--mono);display:flex;gap:12px;flex-wrap:wrap">
+    <span style="color:var(--green)">★ = Size target</span>
+    <span style="color:var(--acc2)">Angka = jumlah pasang</span>
+    <span>– = habis</span>
+  </div>`;
+
+  document.getElementById('stok-table-title').textContent='Stok '+currentDetectedSeries;
+  document.getElementById('stok-table-sub').textContent='\u00B1 2 size dari '+sizeTarget;
+  tbody.innerHTML=html;
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+</script>
+</body>
+</html>
