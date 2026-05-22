@@ -325,7 +325,7 @@
 <!-- LOGIN - SAMA PERSIS DENGAN V3 -->
 <div id="login-screen">
   <div class="lcard">
-    <span class="l-eye">&#128302;</span>
+    <span class="l-eye"><svg width="40" height="40" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>
     <div class="l-chip">Scanner System v4 · PWA</div>
     <div class="l-title">Scan Produk</div>
     <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok</div>
@@ -340,7 +340,7 @@
 
   <div class="topbar">
     <div class="tb-left">
-      <div class="tb-icon">&#128302;</div>
+      <div class="tb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       <div>
         <div class="tb-chip">Scanner Produk</div>
         <div class="tb-name">Sepatu &amp; Aksesoris</div>
@@ -400,7 +400,7 @@
             </div>
           </div>
           <div class="cam-idle" id="idle-screen">
-            <div class="idle-icon">&#128302;</div>
+            <div class="idle-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
             <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
           </div>
         </div>
@@ -449,6 +449,11 @@
         <div class="size-card-title">&#128241; Ukuran yang Dicari</div>
         <input class="size-input" type="number" id="inp-size" placeholder="Ketik size..." min="30" max="50" oninput="onSizeInput()">
         <div class="size-chips">
+          <span class="size-chip" onclick="setSize(34)">34</span>
+          <span class="size-chip" onclick="setSize(35)">35</span>
+          <span class="size-chip" onclick="setSize(36)">36</span>
+          <span class="size-chip" onclick="setSize(37)">37</span>
+          <span class="size-chip" onclick="setSize(38)">38</span>
           <span class="size-chip" onclick="setSize(39)">39</span>
           <span class="size-chip" onclick="setSize(40)">40</span>
           <span class="size-chip" onclick="setSize(41)">41</span>
@@ -467,6 +472,17 @@
             <span class="cam-label2" id="cam-label2">Kamera tidak aktif</span>
           </div>
           <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 8px">&#128230; Cek Stok</span>
+        </div>
+        <!-- Mode toggle barcode/foto -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px">
+          <button id="btn2-mode-barcode" onclick="setMode2('barcode')"
+            style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:var(--green);color:#0b0c10;transition:all .2s">
+            &#128242; Barcode
+          </button>
+          <button id="btn2-mode-foto" onclick="setMode2('foto')"
+            style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted2);transition:all .2s">
+            &#128247; Foto OCR
+          </button>
         </div>
         <div class="cam-wrap2">
           <video id="video2" autoplay playsinline muted></video>
@@ -888,35 +904,52 @@ function setSize(n) {
   if (seriDetected&&!sedangCariStok) cariStok(seriDetected,n);
 }
 
+var mode2 = 'barcode';
+function setMode2(m) {
+  if (stok2Running) stopScan2();
+  mode2 = m;
+  var bBarcode = document.getElementById('btn2-mode-barcode');
+  var bFoto    = document.getElementById('btn2-mode-foto');
+  if (m === 'barcode') {
+    bBarcode.style.background = 'var(--green)'; bBarcode.style.color = '#0b0c10';
+    bFoto.style.background = 'transparent'; bFoto.style.color = 'var(--muted2)';
+    document.getElementById('btn2-foto').style.display = 'none';
+  } else {
+    bFoto.style.background = 'var(--acc)'; bFoto.style.color = '#fff';
+    bBarcode.style.background = 'transparent'; bBarcode.style.color = 'var(--muted2)';
+  }
+}
 async function mulaiScan2() {
   if (audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
   stok2Running=true;
   document.getElementById('idle2').style.display='none';
   document.getElementById('btn2-start').style.display='none';
   document.getElementById('btn2-stop').style.display='flex';
-  document.getElementById('btn2-foto').style.display='flex';
   document.getElementById('scan-line2').style.display='block';
   document.getElementById('cam-dot2').classList.add('live');
   document.getElementById('cam-label2').textContent='LIVE';
-  codeReader2=new ZXing.BrowserMultiFormatReader();
-  var hints=new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  codeReader2.hints=hints;
-  try {
-    await codeReader2.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video2',function(result,err){
-      if(!result||!stok2Running||sedangCariStok) return;
-      var val=result.getText().trim().toUpperCase(), now=Date.now();
-      if(val===lastScan2&&now-lastScanTime2<4000) return;
-      lastScan2=val; lastScanTime2=now;
-      bunyi('read'); prosesBarcode2(val);
-    });
-  } catch(e) {
-    // Fallback: camera only
+  if (mode2 === 'foto') {
+    document.getElementById('btn2-foto').style.display='flex';
     try {
-      stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+      stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
       document.getElementById('video2').srcObject=stream2;
-    } catch(e2){ showToast('Kamera tidak bisa diakses'); stopScan2(); }
+    } catch(e){ showToast('Kamera tidak bisa diakses'); stopScan2(); }
+  } else {
+    document.getElementById('btn2-foto').style.display='none';
+    codeReader2=new ZXing.BrowserMultiFormatReader();
+    var hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    codeReader2.hints=hints;
+    try {
+      await codeReader2.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video2',function(result,err){
+        if(!result||!stok2Running||sedangCariStok) return;
+        var val=result.getText().trim().toUpperCase(), now=Date.now();
+        if(val===lastScan2&&now-lastScanTime2<4000) return;
+        lastScan2=val; lastScanTime2=now;
+        bunyi('read'); prosesBarcode2(val);
+      });
+    } catch(e){ showToast('Scanner error: '+e.message); stopScan2(); }
   }
 }
 function stopScan2() {
