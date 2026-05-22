@@ -325,7 +325,7 @@
 <!-- LOGIN - SAMA PERSIS DENGAN V3 -->
 <div id="login-screen">
   <div class="lcard">
-    <span class="l-eye"><svg width="40" height="40" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+    <span class="l-eye">&#128302;</span>
     <div class="l-chip">Scanner System v4 · PWA</div>
     <div class="l-title">Scan Produk</div>
     <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok</div>
@@ -340,7 +340,7 @@
 
   <div class="topbar">
     <div class="tb-left">
-      <div class="tb-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="tb-icon">&#128302;</div>
       <div>
         <div class="tb-chip">Scanner Produk</div>
         <div class="tb-name">Sepatu &amp; Aksesoris</div>
@@ -366,7 +366,7 @@
   <!-- TAB BAR -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tabbtn-scan" onclick="switchTab('scan')">&#128247; Scan Produk</button>
-    <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">&#128230; Cek Stok Size</button>
+    <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">&#128302; Cek Stok</button>
   </div>
 
   <!-- ===== TAB SCAN (v3 ASLI) ===== -->
@@ -400,7 +400,7 @@
             </div>
           </div>
           <div class="cam-idle" id="idle-screen">
-            <div class="idle-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="6" height="10" rx="2"/><rect x="7" y="10" width="10" height="3" rx="1.5"/><rect x="8.5" y="12.5" width="7" height="5.5" rx="1.5"/><rect x="5" y="21" width="14" height="2" rx="1"/><rect x="10.5" y="17.5" width="3" height="4" rx="1"/><circle cx="18.5" cy="6.5" r="2.5" fill="none" stroke="white" stroke-width="1.5"/><line x1="20.3" y1="8.3" x2="22.5" y2="10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div class="idle-icon">&#128302;</div>
             <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
           </div>
         </div>
@@ -473,15 +473,15 @@
           </div>
           <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 8px">&#128230; Cek Stok</span>
         </div>
-        <!-- Mode toggle barcode/foto -->
+        <!-- Mode toggle foto/barcode -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px">
-          <button id="btn2-mode-barcode" onclick="setMode2('barcode')"
-            style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:var(--green);color:#0b0c10;transition:all .2s">
-            &#128242; Barcode
-          </button>
           <button id="btn2-mode-foto" onclick="setMode2('foto')"
+            style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:var(--acc);color:#fff;transition:all .2s">
+            &#128247; Mode Foto
+          </button>
+          <button id="btn2-mode-barcode" onclick="setMode2('barcode')"
             style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted2);transition:all .2s">
-            &#128247; Foto OCR
+            &#128242; Mode Barcode
           </button>
         </div>
         <div class="cam-wrap2">
@@ -496,8 +496,8 @@
             </div>
           </div>
           <div class="cam-idle2" id="idle2">
-            <div style="font-size:30px">&#128230;</div>
-            <div style="font-size:12px;color:var(--muted2)">Scan barcode produk</div>
+            <div style="font-size:30px">&#128302;</div>
+            <div style="font-size:12px;color:var(--muted2)">Tekan Mulai untuk mengaktifkan kamera</div>
           </div>
         </div>
         <div class="btn-row2">
@@ -904,19 +904,19 @@ function setSize(n) {
   if (seriDetected&&!sedangCariStok) cariStok(seriDetected,n);
 }
 
-var mode2 = 'barcode';
+var mode2 = 'foto';
 function setMode2(m) {
   if (stok2Running) stopScan2();
   mode2 = m;
   var bBarcode = document.getElementById('btn2-mode-barcode');
   var bFoto    = document.getElementById('btn2-mode-foto');
-  if (m === 'barcode') {
+  if (m === 'foto') {
+    bFoto.style.background = 'var(--acc)'; bFoto.style.color = '#fff';
+    bBarcode.style.background = 'transparent'; bBarcode.style.color = 'var(--muted2)';
+  } else {
     bBarcode.style.background = 'var(--green)'; bBarcode.style.color = '#0b0c10';
     bFoto.style.background = 'transparent'; bFoto.style.color = 'var(--muted2)';
     document.getElementById('btn2-foto').style.display = 'none';
-  } else {
-    bFoto.style.background = 'var(--acc)'; bFoto.style.color = '#fff';
-    bBarcode.style.background = 'transparent'; bBarcode.style.color = 'var(--muted2)';
   }
 }
 async function mulaiScan2() {
