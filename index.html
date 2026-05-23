@@ -1076,11 +1076,107 @@ async function ambilFoto2() {
     showToastBig('&#128246;','Gagal Koneksi','Periksa koneksi internet lalu coba lagi','');
   }
 }
+// =====================================================================
+// PATCH HTML — Ganti fungsi prosesBarcode2 yang lama dengan ini
+// Cari di HTML:  function prosesBarcode2(barcode) {
+// Ganti seluruh fungsi itu dengan kode di bawah
+// =====================================================================
+
+// LAMA (hapus ini):
+// function prosesBarcode2(barcode) {
+//   var seri = barcode;
+//   var nm = barcode.match(/\b(8\d{3})\b/);
+//   if (nm) seri = nm[1];
+//   prosesModel2(seri);
+// }
+
+// BARU (pakai ini):
 function prosesBarcode2(barcode) {
-  var seri=barcode;
-  var nm=barcode.match(/\b(8\d{3})\b/);
-  if(nm) seri=nm[1];
-  prosesModel2(seri);
+  var b = barcode.trim().toUpperCase();
+
+  // Tampilkan dulu barcode mentah sementara loading
+  seriDetected = b;
+  document.getElementById('detected-bar').classList.add('show');
+  document.getElementById('det-val').textContent = '⏳ ' + b.substring(0, 30) + '...';
+
+  if (!sizeTarget) {
+    showToast('Isi ukuran yang dicari dulu!');
+    document.getElementById('inp-size').focus();
+    return;
+  }
+
+  // Kirim barcode mentah ke GAS — GAS yang resolve via getBarcodeMapVentela
+  cariStokBarcode(b, sizeTarget);
+}
+
+// =====================================================================
+// TAMBAHKAN JUGA fungsi baru ini (di bawah prosesBarcode2):
+// =====================================================================
+
+async function cariStokBarcode(barcodeMentah, sizeTgt) {
+  if (sedangCariStok) return;
+  sedangCariStok = true;
+
+  var hb = document.getElementById('hero-box');
+  hb.className = 'hero-box show loading';
+  document.getElementById('hero-status').className = 'hero-status loading';
+  document.getElementById('hero-status').textContent = 'Mengecek stok...';
+  document.getElementById('hero-sub').textContent = barcodeMentah + ' - Size ' + sizeTgt;
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
+
+  try {
+    var resp = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        cekStok: true,
+        barcodeMentah: barcodeMentah,   // ← kirim barcode mentah
+        sizeTarget: sizeTgt,
+        sizeRange: 2
+      }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    var txt  = await resp.text();
+    var data = JSON.parse(txt);
+
+    if (data.error) {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = 'Error';
+      document.getElementById('hero-sub').textContent = data.error;
+      sedangCariStok = false;
+      return;
+    }
+
+    // Update detected bar dengan nama yang sudah di-resolve GAS
+    var namaResolved = (data.rows && data.rows.length > 0) ? data.rows[0].seri : barcodeMentah;
+    seriDetected = namaResolved;
+    document.getElementById('det-val').textContent = namaResolved;
+
+    if (data.targetReady) {
+      hb.className = 'hero-box show ready';
+      document.getElementById('hero-status').className = 'hero-status ready';
+      document.getElementById('hero-status').textContent = '✅ READY - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Stok: ' + data.targetQty + ' pasang';
+      bunyi('ok');
+    } else {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Lihat size lain di bawah';
+      bunyi('miss');
+    }
+
+    renderStokTable(data, sizeTgt);
+
+  } catch (e) {
+    hb.className = 'hero-box show habis';
+    document.getElementById('hero-status').className = 'hero-status habis';
+    document.getElementById('hero-status').textContent = 'Gagal koneksi';
+    document.getElementById('hero-sub').textContent = '';
+  }
+
+  sedangCariStok = false;
 }
 function prosesModel2(model) {
   seriDetected=model;
