@@ -576,15 +576,14 @@ var PASSWORD = "kodachi123";
 var GAS_URL  = "https://script.google.com/macros/s/AKfycbxgh5lx4V2Zdd0jJF1kjo-4qcKRtBbk5CTIMJqLzEkzhUdPjyffShD9N6xaEf1vnMrD/exec";
 
 // ─── FOTO CONFIG ─────────────────────────────────────────────────────
-// Ukuran & kualitas dikecilkan agar payload tidak terlalu besar ke GAS
-var FOTO_MAX_W  = 800;   // maks lebar piksel setelah resize
-var FOTO_MAX_H  = 600;   // maks tinggi piksel setelah resize
-var FOTO_QUALITY = 0.45; // kualitas JPEG (0.45 = ~100-200KB, cukup untuk OCR)
+var FOTO_MAX_W  = 800;
+var FOTO_MAX_H  = 600;
+var FOTO_QUALITY = 0.45;
 
 function resizeCanvas(srcCanvas, maxW, maxH) {
   var w = srcCanvas.width, h = srcCanvas.height;
   var scale = Math.min(maxW / w, maxH / h, 1);
-  if (scale >= 1) return srcCanvas; // sudah kecil, tidak perlu resize
+  if (scale >= 1) return srcCanvas;
   var dst = document.createElement('canvas');
   dst.width  = Math.round(w * scale);
   dst.height = Math.round(h * scale);
@@ -781,7 +780,6 @@ async function startCamera() {
   } catch(e) { setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
 }
 
-// ─── AMBIL FOTO — resize sebelum kirim ───────────────────────────────
 async function ambilFoto() {
   if (!stream || sedangKirim) return;
   bunyi('read');
@@ -790,11 +788,8 @@ async function ambilFoto() {
   canvas.width  = video.videoWidth  || 640;
   canvas.height = video.videoHeight || 480;
   canvas.getContext('2d').drawImage(video, 0, 0);
-
-  // Resize agar payload kecil
   var resized = resizeCanvas(canvas, FOTO_MAX_W, FOTO_MAX_H);
   var base64  = resized.toDataURL('image/jpeg', FOTO_QUALITY).split(',')[1];
-
   document.getElementById('cam-processing-scan').classList.add('show');
   document.getElementById('btn-cap').disabled = true;
   document.getElementById('cam-label').textContent = 'PROSES...';
@@ -848,7 +843,6 @@ function prosesResponse(teks, sumber) {
   else if (isAI)              { tipe='ai';   icon='\ud83e\udd16'; cntAI++;   bunyi('ai'); }
   else if (isOk)              { tipe='ok';   icon='\u2705'; cntOk++; bunyi('ok'); }
   else                        { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
-
   var modelMatch=teks.match(/Model:\s*(.+?)\s*\|/);
   var sizeMatch =teks.match(/Size:\s*(\S+)/);
   var model=modelMatch?modelMatch[1].trim():teks.replace(/\n/g,' ').substring(0,60);
@@ -1032,7 +1026,6 @@ function stopScan2() {
   document.getElementById('cam-label2').textContent='Kamera tidak aktif';
 }
 
-// ─── AMBIL FOTO STOK — sama, resize dulu ─────────────────────────────
 async function ambilFoto2() {
   if(sedangCariStok) return;
   bunyi('read');
@@ -1041,10 +1034,8 @@ async function ambilFoto2() {
   canvas.width  = video.videoWidth  || 640;
   canvas.height = video.videoHeight || 480;
   canvas.getContext('2d').drawImage(video, 0, 0);
-
   var resized = resizeCanvas(canvas, FOTO_MAX_W, FOTO_MAX_H);
   var base64  = resized.toDataURL('image/jpeg', FOTO_QUALITY).split(',')[1];
-
   showProcessing(true,'Memproses OCR...','Gemini AI sedang analisa foto');
   document.getElementById('cam-label2').textContent='PROSES...';
   try {
@@ -1088,58 +1079,6 @@ function prosesBarcode2(barcode) {
   cariStokBarcode(b, sizeTarget);
 }
 
-async function cariStokBarcode(barcodeMentah, sizeTgt) {
-  if (sedangCariStok) return;
-  sedangCariStok = true;
-  var hb = document.getElementById('hero-box');
-  hb.className = 'hero-box show loading';
-  document.getElementById('hero-status').className = 'hero-status loading';
-  document.getElementById('hero-status').textContent = 'Mengecek stok...';
-  document.getElementById('hero-sub').textContent = barcodeMentah + ' - Size ' + sizeTgt;
-  document.getElementById('stok-tbl-wrap').classList.remove('show');
-  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
-  try {
-    var resp = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ cekStok: true, barcodeMentah: barcodeMentah, sizeTarget: sizeTgt, sizeRange: 2 }),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var txt  = await resp.text();
-    var data = JSON.parse(txt);
-    if (data.error) {
-      hb.className = 'hero-box show habis';
-      document.getElementById('hero-status').className = 'hero-status habis';
-      document.getElementById('hero-status').textContent = 'Error';
-      document.getElementById('hero-sub').textContent = data.error;
-      sedangCariStok = false; return;
-    }
-    var namaResolved = (data.rows && data.rows.length > 0) ? data.rows[0].seri : barcodeMentah;
-    seriDetected = namaResolved;
-    document.getElementById('det-val').textContent = namaResolved;
-    if (data.targetReady) {
-      hb.className = 'hero-box show ready';
-      document.getElementById('hero-status').className = 'hero-status ready';
-      document.getElementById('hero-status').textContent = '✅ READY - Size ' + sizeTgt;
-      document.getElementById('hero-sub').textContent = 'Stok: ' + data.targetQty + ' pasang';
-      bunyi('ok');
-    } else {
-      hb.className = 'hero-box show habis';
-      document.getElementById('hero-status').className = 'hero-status habis';
-      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
-      document.getElementById('hero-sub').textContent = 'Lihat size lain di bawah';
-      bunyi('miss');
-    }
-    renderStokTable(data, sizeTgt);
-  } catch (e) {
-    hb.className = 'hero-box show habis';
-    document.getElementById('hero-status').className = 'hero-status habis';
-    document.getElementById('hero-status').textContent = 'Gagal koneksi';
-    document.getElementById('hero-sub').textContent = e.message;
-  }
-  sedangCariStok = false;
-}
-
 function prosesModel2(model) {
   seriDetected=model;
   document.getElementById('detected-bar').classList.add('show');
@@ -1160,77 +1099,219 @@ function submitManual() {
   prosesModel2(v.toUpperCase());
 }
 
-async function cariStok(seri, sizeTgt) {
-  if(sedangCariStok) return;
-  sedangCariStok=true;
-  var hb=document.getElementById('hero-box');
-  hb.className='hero-box show loading';
-  document.getElementById('hero-status').className='hero-status loading';
-  document.getElementById('hero-status').textContent='Mengecek stok...';
-  document.getElementById('hero-sub').textContent=seri+' - Size '+sizeTgt;
-  document.getElementById('stok-tbl-wrap').classList.remove('show');
-  document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
-  try {
-    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({cekStok:true,seri:seri,sizeTarget:sizeTgt,sizeRange:2}),headers:{'Content-Type':'text/plain'}});
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var txt=await resp.text();
-    var data=JSON.parse(txt);
-    if(data.error){
-      hb.className='hero-box show habis';
-      document.getElementById('hero-status').className='hero-status habis';
-      document.getElementById('hero-status').textContent='Error';
-      document.getElementById('hero-sub').textContent=data.error;
-      sedangCariStok=false; return;
-    }
-    if(data.targetReady){
-      hb.className='hero-box show ready';
-      document.getElementById('hero-status').className='hero-status ready';
-      document.getElementById('hero-status').textContent='\u2705 READY - Size '+sizeTgt;
-      document.getElementById('hero-sub').textContent='Stok: '+data.targetQty+' pasang';
-      bunyi('ok');
-    } else {
-      hb.className='hero-box show habis';
-      document.getElementById('hero-status').className='hero-status habis';
-      document.getElementById('hero-status').textContent='\u274c HABIS - Size '+sizeTgt;
-      document.getElementById('hero-sub').textContent='Lihat size lain di bawah';
-      bunyi('miss');
-    }
-    renderStokTable(data, sizeTgt);
-  } catch(e){
-    hb.className='hero-box show habis';
-    document.getElementById('hero-status').className='hero-status habis';
-    document.getElementById('hero-status').textContent='Gagal koneksi';
-    document.getElementById('hero-sub').textContent=e.message;
-  }
-  sedangCariStok=false;
+// ─── HELPER: evaluasi baris exact vs varian ──────────────────────────
+// GAS boleh kirim rows[i].isExact=true untuk flag exact match.
+// Kalau tidak ada flag, fallback ke rows[0].
+function evalStokResult(data, sizeTgt) {
+  var rows = data.rows || [];
+  if (!rows.length) return { exactReady:false, exactQty:0, exactRow:null, variantReady:[] };
+  var exactRow = null;
+  for (var i=0; i<rows.length; i++) { if (rows[i].isExact) { exactRow = rows[i]; break; } }
+  if (!exactRow) exactRow = rows[0];
+  var exactQty   = (exactRow.sizes && exactRow.sizes[sizeTgt]) || 0;
+  var exactReady = exactQty > 0;
+  var variantReady = rows.filter(function(r) {
+    return r !== exactRow && ((r.sizes && r.sizes[sizeTgt]) || 0) > 0;
+  });
+  return { exactReady:exactReady, exactQty:exactQty, exactRow:exactRow, variantReady:variantReady };
 }
 
-function renderStokTable(data, sizeTgt) {
-  var wrap=document.getElementById('stok-tbl-wrap');
-  var tbody=document.getElementById('stok-tbl-body');
-  if(!data.rows||!data.rows.length){ wrap.classList.remove('show'); tbody.innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>'; return; }
-  wrap.classList.add('show');
-  var sizes=data.sizes||[];
-  var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
-  sizes.forEach(function(sz){ html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' ✦':'')+'</th>'; });
-  html+='</tr></thead><tbody>';
-  data.rows.forEach(function(row){
-    var hasTgt=row.sizes&&row.sizes[sizeTgt]>0;
-    html+='<tr'+(hasTgt?' class="hl"':'')+'>';
-    html+='<td class="td-nm">'+esc(row.seri)+(row.warna?'<br><span style="color:var(--muted2);font-size:10px">'+esc(row.warna)+'</span>':'')+'</td>';
-    sizes.forEach(function(sz){
-      var qty=(row.sizes&&row.sizes[sz])||0;
-      var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
-      html+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';
+// ─── cariStok (dari OCR / manual) ────────────────────────────────────
+async function cariStok(seri, sizeTgt) {
+  if (sedangCariStok) return;
+  sedangCariStok = true;
+  var hb = document.getElementById('hero-box');
+  hb.className = 'hero-box show loading';
+  document.getElementById('hero-status').className = 'hero-status loading';
+  document.getElementById('hero-status').textContent = 'Mengecek stok...';
+  document.getElementById('hero-sub').textContent = seri + ' - Size ' + sizeTgt;
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
+  try {
+    var resp = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ cekStok:true, seri:seri, sizeTarget:sizeTgt, sizeRange:2 }),
+      headers: { 'Content-Type': 'text/plain' }
     });
-    html+='</tr>';
-  });
-  html+='</tbody></table>';
-  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span style="color:var(--green)">✦ = size target</span><span>angka = pasang</span><span>- = habis</span></div>';
-  document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
-  document.getElementById('stok-tbl-sub').textContent='±2 dari size '+sizeTgt;
-  tbody.innerHTML=html;
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var txt  = await resp.text();
+    var data = JSON.parse(txt);
+    if (data.error) {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = 'Error';
+      document.getElementById('hero-sub').textContent = data.error;
+      sedangCariStok = false; return;
+    }
+    var ev = evalStokResult(data, sizeTgt);
+    if (ev.exactReady) {
+      hb.className = 'hero-box show ready';
+      document.getElementById('hero-status').className = 'hero-status ready';
+      document.getElementById('hero-status').textContent = '✅ READY - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Stok: ' + ev.exactQty + ' pasang';
+      bunyi('ok');
+    } else if (ev.variantReady.length > 0) {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = ev.variantReady.length + ' varian lain ready size ' + sizeTgt + ' ↓';
+      bunyi('miss');
+    } else {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Semua varian habis di size ini';
+      bunyi('miss');
+    }
+    renderStokTable(data, sizeTgt, ev);
+  } catch (e) {
+    hb.className = 'hero-box show habis';
+    document.getElementById('hero-status').className = 'hero-status habis';
+    document.getElementById('hero-status').textContent = 'Gagal koneksi';
+    document.getElementById('hero-sub').textContent = e.message;
+  }
+  sedangCariStok = false;
 }
+
+// ─── cariStokBarcode (dari scan barcode) ─────────────────────────────
+async function cariStokBarcode(barcodeMentah, sizeTgt) {
+  if (sedangCariStok) return;
+  sedangCariStok = true;
+  var hb = document.getElementById('hero-box');
+  hb.className = 'hero-box show loading';
+  document.getElementById('hero-status').className = 'hero-status loading';
+  document.getElementById('hero-status').textContent = 'Mengecek stok...';
+  document.getElementById('hero-sub').textContent = barcodeMentah + ' - Size ' + sizeTgt;
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
+  try {
+    var resp = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ cekStok:true, barcodeMentah:barcodeMentah, sizeTarget:sizeTgt, sizeRange:2 }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var txt  = await resp.text();
+    var data = JSON.parse(txt);
+    if (data.error) {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = 'Error';
+      document.getElementById('hero-sub').textContent = data.error;
+      sedangCariStok = false; return;
+    }
+    var namaResolved = (data.rows && data.rows.length > 0) ? data.rows[0].seri : barcodeMentah;
+    seriDetected = namaResolved;
+    document.getElementById('det-val').textContent = namaResolved;
+    var ev = evalStokResult(data, sizeTgt);
+    if (ev.exactReady) {
+      hb.className = 'hero-box show ready';
+      document.getElementById('hero-status').className = 'hero-status ready';
+      document.getElementById('hero-status').textContent = '✅ READY - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Stok: ' + ev.exactQty + ' pasang';
+      bunyi('ok');
+    } else if (ev.variantReady.length > 0) {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = ev.variantReady.length + ' varian lain ready size ' + sizeTgt + ' ↓';
+      bunyi('miss');
+    } else {
+      hb.className = 'hero-box show habis';
+      document.getElementById('hero-status').className = 'hero-status habis';
+      document.getElementById('hero-status').textContent = '❌ HABIS - Size ' + sizeTgt;
+      document.getElementById('hero-sub').textContent = 'Semua varian habis di size ini';
+      bunyi('miss');
+    }
+    renderStokTable(data, sizeTgt, ev);
+  } catch (e) {
+    hb.className = 'hero-box show habis';
+    document.getElementById('hero-status').className = 'hero-status habis';
+    document.getElementById('hero-status').textContent = 'Gagal koneksi';
+    document.getElementById('hero-sub').textContent = e.message;
+  }
+  sedangCariStok = false;
+}
+
+// ─── renderStokTable ─────────────────────────────────────────────────
+// ev = hasil evalStokResult(). Baris exact match selalu paling atas,
+// diikuti varian lain. Baris exact diberi badge "scan", varian yang
+// ready di size target diberi badge "varian".
+function renderStokTable(data, sizeTgt, ev) {
+  var wrap  = document.getElementById('stok-tbl-wrap');
+  var tbody = document.getElementById('stok-tbl-body');
+  if (!data.rows || !data.rows.length) {
+    wrap.classList.remove('show');
+    tbody.innerHTML = '<div class="stok-empty">Tidak ada stok ditemukan</div>';
+    return;
+  }
+  wrap.classList.add('show');
+  var sizes  = data.sizes || [];
+  var exact  = ev ? ev.exactRow : data.rows[0];
+  // Exact row paling atas, sisanya urut seperti dari GAS
+  var ordered = [exact].concat(data.rows.filter(function(r){ return r !== exact; }));
+
+  var html = '<table class="stok-tbl"><thead><tr><th>Produk</th>';
+  sizes.forEach(function(sz) {
+    html += '<th class="tc' + (sz === sizeTgt ? ' tgt' : '') + '">' + sz + (sz === sizeTgt ? ' ✦' : '') + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  ordered.forEach(function(row, idx) {
+    var isExactRow    = (row === exact);
+    var hasTgt        = ((row.sizes && row.sizes[sizeTgt]) || 0) > 0;
+    var isVarReady    = ev && ev.variantReady.indexOf(row) !== -1;
+
+    // Warna baris
+    var rowAttr = '';
+    if      (isExactRow && hasTgt)  rowAttr = ' class="hl"';
+    else if (isExactRow && !hasTgt) rowAttr = ' style="background:rgba(244,63,94,.06)"';
+    else if (isVarReady)            rowAttr = ' style="background:rgba(251,191,36,.05)"';
+
+    html += '<tr' + rowAttr + '>';
+
+    // Badge nama produk
+    var badge = '';
+    if (isExactRow) {
+      badge = ' <span style="font-size:9px;background:rgba(124,106,247,.2);color:var(--acc2);border-radius:4px;padding:1px 5px">scan</span>';
+    } else if (isVarReady) {
+      badge = ' <span style="font-size:9px;background:rgba(251,191,36,.2);color:var(--amber);border-radius:4px;padding:1px 5px">varian</span>';
+    }
+
+    html += '<td class="td-nm">' + esc(row.seri) + badge
+          + (row.warna ? '<br><span style="color:var(--muted2);font-size:10px">' + esc(row.warna) + '</span>' : '')
+          + '</td>';
+
+    sizes.forEach(function(sz) {
+      var qty = (row.sizes && row.sizes[sz]) || 0;
+      var cls = 'td-sz'
+              + (sz === sizeTgt ? ' tgt' : (Math.abs(sz - sizeTgt) <= 1 ? ' near' : ''))
+              + (qty === 0 ? ' zero' : '');
+      html += '<td class="' + cls + '">' + (qty > 0 ? qty : '-') + '</td>';
+    });
+
+    html += '</tr>';
+
+    // Garis pemisah tipis setelah exact row
+    if (isExactRow && ordered.length > 1) {
+      html += '<tr><td colspan="' + (sizes.length + 1)
+            + '" style="padding:0;height:1px;background:rgba(255,255,255,.07)"></td></tr>';
+    }
+  });
+
+  html += '</tbody></table>';
+  html += '<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'
+        + '<span style="color:var(--green)">✦ = size target</span>'
+        + '<span style="color:var(--acc2)">scan = produk discani</span>'
+        + '<span style="color:var(--amber)">varian = warna lain yg ada</span>'
+        + '<span>angka = pasang &nbsp;· &nbsp;- = habis</span>'
+        + '</div>';
+
+  document.getElementById('stok-tbl-title').textContent = 'Stok ' + seriDetected;
+  document.getElementById('stok-tbl-sub').textContent   = '±2 dari size ' + sizeTgt;
+  tbody.innerHTML = html;
+}
+
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
