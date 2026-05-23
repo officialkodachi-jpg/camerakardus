@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ScanProduk">
   <meta name="theme-color" content="#7c6af7">
-  <title>Scanner Produk v4</title>
+  <title>Scanner Produk v4.3</title>
 
   <script>
     const manifest = {
@@ -46,9 +46,6 @@
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--bg);color:var(--text)}
-    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
-      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      background-size:200px;opacity:.4}
 
     #login-screen{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;
       background:radial-gradient(ellipse at 30% 20%,rgba(124,106,247,.15) 0%,transparent 60%),
@@ -315,8 +312,7 @@
     .proc-spinner{width:44px;height:44px;border:3px solid rgba(124,106,247,.2);
       border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .proc-label{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--acc2);
-      text-transform:uppercase}
+    .proc-label{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase}
     .proc-sub{font-size:10px;color:var(--muted2)}
 
     #toast-big{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);
@@ -339,7 +335,7 @@
 <div id="login-screen">
   <div class="lcard">
     <span class="l-eye">&#128302;</span>
-    <div class="l-chip">Scanner System v4 · PWA</div>
+    <div class="l-chip">Scanner System v4.3 · PWA</div>
     <div class="l-title">Scan Produk</div>
     <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok</div>
     <input class="l-input" type="password" id="inp-pw" placeholder="Password" autocomplete="current-password">
@@ -579,8 +575,26 @@
 var PASSWORD = "kodachi123";
 var GAS_URL  = "https://script.google.com/macros/s/AKfycbxgh5lx4V2Zdd0jJF1kjo-4qcKRtBbk5CTIMJqLzEkzhUdPjyffShD9N6xaEf1vnMrD/exec";
 
+// ─── FOTO CONFIG ─────────────────────────────────────────────────────
+// Ukuran & kualitas dikecilkan agar payload tidak terlalu besar ke GAS
+var FOTO_MAX_W  = 800;   // maks lebar piksel setelah resize
+var FOTO_MAX_H  = 600;   // maks tinggi piksel setelah resize
+var FOTO_QUALITY = 0.45; // kualitas JPEG (0.45 = ~100-200KB, cukup untuk OCR)
+
+function resizeCanvas(srcCanvas, maxW, maxH) {
+  var w = srcCanvas.width, h = srcCanvas.height;
+  var scale = Math.min(maxW / w, maxH / h, 1);
+  if (scale >= 1) return srcCanvas; // sudah kecil, tidak perlu resize
+  var dst = document.createElement('canvas');
+  dst.width  = Math.round(w * scale);
+  dst.height = Math.round(h * scale);
+  dst.getContext('2d').drawImage(srcCanvas, 0, 0, dst.width, dst.height);
+  return dst;
+}
+// ─────────────────────────────────────────────────────────────────────
+
 if ('serviceWorker' in navigator) {
-  var swCode = "const CACHE='scanner-v4b';const OFFLINE_ASSETS=[self.location.href];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(OFFLINE_ASSETS).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{if(e.request.url.includes('script.google.com')){e.respondWith(fetch(e.request).catch(()=>new Response('error',{status:503})));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res&&res.ok){var c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return res;})));});";
+  var swCode = "const CACHE='scanner-v4c';const OFFLINE_ASSETS=[self.location.href];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(OFFLINE_ASSETS).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{if(e.request.url.includes('script.google.com')){e.respondWith(fetch(e.request).catch(()=>new Response('error',{status:503})));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res&&res.ok){var c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return res;})));});";
   var swBlob = new Blob([swCode], {type: 'application/javascript'});
   navigator.serviceWorker.register(URL.createObjectURL(swBlob), {scope: './'}).catch(function(){});
 }
@@ -748,7 +762,7 @@ async function mulaiScan() {
 function stopScan() {
   scanning=false; sedangKirim=false;
   if (stream) { stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
-  if (codeReader) { codeReader.reset(); codeReader=null; }
+  if (codeReader) { try{codeReader.reset();}catch(e){} codeReader=null; }
   document.getElementById('video').srcObject=null;
   document.getElementById('scan-line').style.display='none';
   document.getElementById('btn-start').style.display='flex';
@@ -767,20 +781,27 @@ async function startCamera() {
   } catch(e) { setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
 }
 
+// ─── AMBIL FOTO — resize sebelum kirim ───────────────────────────────
 async function ambilFoto() {
-  if (!stream||sedangKirim) return;
+  if (!stream || sedangKirim) return;
   bunyi('read');
-  var video=document.getElementById('video'), canvas=document.getElementById('canvas');
-  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
-  canvas.getContext('2d').drawImage(video,0,0);
-  var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
+  var video  = document.getElementById('video');
+  var canvas = document.getElementById('canvas');
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  // Resize agar payload kecil
+  var resized = resizeCanvas(canvas, FOTO_MAX_W, FOTO_MAX_H);
+  var base64  = resized.toDataURL('image/jpeg', FOTO_QUALITY).split(',')[1];
+
   document.getElementById('cam-processing-scan').classList.add('show');
-  document.getElementById('btn-cap').disabled=true;
-  document.getElementById('cam-label').textContent='PROSES...';
-  await kirimKeGAS({image:base64});
+  document.getElementById('btn-cap').disabled = true;
+  document.getElementById('cam-label').textContent = 'PROSES...';
+  await kirimKeGAS({image: base64});
   document.getElementById('cam-processing-scan').classList.remove('show');
-  document.getElementById('btn-cap').disabled=false;
-  document.getElementById('cam-label').textContent='LIVE';
+  document.getElementById('btn-cap').disabled = false;
+  document.getElementById('cam-label').textContent = 'LIVE';
 }
 
 async function startBarcodeScanner() {
@@ -806,11 +827,13 @@ async function kirimKeGAS(payload) {
   tutupKoreksi();
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var teks=await resp.text();
+    if (!teks || teks.trim() === '') throw new Error('Respons kosong dari server');
     prosesResponse(teks, payload.image?'foto':'barcode');
   } catch(e) {
     bunyi('miss');
-    setStatus('Gagal koneksi - coba lagi.','err');
+    setStatus('Gagal koneksi: '+e.message+' — coba lagi.','err');
     showToast('Koneksi gagal - data belum tersimpan!','err');
   }
   sedangKirim=false;
@@ -818,15 +841,18 @@ async function kirimKeGAS(payload) {
 
 function prosesResponse(teks, sumber) {
   var isOk=teks.includes('\u2705'), isAI=teks.includes('(AI)'), isMiss=teks.includes('\u26a0\ufe0f');
-  var isErr=teks.includes('\u274c')||teks.includes('Error');
+  var isErr=teks.includes('\u274c')||teks.toLowerCase().includes('error');
   var tipe, icon;
-  if (isErr||(!isOk&&!isMiss)) { tipe='err'; icon='\u274c'; cntMiss++; bunyi('miss'); }
-  else if (isMiss) { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
-  else if (isAI)   { tipe='ai';   icon='\ud83e\udd16'; cntAI++;   bunyi('ai'); }
-  else             { tipe='ok';   icon='\u2705'; cntOk++; bunyi('ok'); }
-  var modelMatch=teks.match(/Model:\s*(.+?)\s*\|/), sizeMatch=teks.match(/Size:\s*(\S+)/);
-  var model=modelMatch?modelMatch[1]:teks.substring(0,60);
-  var size=sizeMatch?sizeMatch[1]:'-';
+  if (isErr&&!isOk&&!isMiss) { tipe='err'; icon='\u274c'; cntMiss++; bunyi('miss'); }
+  else if (isMiss)            { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
+  else if (isAI)              { tipe='ai';   icon='\ud83e\udd16'; cntAI++;   bunyi('ai'); }
+  else if (isOk)              { tipe='ok';   icon='\u2705'; cntOk++; bunyi('ok'); }
+  else                        { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
+
+  var modelMatch=teks.match(/Model:\s*(.+?)\s*\|/);
+  var sizeMatch =teks.match(/Size:\s*(\S+)/);
+  var model=modelMatch?modelMatch[1].trim():teks.replace(/\n/g,' ').substring(0,60);
+  var size =sizeMatch?sizeMatch[1]:'-';
   hasilTerakhirModel=model;
   var aiBadge=isAI?'&ensp;<span style="font-size:11px;opacity:.75;color:var(--ai)">Gemini</span>':'';
   setStatus(icon+' <b>'+model+'</b>&ensp;Size: '+size+aiBadge, tipe);
@@ -957,6 +983,7 @@ function setMode2(m) {
     document.getElementById('btn2-foto').style.display = 'none';
   }
 }
+
 async function mulaiScan2() {
   if (audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
   stok2Running=true;
@@ -990,10 +1017,11 @@ async function mulaiScan2() {
     } catch(e){ showToast('Scanner error: '+e.message); stopScan2(); }
   }
 }
+
 function stopScan2() {
   stok2Running=false;
   if(stream2){stream2.getTracks().forEach(function(t){t.stop();});stream2=null;}
-  if(codeReader2){codeReader2.reset();codeReader2=null;}
+  if(codeReader2){try{codeReader2.reset();}catch(e){} codeReader2=null;}
   document.getElementById('video2').srcObject=null;
   document.getElementById('scan-line2').style.display='none';
   document.getElementById('btn2-start').style.display='flex';
@@ -1003,38 +1031,47 @@ function stopScan2() {
   document.getElementById('cam-dot2').classList.remove('live');
   document.getElementById('cam-label2').textContent='Kamera tidak aktif';
 }
+
+// ─── AMBIL FOTO STOK — sama, resize dulu ─────────────────────────────
 async function ambilFoto2() {
   if(sedangCariStok) return;
   bunyi('read');
-  var video=document.getElementById('video2'), canvas=document.getElementById('canvas2');
-  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
-  canvas.getContext('2d').drawImage(video,0,0);
-  var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
+  var video  = document.getElementById('video2');
+  var canvas = document.getElementById('canvas2');
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+
+  var resized = resizeCanvas(canvas, FOTO_MAX_W, FOTO_MAX_H);
+  var base64  = resized.toDataURL('image/jpeg', FOTO_QUALITY).split(',')[1];
+
   showProcessing(true,'Memproses OCR...','Gemini AI sedang analisa foto');
   document.getElementById('cam-label2').textContent='PROSES...';
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({image:base64}),headers:{'Content-Type':'text/plain'}});
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var teks=await resp.text();
     showProcessing(false);
     document.getElementById('cam-label2').textContent='LIVE';
+    if (!teks || teks.trim()==='') throw new Error('Respons kosong');
     var m=teks.match(/Model:\s*(.+?)\s*\|/);
     if(m){
-      prosesModel2(m[1]);
+      prosesModel2(m[1].trim());
     } else if(teks.includes('Teks tidak terdeteksi')||teks.includes('tidak terdeteksi')){
       bunyi('miss');
-      showToastBig('&#128247;','Label Tidak Terbaca','Pastikan label terlihat jelas dan pencahayaan cukup','warn');
-    } else if(teks.includes('Error')||teks.includes('error')){
+      showToastBig('📷','Label Tidak Terbaca','Pastikan label terlihat jelas dan pencahayaan cukup','warn');
+    } else if(teks.toLowerCase().includes('error')){
       bunyi('miss');
-      showToastBig('&#10060;','Gagal Proses',''+teks.substring(0,80),'');
+      showToastBig('❌','Gagal Proses',''+teks.substring(0,80),'');
     } else {
       bunyi('miss');
-      showToastBig('&#10067;','Produk Tidak Dikenali','Coba foto lebih dekat atau gunakan mode Barcode','warn');
+      showToastBig('❓','Produk Tidak Dikenali','Coba foto lebih dekat atau gunakan mode Barcode','warn');
     }
   } catch(e){
     showProcessing(false);
     document.getElementById('cam-label2').textContent='LIVE';
     bunyi('miss');
-    showToastBig('&#128246;','Gagal Koneksi','Periksa koneksi internet lalu coba lagi','');
+    showToastBig('📵','Gagal Koneksi','Periksa koneksi internet lalu coba lagi: '+e.message,'');
   }
 }
 
@@ -1042,7 +1079,7 @@ function prosesBarcode2(barcode) {
   var b = barcode.trim().toUpperCase();
   seriDetected = b;
   document.getElementById('detected-bar').classList.add('show');
-  document.getElementById('det-val').textContent = '⏳ ' + b.substring(0, 30) + '...';
+  document.getElementById('det-val').textContent = '⏳ ' + b.substring(0,30) + '...';
   if (!sizeTarget) {
     showToast('Isi ukuran yang dicari dulu!');
     document.getElementById('inp-size').focus();
@@ -1067,6 +1104,7 @@ async function cariStokBarcode(barcodeMentah, sizeTgt) {
       body: JSON.stringify({ cekStok: true, barcodeMentah: barcodeMentah, sizeTarget: sizeTgt, sizeRange: 2 }),
       headers: { 'Content-Type': 'text/plain' }
     });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var txt  = await resp.text();
     var data = JSON.parse(txt);
     if (data.error) {
@@ -1074,8 +1112,7 @@ async function cariStokBarcode(barcodeMentah, sizeTgt) {
       document.getElementById('hero-status').className = 'hero-status habis';
       document.getElementById('hero-status').textContent = 'Error';
       document.getElementById('hero-sub').textContent = data.error;
-      sedangCariStok = false;
-      return;
+      sedangCariStok = false; return;
     }
     var namaResolved = (data.rows && data.rows.length > 0) ? data.rows[0].seri : barcodeMentah;
     seriDetected = namaResolved;
@@ -1098,7 +1135,7 @@ async function cariStokBarcode(barcodeMentah, sizeTgt) {
     hb.className = 'hero-box show habis';
     document.getElementById('hero-status').className = 'hero-status habis';
     document.getElementById('hero-status').textContent = 'Gagal koneksi';
-    document.getElementById('hero-sub').textContent = '';
+    document.getElementById('hero-sub').textContent = e.message;
   }
   sedangCariStok = false;
 }
@@ -1120,7 +1157,6 @@ function submitManual() {
   if(!v){showToast('Ketik kode seri dulu');return;}
   document.getElementById('manual-wrap').classList.remove('show');
   document.getElementById('inp-manual').value='';
-  if(!sizeTarget){ seriDetected=v.toUpperCase(); prosesModel2(v.toUpperCase()); return; }
   prosesModel2(v.toUpperCase());
 }
 
@@ -1136,9 +1172,16 @@ async function cariStok(seri, sizeTgt) {
   document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({cekStok:true,seri:seri,sizeTarget:sizeTgt,sizeRange:2}),headers:{'Content-Type':'text/plain'}});
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var txt=await resp.text();
     var data=JSON.parse(txt);
-    if(data.error){ hb.className='hero-box show habis'; document.getElementById('hero-status').className='hero-status habis'; document.getElementById('hero-status').textContent='Error'; document.getElementById('hero-sub').textContent=data.error; sedangCariStok=false; return; }
+    if(data.error){
+      hb.className='hero-box show habis';
+      document.getElementById('hero-status').className='hero-status habis';
+      document.getElementById('hero-status').textContent='Error';
+      document.getElementById('hero-sub').textContent=data.error;
+      sedangCariStok=false; return;
+    }
     if(data.targetReady){
       hb.className='hero-box show ready';
       document.getElementById('hero-status').className='hero-status ready';
@@ -1153,7 +1196,12 @@ async function cariStok(seri, sizeTgt) {
       bunyi('miss');
     }
     renderStokTable(data, sizeTgt);
-  } catch(e){ hb.className='hero-box show habis'; document.getElementById('hero-status').className='hero-status habis'; document.getElementById('hero-status').textContent='Gagal koneksi'; document.getElementById('hero-sub').textContent=''; }
+  } catch(e){
+    hb.className='hero-box show habis';
+    document.getElementById('hero-status').className='hero-status habis';
+    document.getElementById('hero-status').textContent='Gagal koneksi';
+    document.getElementById('hero-sub').textContent=e.message;
+  }
   sedangCariStok=false;
 }
 
@@ -1164,7 +1212,7 @@ function renderStokTable(data, sizeTgt) {
   wrap.classList.add('show');
   var sizes=data.sizes||[];
   var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
-  sizes.forEach(function(sz){ html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' *':'')+'</th>'; });
+  sizes.forEach(function(sz){ html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' ✦':'')+'</th>'; });
   html+='</tr></thead><tbody>';
   data.rows.forEach(function(row){
     var hasTgt=row.sizes&&row.sizes[sizeTgt]>0;
@@ -1173,14 +1221,14 @@ function renderStokTable(data, sizeTgt) {
     sizes.forEach(function(sz){
       var qty=(row.sizes&&row.sizes[sz])||0;
       var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
-      html+='<td class="'+cls+'">'+( qty>0?qty:'-')+'</td>';
+      html+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';
     });
     html+='</tr>';
   });
   html+='</tbody></table>';
-  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span style="color:var(--green)">* = size target</span><span>angka = pasang</span><span>- = habis</span></div>';
+  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span style="color:var(--green)">✦ = size target</span><span>angka = pasang</span><span>- = habis</span></div>';
   document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
-  document.getElementById('stok-tbl-sub').textContent='+-2 dari size '+sizeTgt;
+  document.getElementById('stok-tbl-sub').textContent='±2 dari size '+sizeTgt;
   tbody.innerHTML=html;
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
