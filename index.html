@@ -115,7 +115,7 @@
     .tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
     .tab-panel.active{display:flex}
 
-    /* SCAN PANEL - original styles */
+    /* SCAN PANEL */
     .top-controls{flex-shrink:0;padding:10px 14px 0;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
     .mode-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:4px;gap:4px}
     .mode-btn{padding:9px;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;
@@ -319,7 +319,7 @@
     #toast.err{border-color:var(--red);color:#fca5a5}
     canvas{display:none}
 
-    /* Loading overlay kamera cek stok */
+    /* Loading overlay kamera — dipakai di KEDUA tab */
     .cam-processing{position:absolute;inset:0;background:rgba(11,12,16,.82);
       display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:10}
     .cam-processing.show{display:flex}
@@ -347,7 +347,7 @@
 </head>
 <body>
 
-<!-- LOGIN - SAMA PERSIS DENGAN V3 -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="lcard">
     <span class="l-eye">&#128302;</span>
@@ -394,7 +394,7 @@
     <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">&#128302; Cek Stok</button>
   </div>
 
-  <!-- ===== TAB SCAN (v3 ASLI) ===== -->
+  <!-- ===== TAB SCAN ===== -->
   <div class="tab-panel active" id="panel-scan">
     <div class="top-controls">
       <div class="mode-toggle">
@@ -423,6 +423,12 @@
               <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
               <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             </div>
+          </div>
+          <!-- PATCH 1: Loading overlay OCR untuk tab Scan -->
+          <div class="cam-processing" id="cam-processing-scan">
+            <div class="proc-spinner"></div>
+            <div class="proc-label">Memproses OCR</div>
+            <div class="proc-sub">Gemini AI sedang analisa...</div>
           </div>
           <div class="cam-idle" id="idle-screen">
             <div class="idle-icon">&#128302;</div>
@@ -498,7 +504,6 @@
           </div>
           <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 8px">&#128230; Cek Stok</span>
         </div>
-        <!-- Mode toggle foto/barcode -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px">
           <button id="btn2-mode-foto" onclick="setMode2('foto')"
             style="padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:var(--acc);color:#fff;transition:all .2s">
@@ -753,7 +758,7 @@ function setStatus(msg, tipe) {
   if (tipe && tipe!=='loading') statusTimer = setTimeout(function(){ el.className='status-box'; el.innerHTML='Siap scan berikutnya...'; }, 4000);
 }
 
-// SCAN (original v3)
+// SCAN
 async function mulaiScan() {
   if (audioCtx && audioCtx.state==='suspended') audioCtx.resume();
   scanning=true;
@@ -784,6 +789,8 @@ function stopScan() {
   document.getElementById('idle-screen').style.display='flex';
   document.getElementById('cam-dot').classList.remove('live');
   document.getElementById('cam-label').textContent='Kamera tidak aktif';
+  // Pastikan overlay loading juga disembunyikan saat stop
+  document.getElementById('cam-processing-scan').classList.remove('show');
   setStatus('Dihentikan.');
 }
 async function startCamera() {
@@ -792,6 +799,8 @@ async function startCamera() {
     document.getElementById('video').srcObject=stream;
   } catch(e) { setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
 }
+
+// PATCH 2: ambilFoto — tampilkan overlay loading saat OCR berlangsung
 async function ambilFoto() {
   if (!stream||sedangKirim) return;
   bunyi('read');
@@ -799,8 +808,17 @@ async function ambilFoto() {
   canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
   canvas.getContext('2d').drawImage(video,0,0);
   var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
+  // Tampilkan loading overlay + nonaktifkan tombol foto
+  document.getElementById('cam-processing-scan').classList.add('show');
+  document.getElementById('btn-cap').disabled=true;
+  document.getElementById('cam-label').textContent='PROSES...';
   await kirimKeGAS({image:base64});
+  // Sembunyikan loading overlay setelah selesai
+  document.getElementById('cam-processing-scan').classList.remove('show');
+  document.getElementById('btn-cap').disabled=false;
+  document.getElementById('cam-label').textContent='LIVE';
 }
+
 async function startBarcodeScanner() {
   codeReader=new ZXing.BrowserMultiFormatReader();
   var hints=new Map();
@@ -817,9 +835,12 @@ async function startBarcodeScanner() {
     });
   } catch(e) { setStatus('Scanner error: '+e.message,'err'); stopScan(); }
 }
+
+// PATCH 3: kirimKeGAS — mode foto tidak tampilkan status loading (sudah pakai overlay)
 async function kirimKeGAS(payload) {
   sedangKirim=true;
-  setStatus('Memproses'+(payload.image?' OCR + AI...':' Barcode...'),'loading');
+  // Hanya tampilkan status loading untuk mode barcode; mode foto sudah pakai overlay
+  if (!payload.image) setStatus('Memproses Barcode...','loading');
   tutupKoreksi();
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
@@ -832,6 +853,7 @@ async function kirimKeGAS(payload) {
   }
   sedangKirim=false;
 }
+
 function prosesResponse(teks, sumber) {
   var isOk=teks.includes('\u2705'), isAI=teks.includes('(AI)'), isMiss=teks.includes('\u26a0\ufe0f');
   var isErr=teks.includes('\u274c')||teks.includes('Error');
@@ -1027,7 +1049,6 @@ async function ambilFoto2() {
   canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
   canvas.getContext('2d').drawImage(video,0,0);
   var base64=canvas.toDataURL('image/jpeg',.82).split(',')[1];
-  // Tampilkan loading overlay
   showProcessing(true,'Memproses OCR...','Gemini AI sedang analisa foto');
   document.getElementById('cam-label2').textContent='PROSES...';
   try {
