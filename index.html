@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ScanProduk">
   <meta name="theme-color" content="#7c6af7">
-  <title>Scanner Produk v4.3</title>
+  <title>Scanner Produk v4.6</title>
 
   <script>
     const manifest = {
@@ -264,6 +264,44 @@
     .hero-status.habis{color:var(--red)}
     .hero-status.loading{color:var(--acc2)}
     .hero-sub{font-size:12px;color:var(--muted2);margin-top:4px}
+
+    /* ── HARGA CARD ─────────────────────────────────────────── */
+    .harga-card{
+      background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+      padding:14px 16px;margin-bottom:10px;display:none;
+      animation:fadeup .25s ease;
+    }
+    .harga-card.show{display:block}
+    .harga-card-title{
+      font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--muted);
+      text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px
+    }
+    .harga-main-row{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+    .harga-final{
+      font-family:var(--mono);font-size:26px;font-weight:700;color:var(--green);line-height:1
+    }
+    .harga-retail{
+      font-family:var(--mono);font-size:13px;color:var(--muted);text-decoration:line-through;
+      padding-bottom:2px
+    }
+    .diskon-badge{
+      background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);
+      color:#ff8099;border-radius:7px;padding:3px 10px;
+      font-family:var(--mono);font-size:12px;font-weight:700;
+    }
+    .harga-meta-row{display:flex;gap:8px;flex-wrap:wrap}
+    .harga-meta-pill{
+      font-size:11px;color:var(--muted2);
+      background:var(--s2);border:1px solid var(--brd);
+      border-radius:6px;padding:3px 9px;
+      font-family:var(--mono)
+    }
+    .harga-meta-pill.amber{color:var(--amber);background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25)}
+    .harga-meta-pill.red{color:#ff8099;background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.2)}
+    .harga-not-found{font-size:12px;color:var(--muted);font-family:var(--mono);
+      padding:8px 0;display:flex;align-items:center;gap:6px}
+    /* ── END HARGA CARD ─────────────────────────────────────── */
+
     .stok-tbl-wrap{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;display:none}
     .stok-tbl-wrap.show{display:block}
     .stok-tbl-hdr{padding:9px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd)}
@@ -335,9 +373,9 @@
 <div id="login-screen">
   <div class="lcard">
     <span class="l-eye">&#128302;</span>
-    <div class="l-chip">Scanner System v4.3 · PWA</div>
+    <div class="l-chip">Scanner System v4.6 · PWA</div>
     <div class="l-title">Scan Produk</div>
-    <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok</div>
+    <div class="l-sub">OCR + Fuzzy Match + Gemini AI + Cek Stok + Harga</div>
     <input class="l-input" type="password" id="inp-pw" placeholder="Password" autocomplete="current-password">
     <button class="l-btn" onclick="doLogin()">Masuk &rarr;</button>
     <div class="l-err" id="l-err"></div>
@@ -538,6 +576,15 @@
         <div class="hero-sub" id="hero-sub">-</div>
       </div>
 
+      <!-- HARGA CARD — BARU v4.6 -->
+      <div class="harga-card" id="harga-card">
+        <div class="harga-card-title">
+          <span>&#128178;</span> INFO HARGA
+          <span id="harga-size-badge" style="margin-left:auto;font-size:9px;color:var(--acc2)"></span>
+        </div>
+        <div id="harga-content"></div>
+      </div>
+
       <div class="stok-tbl-wrap" id="stok-tbl-wrap">
         <div class="stok-tbl-hdr">
           <span class="stok-tbl-title" id="stok-tbl-title">Stok</span>
@@ -575,8 +622,8 @@
 var PASSWORD = "kodachi123";
 var GAS_URL  = "https://script.google.com/macros/s/AKfycbxgh5lx4V2Zdd0jJF1kjo-4qcKRtBbk5CTIMJqLzEkzhUdPjyffShD9N6xaEf1vnMrD/exec";
 
-var FOTO_MAX_W  = 800;
-var FOTO_MAX_H  = 600;
+var FOTO_MAX_W   = 800;
+var FOTO_MAX_H   = 600;
 var FOTO_QUALITY = 0.45;
 
 function resizeCanvas(srcCanvas, maxW, maxH) {
@@ -591,7 +638,7 @@ function resizeCanvas(srcCanvas, maxW, maxH) {
 }
 
 if ('serviceWorker' in navigator) {
-  var swCode = "const CACHE='scanner-v4c';const OFFLINE_ASSETS=[self.location.href];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(OFFLINE_ASSETS).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{if(e.request.url.includes('script.google.com')){e.respondWith(fetch(e.request).catch(()=>new Response('error',{status:503})));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res&&res.ok){var c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return res;})));});";
+  var swCode = "const CACHE='scanner-v46';const OFFLINE_ASSETS=[self.location.href];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(OFFLINE_ASSETS).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{if(e.request.url.includes('script.google.com')){e.respondWith(fetch(e.request).catch(()=>new Response('error',{status:503})));return;}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{if(res&&res.ok){var c=res.clone();caches.open(CACHE).then(cache=>cache.put(e.request,c));}return res;})));});";
   var swBlob = new Blob([swCode], {type: 'application/javascript'});
   navigator.serviceWorker.register(URL.createObjectURL(swBlob), {scope: './'}).catch(function(){});
 }
@@ -627,7 +674,7 @@ function initDB() {
       }
     };
     req.onsuccess = function(e) { db = e.target.result; res(db); };
-    req.onerror = function() { rej(req.error); };
+    req.onerror   = function() { rej(req.error); };
   });
 }
 function dbAdd(item) {
@@ -641,10 +688,10 @@ function dbAdd(item) {
 function dbGetAll() {
   if (!db) return Promise.resolve([]);
   return new Promise(function(res,rej) {
-    var tx = db.transaction(STORE,'readonly');
+    var tx  = db.transaction(STORE,'readonly');
     var req = tx.objectStore(STORE).index('waktu').getAll();
     req.onsuccess = function() { res(req.result.reverse()); };
-    req.onerror = function() { rej(req.error); };
+    req.onerror   = function() { rej(req.error); };
   });
 }
 function dbClear() {
@@ -704,13 +751,13 @@ function doLogin() {
     document.getElementById('app').classList.add('visible');
     initAudio();
     fetch(GAS_URL+'?ping=1').catch(function(){});
-    initDB().then(function(){loadHistoryFromDB();});
+    initDB().then(function(){ loadHistoryFromDB(); });
   } else {
     document.getElementById('l-err').textContent = 'Password salah.';
     document.getElementById('inp-pw').value = '';
   }
 }
-document.getElementById('inp-pw').addEventListener('keydown', function(e) { if(e.key==='Enter') doLogin(); });
+document.getElementById('inp-pw').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 
 function switchTab(tab) {
   document.getElementById('panel-scan').classList.toggle('active', tab==='scan');
@@ -718,7 +765,7 @@ function switchTab(tab) {
   document.getElementById('tabbtn-scan').classList.toggle('active', tab==='scan');
   document.getElementById('tabbtn-stok').classList.toggle('active', tab==='stok');
   if (tab==='scan' && stok2Running) stopScan2();
-  if (tab==='stok' && scanning) stopScan();
+  if (tab==='stok' && scanning)     stopScan();
 }
 
 function setMode(m) {
@@ -758,8 +805,8 @@ async function mulaiScan() {
 }
 function stopScan() {
   scanning=false; sedangKirim=false;
-  if (stream) { stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
-  if (codeReader) { try{codeReader.reset();}catch(e){} codeReader=null; }
+  if (stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
+  if (codeReader){ try{codeReader.reset();}catch(e){} codeReader=null; }
   document.getElementById('video').srcObject=null;
   document.getElementById('scan-line').style.display='none';
   document.getElementById('btn-start').style.display='flex';
@@ -775,9 +822,8 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
     document.getElementById('video').srcObject=stream;
-  } catch(e) { setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
+  } catch(e){ setStatus('Kamera tidak bisa diakses: '+e.message,'err'); stopScan(); }
 }
-
 async function ambilFoto() {
   if (!stream || sedangKirim) return;
   bunyi('read');
@@ -796,7 +842,6 @@ async function ambilFoto() {
   document.getElementById('btn-cap').disabled = false;
   document.getElementById('cam-label').textContent = 'LIVE';
 }
-
 async function startBarcodeScanner() {
   codeReader=new ZXing.BrowserMultiFormatReader();
   var hints=new Map();
@@ -805,24 +850,23 @@ async function startBarcodeScanner() {
   codeReader.hints=hints;
   try {
     await codeReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video',function(result,err){
-      if (!result||!scanning||sedangKirim) return;
+      if(!result||!scanning||sedangKirim) return;
       var val=result.getText().trim().toUpperCase(), now=Date.now();
-      if (val===lastScan&&now-lastScanTime<3500) return;
+      if(val===lastScan&&now-lastScanTime<3500) return;
       lastScan=val; lastScanTime=now;
       bunyi('read'); kirimKeGAS({barcode:val});
     });
-  } catch(e) { setStatus('Scanner error: '+e.message,'err'); stopScan(); }
+  } catch(e){ setStatus('Scanner error: '+e.message,'err'); stopScan(); }
 }
-
 async function kirimKeGAS(payload) {
   sedangKirim=true;
   if (!payload.image) setStatus('Memproses Barcode...','loading');
   tutupKoreksi();
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
     var teks=await resp.text();
-    if (!teks || teks.trim() === '') throw new Error('Respons kosong dari server');
+    if (!teks||teks.trim()==='') throw new Error('Respons kosong dari server');
     prosesResponse(teks, payload.image?'foto':'barcode');
   } catch(e) {
     bunyi('miss');
@@ -831,16 +875,15 @@ async function kirimKeGAS(payload) {
   }
   sedangKirim=false;
 }
-
 function prosesResponse(teks, sumber) {
   var isOk=teks.includes('\u2705'), isAI=teks.includes('(AI)'), isMiss=teks.includes('\u26a0\ufe0f');
   var isErr=teks.includes('\u274c')||teks.toLowerCase().includes('error');
   var tipe, icon;
-  if (isErr&&!isOk&&!isMiss) { tipe='err'; icon='\u274c'; cntMiss++; bunyi('miss'); }
-  else if (isMiss)            { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
-  else if (isAI)              { tipe='ai';   icon='\ud83e\udd16'; cntAI++;   bunyi('ai'); }
-  else if (isOk)              { tipe='ok';   icon='\u2705'; cntOk++; bunyi('ok'); }
-  else                        { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
+  if (isErr&&!isOk&&!isMiss){ tipe='err'; icon='\u274c'; cntMiss++; bunyi('miss'); }
+  else if (isMiss)           { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
+  else if (isAI)             { tipe='ai';  icon='\ud83e\udd16'; cntAI++;  bunyi('ai'); }
+  else if (isOk)             { tipe='ok';  icon='\u2705'; cntOk++; bunyi('ok'); }
+  else                       { tipe='warn'; icon='\u26a0\ufe0f'; cntMiss++; bunyi('miss'); }
   var modelMatch=teks.match(/Model:\s*(.+?)\s*\|/);
   var sizeMatch =teks.match(/Size:\s*(\S+)/);
   var model=modelMatch?modelMatch[1].trim():teks.replace(/\n/g,' ').substring(0,60);
@@ -860,14 +903,14 @@ function tampilKoreksi(m) {
 function tutupKoreksi() { document.getElementById('koreksi-wrap').classList.remove('visible'); }
 async function kirimKoreksi() {
   var benar=document.getElementById('inp-koreksi').value.trim();
-  if (!benar) { showToast('Isi nama produk yang benar dulu.'); return; }
+  if (!benar){ showToast('Isi nama produk yang benar dulu.'); return; }
   tutupKoreksi(); setStatus('Menyimpan koreksi ke AI...','loading');
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({koreksi:true,rawText:hasilTerakhirModel,hasilSalah:hasilTerakhirModel,hasilBenar:benar}),headers:{'Content-Type':'text/plain'}});
     var txt=await resp.text();
-    if (txt.includes('\u2705')) { bunyi('ok'); setStatus('Koreksi tersimpan - AI akan belajar!','ok'); }
+    if(txt.includes('\u2705')){ bunyi('ok'); setStatus('Koreksi tersimpan - AI akan belajar!','ok'); }
     else setStatus('\u26a0\ufe0f '+txt,'warn');
-  } catch(e) { showToast('Gagal simpan koreksi.','err'); setStatus('Siap scan berikutnya...'); }
+  } catch(e){ showToast('Gagal simpan koreksi.','err'); setStatus('Siap scan berikutnya...'); }
 }
 function updateStats() {
   document.getElementById('cnt-ok').textContent=cntOk;
@@ -876,7 +919,7 @@ function updateStats() {
   document.getElementById('total-count').textContent=cntOk+cntAI+cntMiss;
 }
 function renderHistItem(item, prepend) {
-  if (prepend === undefined) prepend = true;
+  if (prepend===undefined) prepend=true;
   var el=document.createElement('div');
   var kls=item.isAI?'ai':(item.tipe==='ok'?'':(item.tipe==='err'?'err':'warn'));
   el.className='hist-item '+kls;
@@ -886,14 +929,14 @@ function renderHistItem(item, prepend) {
   el.innerHTML='<span class="hist-icon">'+icon+'</span><span class="hist-name">'+item.model+'</span><span class="hist-size">'+item.size+' '+srcBadge+'</span><span class="hist-time">'+wStr+'</span>';
   var wrap=document.getElementById('riwayat');
   var empty=wrap.querySelector('.hist-empty'); if(empty) empty.remove();
-  if (prepend) { wrap.insertBefore(el, wrap.firstChild); while(wrap.children.length>100) wrap.removeChild(wrap.lastChild); }
+  if (prepend){ wrap.insertBefore(el,wrap.firstChild); while(wrap.children.length>100) wrap.removeChild(wrap.lastChild); }
   else wrap.appendChild(el);
 }
 async function tambahHistory(model,size,tipe,isAI,sumber) {
   var waktu=Date.now();
   var waktuStr=new Date(waktu).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   var item={model:model,size:size,tipe:tipe,isAI:isAI,sumber:sumber,waktu:waktu,waktuStr:waktuStr};
-  try { await dbAdd(item); var all=await dbGetAll(); updateHistCount(all.length); } catch(e){}
+  try{ await dbAdd(item); var all=await dbGetAll(); updateHistCount(all.length); }catch(e){}
   renderHistItem(item,true);
 }
 async function clearHistory() {
@@ -901,15 +944,15 @@ async function clearHistory() {
   cntOk=0; cntAI=0; cntMiss=0; updateStats();
   document.getElementById('riwayat').innerHTML='<div class="hist-empty">Belum ada hasil scan</div>';
   updateHistCount(0);
-  try { await dbClear(); } catch(e){}
+  try{ await dbClear(); }catch(e){}
 }
-function showResetModal() { document.getElementById('modal-reset').classList.add('open'); }
-function hideModal() { document.getElementById('modal-reset').classList.remove('open'); }
+function showResetModal(){ document.getElementById('modal-reset').classList.add('open'); }
+function hideModal(){ document.getElementById('modal-reset').classList.remove('open'); }
 async function doReset() {
   cntOk=0; cntAI=0; cntMiss=0; updateStats();
   document.getElementById('riwayat').innerHTML='<div class="hist-empty">Belum ada hasil scan</div>';
   updateHistCount(0);
-  try { await dbClear(); } catch(e){}
+  try{ await dbClear(); }catch(e){}
   hideModal();
 }
 
@@ -931,16 +974,13 @@ function showToastBig(icon, title, msg, type) {
 }
 function showProcessing(show, label, sub) {
   var el=document.getElementById('cam-processing');
-  if(show){
-    el.classList.add('show');
-    if(label) el.querySelector('.proc-label').textContent=label;
-    if(sub)   el.querySelector('.proc-sub').textContent=sub;
-  } else {
-    el.classList.remove('show');
-  }
+  if(show){ el.classList.add('show'); if(label) el.querySelector('.proc-label').textContent=label; if(sub) el.querySelector('.proc-sub').textContent=sub; }
+  else el.classList.remove('show');
 }
 
-// ===== CEK STOK =====
+// =====================================================================
+// CEK STOK
+// =====================================================================
 var stok2Running=false, stream2=null, codeReader2=null;
 var lastScan2='', lastScanTime2=0;
 var sizeTarget=null, seriDetected=null, sedangCariStok=false;
@@ -960,19 +1000,19 @@ function setSize(n) {
   if (seriDetected&&!sedangCariStok) cariStok(seriDetected,n);
 }
 
-var mode2 = 'foto';
+var mode2='foto';
 function setMode2(m) {
   if (stok2Running) stopScan2();
-  mode2 = m;
-  var bBarcode = document.getElementById('btn2-mode-barcode');
-  var bFoto    = document.getElementById('btn2-mode-foto');
-  if (m === 'foto') {
-    bFoto.style.background = 'var(--acc)'; bFoto.style.color = '#fff';
-    bBarcode.style.background = 'transparent'; bBarcode.style.color = 'var(--muted2)';
+  mode2=m;
+  var bB=document.getElementById('btn2-mode-barcode');
+  var bF=document.getElementById('btn2-mode-foto');
+  if (m==='foto') {
+    bF.style.background='var(--acc)'; bF.style.color='#fff';
+    bB.style.background='transparent'; bB.style.color='var(--muted2)';
   } else {
-    bBarcode.style.background = 'var(--green)'; bBarcode.style.color = '#0b0c10';
-    bFoto.style.background = 'transparent'; bFoto.style.color = 'var(--muted2)';
-    document.getElementById('btn2-foto').style.display = 'none';
+    bB.style.background='var(--green)'; bB.style.color='#0b0c10';
+    bF.style.background='transparent'; bF.style.color='var(--muted2)';
+    document.getElementById('btn2-foto').style.display='none';
   }
 }
 
@@ -985,7 +1025,7 @@ async function mulaiScan2() {
   document.getElementById('scan-line2').style.display='block';
   document.getElementById('cam-dot2').classList.add('live');
   document.getElementById('cam-label2').textContent='LIVE';
-  if (mode2 === 'foto') {
+  if (mode2==='foto') {
     document.getElementById('btn2-foto').style.display='flex';
     try {
       stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
@@ -1009,7 +1049,6 @@ async function mulaiScan2() {
     } catch(e){ showToast('Scanner error: '+e.message); stopScan2(); }
   }
 }
-
 function stopScan2() {
   stok2Running=false;
   if(stream2){stream2.getTracks().forEach(function(t){t.stop();});stream2=null;}
@@ -1023,7 +1062,6 @@ function stopScan2() {
   document.getElementById('cam-dot2').classList.remove('live');
   document.getElementById('cam-label2').textContent='Kamera tidak aktif';
 }
-
 async function ambilFoto2() {
   if(sedangCariStok) return;
   bunyi('read');
@@ -1038,11 +1076,11 @@ async function ambilFoto2() {
   document.getElementById('cam-label2').textContent='PROSES...';
   try {
     var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({image:base64}),headers:{'Content-Type':'text/plain'}});
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
     var teks=await resp.text();
     showProcessing(false);
     document.getElementById('cam-label2').textContent='LIVE';
-    if (!teks || teks.trim()==='') throw new Error('Respons kosong');
+    if (!teks||teks.trim()==='') throw new Error('Respons kosong');
     var m=teks.match(/Model:\s*(.+?)\s*\|/);
     if(m){
       prosesModel2(m[1].trim());
@@ -1063,25 +1101,19 @@ async function ambilFoto2() {
     showToastBig('📵','Gagal Koneksi','Periksa koneksi internet lalu coba lagi: '+e.message,'');
   }
 }
-
 function prosesBarcode2(barcode) {
-  var b = barcode.trim().toUpperCase();
-  seriDetected = b;
+  var b=barcode.trim().toUpperCase();
+  seriDetected=b;
   document.getElementById('detected-bar').classList.add('show');
-  document.getElementById('det-val').textContent = '⏳ ' + b.substring(0,30) + '...';
-  if (!sizeTarget) {
-    showToast('Isi ukuran yang dicari dulu!');
-    document.getElementById('inp-size').focus();
-    return;
-  }
+  document.getElementById('det-val').textContent='⏳ '+b.substring(0,30)+'...';
+  if (!sizeTarget){ showToast('Isi ukuran yang dicari dulu!'); document.getElementById('inp-size').focus(); return; }
   cariStokBarcode(b, sizeTarget);
 }
-
 function prosesModel2(model) {
   seriDetected=model;
   document.getElementById('detected-bar').classList.add('show');
   document.getElementById('det-val').textContent=model;
-  if(!sizeTarget){ showToast('Isi ukuran yang dicari dulu!'); document.getElementById('inp-size').focus(); return; }
+  if (!sizeTarget){ showToast('Isi ukuran yang dicari dulu!'); document.getElementById('inp-size').focus(); return; }
   cariStok(model, sizeTarget);
 }
 function toggleManual() {
@@ -1097,277 +1129,258 @@ function submitManual() {
   prosesModel2(v.toUpperCase());
 }
 
-// ─── evalStokResult (UPDATED) ─────────────────────────────────────────
-function evalStokResult(data, sizeTgt) {
-  var rows = data.rows || [];
-  if (!rows.length) return { exactReady:false, exactQty:0, exactRow:null, variantReady:[], variantHabis:[] };
-
-  var exactRow = null;
-  for (var i = 0; i < rows.length; i++) {
-    if (rows[i].isExact) { exactRow = rows[i]; break; }
-  }
-  if (!exactRow) exactRow = rows[0];
-
-  var exactQty   = (exactRow.sizes && exactRow.sizes[sizeTgt]) || 0;
-  var exactReady = exactQty > 0;
-
-  var variantReady = [];
-  var variantHabis = [];
-  rows.forEach(function(r) {
-    if (r === exactRow) return;
-    var qty = (r.sizes && r.sizes[sizeTgt]) || 0;
-    if (qty > 0) variantReady.push(r);
-    else         variantHabis.push(r);
-  });
-
-  // Cari size terdekat yang ada stok di exactRow
-  var nearestSize = null, nearestQty = 0;
-  if (!exactReady && exactRow.sizes) {
-    var sizes = Object.keys(exactRow.sizes).map(Number).sort(function(a,b){return Math.abs(a-sizeTgt)-Math.abs(b-sizeTgt);});
-    for (var s = 0; s < sizes.length; s++) {
-      if (exactRow.sizes[sizes[s]] > 0) { nearestSize = sizes[s]; nearestQty = exactRow.sizes[sizes[s]]; break; }
-    }
-  }
-
-  return { exactReady:exactReady, exactQty:exactQty, exactRow:exactRow,
-           variantReady:variantReady, variantHabis:variantHabis,
-           nearestSize:nearestSize, nearestQty:nearestQty };
+// ─── FORMAT HARGA ─────────────────────────────────────────────────────
+function fmtRupiah(n) {
+  if (!n && n !== 0) return '-';
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
 }
 
-// ─── renderHeroBox (BARU) ────────────────────────────────────────────
-function renderHeroBox(ev, sizeTgt) {
-  var hb = document.getElementById('hero-box');
-  var hs = document.getElementById('hero-status');
-  var hsub = document.getElementById('hero-sub');
+// ─── RENDER HARGA CARD (BARU v4.6) ────────────────────────────────────
+function renderHargaCard(harga, sizeTgt) {
+  var card    = document.getElementById('harga-card');
+  var content = document.getElementById('harga-content');
+  var badge   = document.getElementById('harga-size-badge');
 
-  if (ev.exactReady) {
-    var tipis = ev.exactQty <= 2;
-    hb.className  = 'hero-box show ready';
-    hs.className  = 'hero-status ready';
-    hs.textContent = '✅ READY - Size ' + sizeTgt;
-    hsub.innerHTML = 'Stok: <b>' + ev.exactQty + ' pasang</b>'
-      + (tipis ? ' &nbsp;<span style="color:var(--amber);font-size:12px">⚠️ Stok terbatas!</span>' : '');
-    bunyi('ok');
-
-  } else if (ev.nearestSize !== null) {
-    hb.className  = 'hero-box show habis';
-    hs.className  = 'hero-status habis';
-    hs.textContent = '❌ HABIS - Size ' + sizeTgt;
-    var saranBaris = '';
-    if (ev.variantReady.length > 0) {
-      saranBaris = ' &nbsp;·&nbsp; ' + ev.variantReady.length + ' varian lain ready ↓';
-    }
-    hsub.innerHTML = 'Size terdekat: <b style="color:var(--amber)">Size ' + ev.nearestSize
-      + ' (' + ev.nearestQty + ' pasang)</b>' + saranBaris;
-    bunyi('miss');
-
-  } else if (ev.variantReady.length > 0) {
-    hb.className  = 'hero-box show habis';
-    hs.className  = 'hero-status habis';
-    hs.textContent = '❌ HABIS - Size ' + sizeTgt;
-    hsub.innerHTML = ev.variantReady.length + ' varian lain <b style="color:var(--green)">READY</b> size '
-      + sizeTgt + ' ↓';
-    bunyi('miss');
-
-  } else {
-    hb.className  = 'hero-box show habis';
-    hs.className  = 'hero-status habis';
-    hs.textContent = '❌ HABIS - Size ' + sizeTgt;
-    hsub.textContent = 'Semua varian habis di size ini';
-    bunyi('miss');
-  }
-}
-
-// ─── cariStok (UPDATED) ──────────────────────────────────────────────
-async function cariStok(seri, sizeTgt) {
-  if (sedangCariStok) return;
-  sedangCariStok = true;
-  var hb = document.getElementById('hero-box');
-  hb.className = 'hero-box show loading';
-  document.getElementById('hero-status').className = 'hero-status loading';
-  document.getElementById('hero-status').textContent = 'Mengecek stok...';
-  document.getElementById('hero-sub').textContent = seri + ' - Size ' + sizeTgt;
-  document.getElementById('stok-tbl-wrap').classList.remove('show');
-  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
-  try {
-    var resp = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ cekStok:true, seri:seri, sizeTarget:sizeTgt, sizeRange:2 }),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var txt  = await resp.text();
-    var data = JSON.parse(txt);
-    if (data.error) {
-      hb.className = 'hero-box show habis';
-      document.getElementById('hero-status').className = 'hero-status habis';
-      document.getElementById('hero-status').textContent = 'Error';
-      document.getElementById('hero-sub').textContent = data.error;
-      sedangCariStok = false; return;
-    }
-    var ev = evalStokResult(data, sizeTgt);
-    renderHeroBox(ev, sizeTgt);
-    renderStokTable(data, sizeTgt, ev);
-  } catch (e) {
-    hb.className = 'hero-box show habis';
-    document.getElementById('hero-status').className = 'hero-status habis';
-    document.getElementById('hero-status').textContent = 'Gagal koneksi';
-    document.getElementById('hero-sub').textContent = e.message;
-  }
-  sedangCariStok = false;
-}
-
-// ─── cariStokBarcode (UPDATED) ────────────────────────────────────────
-async function cariStokBarcode(barcodeMentah, sizeTgt) {
-  if (sedangCariStok) return;
-  sedangCariStok = true;
-  var hb = document.getElementById('hero-box');
-  hb.className = 'hero-box show loading';
-  document.getElementById('hero-status').className = 'hero-status loading';
-  document.getElementById('hero-status').textContent = 'Mengecek stok...';
-  document.getElementById('hero-sub').textContent = barcodeMentah + ' - Size ' + sizeTgt;
-  document.getElementById('stok-tbl-wrap').classList.remove('show');
-  document.getElementById('stok-tbl-body').innerHTML = '<div class="stok-empty loading-dots">Mengambil data</div>';
-  try {
-    var resp = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ cekStok:true, barcodeMentah:barcodeMentah, sizeTarget:sizeTgt, sizeRange:2 }),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var txt  = await resp.text();
-    var data = JSON.parse(txt);
-    if (data.error) {
-      hb.className = 'hero-box show habis';
-      document.getElementById('hero-status').className = 'hero-status habis';
-      document.getElementById('hero-status').textContent = 'Error';
-      document.getElementById('hero-sub').textContent = data.error;
-      sedangCariStok = false; return;
-    }
-    var namaResolved = (data.rows && data.rows.length > 0) ? data.rows[0].seri : barcodeMentah;
-    seriDetected = namaResolved;
-    document.getElementById('det-val').textContent = namaResolved;
-    var ev = evalStokResult(data, sizeTgt);
-    renderHeroBox(ev, sizeTgt);
-    renderStokTable(data, sizeTgt, ev);
-  } catch (e) {
-    hb.className = 'hero-box show habis';
-    document.getElementById('hero-status').className = 'hero-status habis';
-    document.getElementById('hero-status').textContent = 'Gagal koneksi';
-    document.getElementById('hero-sub').textContent = e.message;
-  }
-  sedangCariStok = false;
-}
-
-// ─── renderStokTable (UPDATED) ────────────────────────────────────────
-function renderStokTable(data, sizeTgt, ev) {
-  var wrap  = document.getElementById('stok-tbl-wrap');
-  var tbody = document.getElementById('stok-tbl-body');
-  if (!data.rows || !data.rows.length) {
-    wrap.classList.remove('show');
-    tbody.innerHTML = '<div class="stok-empty">Tidak ada stok ditemukan</div>';
+  if (!harga) {
+    // Harga tidak ditemukan di sheet
+    card.classList.add('show');
+    badge.textContent = 'Size ' + sizeTgt;
+    content.innerHTML =
+      '<div class="harga-not-found">' +
+      '<span style="font-size:16px">💡</span>' +
+      '<span>Harga belum tersedia untuk produk ini</span>' +
+      '</div>';
     return;
   }
+
+  badge.textContent = 'Size ' + sizeTgt + (harga.size44plus ? ' (+5rb)' : '');
+
+  var pctBadge = harga.diskonPersen > 0
+    ? '<span class="diskon-badge">DISKON ' + harga.diskonPersen + '%</span>'
+    : '';
+
+  var retailLine = harga.diskonRupiah > 0
+    ? '<span class="harga-retail">' + fmtRupiah(harga.hargaRetail) + '</span>'
+    : '';
+
+  var pillsHtml = '';
+
+  if (harga.diskonRupiah > 0) {
+    pillsHtml +=
+      '<span class="harga-meta-pill red">Hemat ' + fmtRupiah(harga.diskonRupiah) + '</span>';
+  }
+
+  if (harga.size44plus) {
+    pillsHtml +=
+      '<span class="harga-meta-pill amber">+Rp 5.000 (size 44/45)</span>';
+  }
+
+  if (harga.diskonPersen === 0) {
+    pillsHtml +=
+      '<span class="harga-meta-pill">Harga normal</span>';
+  }
+
+  content.innerHTML =
+    '<div class="harga-main-row">' +
+      '<span class="harga-final">' + fmtRupiah(harga.hargaBaru) + '</span>' +
+      retailLine +
+      pctBadge +
+    '</div>' +
+    (pillsHtml ? '<div class="harga-meta-row">' + pillsHtml + '</div>' : '');
+
+  card.classList.add('show');
+}
+
+// ─── EVAL STOK RESULT ─────────────────────────────────────────────────
+function evalStokResult(data, sizeTgt) {
+  var rows=data.rows||[];
+  if (!rows.length) return {exactReady:false,exactQty:0,exactRow:null,variantReady:[],variantHabis:[]};
+  var exactRow=null;
+  for(var i=0;i<rows.length;i++){if(rows[i].isExact){exactRow=rows[i];break;}}
+  if(!exactRow) exactRow=rows[0];
+  var exactQty=(exactRow.sizes&&exactRow.sizes[sizeTgt])||0;
+  var exactReady=exactQty>0;
+  var variantReady=[],variantHabis=[];
+  rows.forEach(function(r){
+    if(r===exactRow) return;
+    var qty=(r.sizes&&r.sizes[sizeTgt])||0;
+    if(qty>0) variantReady.push(r); else variantHabis.push(r);
+  });
+  var nearestSize=null,nearestQty=0;
+  if(!exactReady&&exactRow.sizes){
+    var szs=Object.keys(exactRow.sizes).map(Number).sort(function(a,b){return Math.abs(a-sizeTgt)-Math.abs(b-sizeTgt);});
+    for(var s=0;s<szs.length;s++){if(exactRow.sizes[szs[s]]>0){nearestSize=szs[s];nearestQty=exactRow.sizes[szs[s]];break;}}
+  }
+  return {exactReady:exactReady,exactQty:exactQty,exactRow:exactRow,variantReady:variantReady,variantHabis:variantHabis,nearestSize:nearestSize,nearestQty:nearestQty};
+}
+
+// ─── RENDER HERO BOX ──────────────────────────────────────────────────
+function renderHeroBox(ev, sizeTgt) {
+  var hb=document.getElementById('hero-box');
+  var hs=document.getElementById('hero-status');
+  var hsub=document.getElementById('hero-sub');
+  if(ev.exactReady){
+    var tipis=ev.exactQty<=2;
+    hb.className='hero-box show ready';
+    hs.className='hero-status ready';
+    hs.textContent='✅ READY - Size '+sizeTgt;
+    hsub.innerHTML='Stok: <b>'+ev.exactQty+' pasang</b>'+(tipis?' &nbsp;<span style="color:var(--amber);font-size:12px">⚠️ Stok terbatas!</span>':'');
+    bunyi('ok');
+  } else if(ev.nearestSize!==null){
+    hb.className='hero-box show habis';
+    hs.className='hero-status habis';
+    hs.textContent='❌ HABIS - Size '+sizeTgt;
+    var saranBaris=ev.variantReady.length>0?' &nbsp;·&nbsp; '+ev.variantReady.length+' varian lain ready ↓':'';
+    hsub.innerHTML='Size terdekat: <b style="color:var(--amber)">Size '+ev.nearestSize+' ('+ev.nearestQty+' pasang)</b>'+saranBaris;
+    bunyi('miss');
+  } else if(ev.variantReady.length>0){
+    hb.className='hero-box show habis';
+    hs.className='hero-status habis';
+    hs.textContent='❌ HABIS - Size '+sizeTgt;
+    hsub.innerHTML=ev.variantReady.length+' varian lain <b style="color:var(--green)">READY</b> size '+sizeTgt+' ↓';
+    bunyi('miss');
+  } else {
+    hb.className='hero-box show habis';
+    hs.className='hero-status habis';
+    hs.textContent='❌ HABIS - Size '+sizeTgt;
+    hsub.textContent='Semua varian habis di size ini';
+    bunyi('miss');
+  }
+}
+
+// ─── CARI STOK (UPDATED v4.6) ─────────────────────────────────────────
+async function cariStok(seri, sizeTgt) {
+  if(sedangCariStok) return;
+  sedangCariStok=true;
+  var hb=document.getElementById('hero-box');
+  hb.className='hero-box show loading';
+  document.getElementById('hero-status').className='hero-status loading';
+  document.getElementById('hero-status').textContent='Mengecek stok...';
+  document.getElementById('hero-sub').textContent=seri+' - Size '+sizeTgt;
+  document.getElementById('harga-card').classList.remove('show');
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
+  try {
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({cekStok:true,seri:seri,sizeTarget:sizeTgt,sizeRange:2}),headers:{'Content-Type':'text/plain'}});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var txt=await resp.text();
+    var data=JSON.parse(txt);
+    if(data.error){
+      hb.className='hero-box show habis';
+      document.getElementById('hero-status').className='hero-status habis';
+      document.getElementById('hero-status').textContent='Error';
+      document.getElementById('hero-sub').textContent=data.error;
+      sedangCariStok=false; return;
+    }
+    var ev=evalStokResult(data,sizeTgt);
+    renderHeroBox(ev,sizeTgt);
+    renderHargaCard(data.harga||null, sizeTgt);   // ← BARU
+    renderStokTable(data,sizeTgt,ev);
+  } catch(e){
+    hb.className='hero-box show habis';
+    document.getElementById('hero-status').className='hero-status habis';
+    document.getElementById('hero-status').textContent='Gagal koneksi';
+    document.getElementById('hero-sub').textContent=e.message;
+  }
+  sedangCariStok=false;
+}
+
+// ─── CARI STOK BARCODE (UPDATED v4.6) ────────────────────────────────
+async function cariStokBarcode(barcodeMentah, sizeTgt) {
+  if(sedangCariStok) return;
+  sedangCariStok=true;
+  var hb=document.getElementById('hero-box');
+  hb.className='hero-box show loading';
+  document.getElementById('hero-status').className='hero-status loading';
+  document.getElementById('hero-status').textContent='Mengecek stok...';
+  document.getElementById('hero-sub').textContent=barcodeMentah+' - Size '+sizeTgt;
+  document.getElementById('harga-card').classList.remove('show');
+  document.getElementById('stok-tbl-wrap').classList.remove('show');
+  document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
+  try {
+    var resp=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({cekStok:true,barcodeMentah:barcodeMentah,sizeTarget:sizeTgt,sizeRange:2}),headers:{'Content-Type':'text/plain'}});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var txt=await resp.text();
+    var data=JSON.parse(txt);
+    if(data.error){
+      hb.className='hero-box show habis';
+      document.getElementById('hero-status').className='hero-status habis';
+      document.getElementById('hero-status').textContent='Error';
+      document.getElementById('hero-sub').textContent=data.error;
+      sedangCariStok=false; return;
+    }
+    var namaResolved=(data.rows&&data.rows.length>0)?data.rows[0].seri:barcodeMentah;
+    seriDetected=namaResolved;
+    document.getElementById('det-val').textContent=namaResolved;
+    var ev=evalStokResult(data,sizeTgt);
+    renderHeroBox(ev,sizeTgt);
+    renderHargaCard(data.harga||null, sizeTgt);   // ← BARU
+    renderStokTable(data,sizeTgt,ev);
+  } catch(e){
+    hb.className='hero-box show habis';
+    document.getElementById('hero-status').className='hero-status habis';
+    document.getElementById('hero-status').textContent='Gagal koneksi';
+    document.getElementById('hero-sub').textContent=e.message;
+  }
+  sedangCariStok=false;
+}
+
+// ─── RENDER STOK TABLE ────────────────────────────────────────────────
+function renderStokTable(data, sizeTgt, ev) {
+  var wrap=document.getElementById('stok-tbl-wrap');
+  var tbody=document.getElementById('stok-tbl-body');
+  if(!data.rows||!data.rows.length){ wrap.classList.remove('show'); tbody.innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>'; return; }
   wrap.classList.add('show');
-  var sizes  = data.sizes || [];
-  var exact  = ev ? ev.exactRow : data.rows[0];
-
-  // Urutan: exact → variantReady (urut qty desc) → variantHabis
-  var varReady = ev ? ev.variantReady.slice().sort(function(a,b){
-    return ((b.sizes&&b.sizes[sizeTgt])||0) - ((a.sizes&&a.sizes[sizeTgt])||0);
-  }) : [];
-  var varHabis = ev ? ev.variantHabis : [];
-  var ordered  = [exact].concat(varReady).concat(varHabis);
-
-  // Header tabel
-  var html = '<table class="stok-tbl"><thead><tr><th>Produk</th>';
-  sizes.forEach(function(sz) {
-    html += '<th class="tc' + (sz === sizeTgt ? ' tgt' : '') + '">'
-          + sz + (sz === sizeTgt ? ' ✦' : '') + '</th>';
-  });
-  html += '</tr></thead><tbody>';
-
-  ordered.forEach(function(row, idx) {
-    if (!row) return;
-    var isExactRow  = (row === exact);
-    var tgtQty      = (row.sizes && row.sizes[sizeTgt]) || 0;
-    var isVarReady  = varReady.indexOf(row) !== -1;
-    var isVarHabis  = varHabis.indexOf(row) !== -1;
-
-    // Warna baris
-    var rowStyle = '';
-    if      (isExactRow && tgtQty > 0)  rowStyle = ' class="hl"';
-    else if (isExactRow && tgtQty === 0) rowStyle = ' style="background:rgba(244,63,94,.06)"';
-    else if (isVarReady)                 rowStyle = ' style="background:rgba(34,211,160,.05)"';
-
-    html += '<tr' + rowStyle + '>';
-
-    // Badge nama produk
-    var badge = '';
-    if (isExactRow) {
-      badge = ' <span style="font-size:9px;background:rgba(124,106,247,.2);color:var(--acc2);border-radius:4px;padding:1px 5px">scan</span>';
-    } else if (isVarReady) {
-      badge = ' <span style="font-size:9px;background:rgba(34,211,160,.15);color:var(--green);border-radius:4px;padding:1px 5px">✓ ready</span>';
-    } else if (isVarHabis) {
-      badge = ' <span style="font-size:9px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:4px;padding:1px 5px">habis</span>';
+  var sizes=data.sizes||[];
+  var exact=ev?ev.exactRow:data.rows[0];
+  var varReady=ev?ev.variantReady.slice().sort(function(a,b){return((b.sizes&&b.sizes[sizeTgt])||0)-((a.sizes&&a.sizes[sizeTgt])||0);}):[];
+  var varHabis=ev?ev.variantHabis:[];
+  var ordered=[exact].concat(varReady).concat(varHabis);
+  var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
+  sizes.forEach(function(sz){html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+(sz===sizeTgt?'<b>':'')+sz+(sz===sizeTgt?' ✦</b>':'')+'</th>';});
+  html+='</tr></thead><tbody>';
+  ordered.forEach(function(row){
+    if(!row) return;
+    var isExactRow=(row===exact);
+    var tgtQty=(row.sizes&&row.sizes[sizeTgt])||0;
+    var isVarReady=varReady.indexOf(row)!==-1;
+    var isVarHabis=varHabis.indexOf(row)!==-1;
+    var rowStyle='';
+    if(isExactRow&&tgtQty>0) rowStyle=' class="hl"';
+    else if(isExactRow&&tgtQty===0) rowStyle=' style="background:rgba(244,63,94,.06)"';
+    else if(isVarReady) rowStyle=' style="background:rgba(34,211,160,.05)"';
+    html+='<tr'+rowStyle+'>';
+    var badge='';
+    if(isExactRow) badge=' <span style="font-size:9px;background:rgba(124,106,247,.2);color:var(--acc2);border-radius:4px;padding:1px 5px">scan</span>';
+    else if(isVarReady) badge=' <span style="font-size:9px;background:rgba(34,211,160,.15);color:var(--green);border-radius:4px;padding:1px 5px">✓ ready</span>';
+    else if(isVarHabis) badge=' <span style="font-size:9px;background:rgba(255,255,255,.05);color:var(--muted);border-radius:4px;padding:1px 5px">habis</span>';
+    var saranSize='';
+    if(tgtQty===0&&row.sizes){
+      var szKeys=Object.keys(row.sizes).map(Number).filter(function(s){return(row.sizes[s]||0)>0;}).sort(function(a,b){return Math.abs(a-sizeTgt)-Math.abs(b-sizeTgt);});
+      if(szKeys.length>0) saranSize='<br><span style="font-size:9px;color:var(--amber)">nearest: size '+szKeys[0]+' ('+row.sizes[szKeys[0]]+' pasang)</span>';
     }
-
-    // Saran size terdekat untuk baris yang habis di size target
-    var saranSize = '';
-    if (tgtQty === 0 && row.sizes) {
-      var szKeys = Object.keys(row.sizes).map(Number)
-        .filter(function(s){ return (row.sizes[s]||0) > 0; })
-        .sort(function(a,b){ return Math.abs(a-sizeTgt)-Math.abs(b-sizeTgt); });
-      if (szKeys.length > 0) {
-        saranSize = '<br><span style="font-size:9px;color:var(--amber)">nearest: size '
-          + szKeys[0] + ' (' + row.sizes[szKeys[0]] + ' pasang)</span>';
-      }
-    }
-
-    html += '<td class="td-nm">' + esc(row.seri) + badge
-          + (row.warna ? '<br><span style="color:var(--muted2);font-size:10px">' + esc(row.warna) + '</span>' : '')
-          + saranSize + '</td>';
-
-    // Kolom size
-    sizes.forEach(function(sz) {
-      var qty = (row.sizes && row.sizes[sz]) || 0;
-      var cls = 'td-sz'
-              + (sz === sizeTgt ? ' tgt' : (Math.abs(sz - sizeTgt) <= 1 ? ' near' : ''))
-              + (qty === 0 ? ' zero' : '');
-      var inner = qty > 0
-        ? (sz === sizeTgt ? '<b>' + qty + '</b>' : qty)
-        : '-';
-      html += '<td class="' + cls + '">' + inner + '</td>';
+    html+='<td class="td-nm">'+esc(row.seri)+badge+(row.warna?'<br><span style="color:var(--muted2);font-size:10px">'+esc(row.warna)+'</span>':'')+saranSize+'</td>';
+    sizes.forEach(function(sz){
+      var qty=(row.sizes&&row.sizes[sz])||0;
+      var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
+      var inner=qty>0?(sz===sizeTgt?'<b>'+qty+'</b>':qty):'-';
+      html+='<td class="'+cls+'">'+inner+'</td>';
     });
-
-    html += '</tr>';
-
-    // Garis pemisah setelah exact row
-    if (isExactRow && ordered.length > 1) {
-      html += '<tr><td colspan="' + (sizes.length + 1)
-            + '" style="padding:0;height:1px;background:rgba(255,255,255,.07)"></td></tr>';
-    }
-    // Garis pemisah antara variantReady dan variantHabis
-    if (isVarReady && varHabis.length > 0 && varReady.indexOf(row) === varReady.length - 1) {
-      html += '<tr><td colspan="' + (sizes.length + 1)
-            + '" style="padding:0;height:1px;background:rgba(255,255,255,.04)"></td></tr>';
-    }
+    html+='</tr>';
+    if(isExactRow&&ordered.length>1) html+='<tr><td colspan="'+(sizes.length+1)+'" style="padding:0;height:1px;background:rgba(255,255,255,.07)"></td></tr>';
+    if(isVarReady&&varHabis.length>0&&varReady.indexOf(row)===varReady.length-1) html+='<tr><td colspan="'+(sizes.length+1)+'" style="padding:0;height:1px;background:rgba(255,255,255,.04)"></td></tr>';
   });
-
-  html += '</tbody></table>';
-
-  // Legend (updated)
-  html += '<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'
-        + '<span style="color:var(--green)">✦ = size target</span>'
-        + '<span style="color:var(--acc2)">scan = produk discani</span>'
-        + '<span style="color:var(--green)">✓ ready = varian lain ada stok</span>'
-        + '<span style="color:var(--amber)">nearest = size terdekat yg ada</span>'
-        + '<span>angka = pasang &nbsp;·&nbsp; - = habis</span>'
-        + '</div>';
-
-  document.getElementById('stok-tbl-title').textContent = 'Stok ' + seriDetected;
-  document.getElementById('stok-tbl-sub').textContent   = '±2 dari size ' + sizeTgt;
-  tbody.innerHTML = html;
+  html+='</tbody></table>';
+  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'
+      +'<span style="color:var(--green)">✦ = size target</span>'
+      +'<span style="color:var(--acc2)">scan = produk discani</span>'
+      +'<span style="color:var(--green)">✓ ready = varian lain ada stok</span>'
+      +'<span style="color:var(--amber)">nearest = size terdekat yg ada</span>'
+      +'<span>angka = pasang · - = habis</span>'
+      +'</div>';
+  document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
+  document.getElementById('stok-tbl-sub').textContent='±2 dari size '+sizeTgt;
+  tbody.innerHTML=html;
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
