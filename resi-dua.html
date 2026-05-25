@@ -98,6 +98,9 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .user-strip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 5px var(--green); }
 .user-strip-label { font-size: 9px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; }
 .user-strip-nama { font-size: 12px; font-weight: 600; color: var(--text2); flex: 1; }
+/* Nama loading state */
+.user-strip-nama.loading { color: var(--text3); animation: pulse .9s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 
 /* SCANNER */
 .scanner-wrap { position: relative; width: 100%; border-radius: var(--r-lg); overflow: hidden; background: #000; border: 1px solid var(--border); aspect-ratio: 4/3; max-height: 240px; }
@@ -175,7 +178,6 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 .sbd.fresh   { background: var(--green); }
 .sbd.stale   { background: var(--yellow); }
 .sbd.loading { background: var(--accent2); animation: pulse .9s ease-in-out infinite; }
-@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
 .sbt { flex: 1; }
 .sbc { background: var(--surf3); border-radius: 4px; padding: 2px 7px; color: var(--text); font-size: 10px; }
 
@@ -259,10 +261,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   <div class="content">
 
     <!-- Petugas strip -->
-    <div class="user-strip" id="user-strip" style="display:none">
+    <div class="user-strip" id="user-strip">
       <span class="user-strip-dot"></span>
       <span class="user-strip-label">Petugas</span>
-      <span class="user-strip-nama" id="user-nama-strip">—</span>
+      <span class="user-strip-nama loading" id="user-nama-strip">memuat…</span>
     </div>
 
     <!-- Scanner -->
@@ -366,16 +368,23 @@ const CFG = {
   BATCH_CONCURRENCY: 3,
   MAX_RETRY        : 2,
   RETRY_DELAY_MS   : 1_500,
+  // Batas waktu (ms) sebelum nama dianggap kadaluarsa dan harus di-fetch ulang
+  NAMA_STALE_MS    : 5 * 60 * 1000,
+  // Batas waktu tidak aktif (ms) sebelum wakeup sync dipaksa (default: 3 menit)
+  WAKEUP_STALE_MS  : 3 * 60 * 1000,
 };
 
 /* ════════════════════════════════════════
    STATE
 ════════════════════════════════════════ */
-let currentUser = "";
+let currentUser    = "";
+let lastNamaFetchAt = null;      // kapan terakhir fetch nama berhasil
+let lastHiddenAt   = null;       // kapan tab terakhir masuk background
 let cntSukses = 0, cntBatal = 0, cntSudahPack = 0, cntDuplikat = 0;
 const resiDiScan = new Set();
 const domItemMap = new Map();
 let isKiriming   = false;
+let autoSyncTimer = null;
 
 /* ════════════════════════════════════════
    AUDIO
@@ -473,18 +482,20 @@ async function loadStatusCache() {
 function getCacheEntry(resi) {
   return statusCache.get(resi.toUpperCase());
 }
-
 function isResiBatal(resi) {
   const e = getCacheEntry(resi);
   return e && String(e.statusJ).trim() === "Batal";
 }
-
 function isResiSudahPacking(resi) {
   const e = getCacheEntry(resi);
   return e && String(e.statusJ).trim() === "Sudah";
 }
 
-async function syncStatus(manual = false) {
+/* ──────────────────────────────────────
+   syncStatus: sinkron data status pesanan
+   silent = true  → tidak tampilkan toast sukses
+────────────────────────────────────── */
+async function syncStatus(silent = true) {
   const dot = document.getElementById("sync-dot");
   const btn = document.getElementById("btn-sync");
   const lbl = document.getElementById("sync-lbl");
@@ -520,12 +531,12 @@ async function syncStatus(manual = false) {
     dot.className   = "sync-dot fresh";
     lbl.textContent = fmtWaktu(lastSyncAt);
     await checkBatalPasca();
-    if (manual) showToast("✅ Sync OK — " + statusCache.size + " resi", "g");
+    if (!silent) showToast("✅ Sync OK — " + statusCache.size + " resi", "g");
 
   } catch(err) {
     dot.className   = "sync-dot err";
     lbl.textContent = "Error";
-    if (manual) showToast("❌ Sync gagal: " + err.message, "r");
+    if (!silent) showToast("❌ Sync gagal: " + err.message, "r");
   } finally {
     document.getElementById("btn-sync").classList.remove("syncing");
     setSyncBarLoading(false);
@@ -533,8 +544,14 @@ async function syncStatus(manual = false) {
   }
 }
 
-function syncManual() { syncStatus(true); }
-function startAutoSync() { syncStatus(); setInterval(() => syncStatus(), CFG.SYNC_INTERVAL_MS); }
+/* Tombol manual tetap tampilkan toast */
+function syncManual() { syncStatus(false); }
+
+/* Auto sync berkala — reset timer supaya tidak menumpuk */
+function startAutoSync() {
+  if (autoSyncTimer) clearInterval(autoSyncTimer);
+  autoSyncTimer = setInterval(() => syncStatus(true), CFG.SYNC_INTERVAL_MS);
+}
 
 async function checkBatalPasca() {
   const scans = await idbGetAll("scans");
@@ -585,29 +602,94 @@ function cekPassword() {
   }
 }
 
+/* ════════════════════════════════════════
+   APP START
+   — Semua sinkron dijalankan paralel di sini
+   — Tidak menunggu satu selesai dulu
+════════════════════════════════════════ */
 async function onAppStart() {
   await initDB();
   await loadStatusCache();
   await initRiwayat();
-  await fetchNamaDanTampilkan();
+
+  // Paksa sync nama & status secara paralel, langsung saat app terbuka
+  fetchNamaDanTampilkan();  // tidak di-await agar non-blocking
+  syncStatus(true);         // tidak di-await agar non-blocking
+
+  // Aktifkan auto sync berkala
   startAutoSync();
+
+  // Daftarkan visibility listener untuk deteksi "bangun dari tidur"
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
   fetch(CFG.GAS_URL + "?action=ping").catch(() => {});
 }
 
 /* ════════════════════════════════════════
+   VISIBILITY CHANGE — deteksi tab dibuka kembali
+   Jika tab/layar kembali aktif setelah > WAKEUP_STALE_MS,
+   paksa re-sync nama & status tanpa perlu tutup-buka.
+════════════════════════════════════════ */
+function onVisibilityChange() {
+  if (document.hidden) {
+    // Tab masuk background — catat waktunya
+    lastHiddenAt = Date.now();
+    return;
+  }
+
+  // Tab kembali aktif
+  const hiddenDuration = lastHiddenAt ? (Date.now() - lastHiddenAt) : Infinity;
+  lastHiddenAt = null;
+
+  if (hiddenDuration >= CFG.WAKEUP_STALE_MS) {
+    // Sudah lama di background, paksa sync ulang semua
+    showToast("🔄 Sinkronisasi ulang setelah tidak aktif…", "");
+    fetchNamaDanTampilkan();
+    syncStatus(true).then(() => {
+      // Reset auto-sync timer agar hitungan dimulai dari sekarang
+      startAutoSync();
+    });
+  } else if (hiddenDuration > 30_000) {
+    // Lebih dari 30 detik — sync status saja (nama tidak perlu)
+    syncStatus(true).then(() => startAutoSync());
+  }
+}
+
+/* ════════════════════════════════════════
    FETCH NAMA dari E8
+   Selalu update UI, bahkan jika hasilnya kosong
 ════════════════════════════════════════ */
 async function fetchNamaDanTampilkan() {
+  const el = document.getElementById("user-nama-strip");
+  const strip = document.getElementById("user-strip");
+
+  // Tampilkan loading state
+  el.textContent = "memuat…";
+  el.classList.add("loading");
+  strip.style.display = "flex";
+
   try {
     const resp = await fetch(CFG.GAS_URL + "?action=getNama&t=" + Date.now(), { redirect:"follow" });
     const text = await resp.text();
     const json = JSON.parse(text);
-    currentUser = json.nama ? String(json.nama).trim() : "";
+    const nama = json.nama ? String(json.nama).trim() : "";
+    currentUser    = nama;
+    lastNamaFetchAt = Date.now();
+
+    el.classList.remove("loading");
+    if (nama) {
+      el.textContent       = nama;
+      strip.style.display  = "flex";
+    } else {
+      el.textContent       = "(tidak tersedia)";
+      strip.style.display  = "flex";
+    }
   } catch(_) {
     currentUser = "";
+    el.classList.remove("loading");
+    el.textContent = "(gagal memuat)";
+    strip.style.display = "flex";
   }
-  document.getElementById("user-nama-strip").textContent = currentUser || "(tidak tersedia)";
-  document.getElementById("user-strip").style.display    = currentUser ? "flex" : "none";
 }
 
 /* ════════════════════════════════════════
@@ -719,30 +801,20 @@ function updateRiwayatDOM(idOrResi, status, sent) {
 
 /* ════════════════════════════════════════
    PROSES HASIL SCAN
-
-   Urutan prioritas:
-   1. Resi BATAL (J = "Batal")
-      - Sudah pernah discan sesi ini → peringatan saja, counter TIDAK nambah
-      - Pertama kali discan → catat & hitung 1x
-   2. Resi SUDAH PACKING di Sheets (J = "Sudah")
-   3. Duplikat sesi ini
-   4. Sukses
 ════════════════════════════════════════ */
 async function prosesHasil(resi, ts) {
 
-  // ① Batal — prioritas tertinggi
+  // ① Batal
   if (isResiBatal(resi)) {
     const e   = getCacheEntry(resi);
     const ket = e?.keteranganI ? " (" + e.keteranganI + ")" : "";
     bunyi("batal");
 
-    // Sudah pernah discan di sesi ini → peringatan saja, TANPA tambah counter & riwayat
     if (resiDiScan.has(resi)) {
       setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — sudah tercatat, dilewati.", "batal");
       return;
     }
 
-    // Pertama kali discan → catat & hitung 1x
     resiDiScan.add(resi);
     setStatus("🚫 <b>" + resi + "</b> BATAL" + ket + " — dilewati.", "batal");
     cntBatal++;
@@ -752,7 +824,7 @@ async function prosesHasil(resi, ts) {
     return;
   }
 
-  // ② Sudah di-packing sebelumnya (dari cache Sheets, J = "Sudah")
+  // ② Sudah di-packing (dari cache Sheets)
   if (isResiSudahPacking(resi)) {
     bunyi("duplikat");
     setStatus("📦 <b>" + resi + "</b> sudah di-packing sebelumnya (dari Sheets)!", "sudah-packing");
@@ -828,7 +900,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function kirimSemua() {
   if (isKiriming) return;
 
-  if (!currentUser) {
+  // Jika nama belum ada atau sudah kadaluarsa, fetch ulang dulu
+  const namaStale = !lastNamaFetchAt || (Date.now() - lastNamaFetchAt > CFG.NAMA_STALE_MS);
+  if (!currentUser || namaStale) {
     showToast("⏳ Mengambil nama petugas…", "");
     await fetchNamaDanTampilkan();
   }
