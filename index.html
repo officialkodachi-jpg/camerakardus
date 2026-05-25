@@ -582,6 +582,7 @@ var PASSWORD      = "kodachi123";
 var GEMINI_KEY    = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
 var VISION_KEY    = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
 var SPREADSHEET_ID = "1gJtL8Qr65ZXy5aNW4WWz1umKdSkFjGTZdPq7xfnJbfI";
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMJGojO0mHxttLQ_oTlRVr29Fk0Ga7H82ory_H5714aEDSRUnjQi2k2Yu9_hy9ASxl0A/exec";
 
 // Sheet GIDs from the URL
 // Stock sheet gid=1654205431  → need to find its name or use gid
@@ -712,12 +713,10 @@ function parseCSV(text) {
 }
 
 async function loadStokSheet() {
-  var url = csvUrl(GID_STOK);
-  var resp = await fetch(url);
+  var resp = await fetch(APPS_SCRIPT_URL + '?action=stok');
   if (!resp.ok) throw new Error('Stok HTTP ' + resp.status);
-  var text = await resp.text();
-  var rows = parseCSV(text);
-  stokDB = parseStokSheet(rows);
+  var data = await resp.json();
+  stokDB = parseStokSheet(data); // data sudah array 2D, bukan CSV
 }
 
 // Parse stock sheet: header row 4 (index 3) has sizes, col structure from image
@@ -812,23 +811,10 @@ function parseStokSheet(rows) {
 }
 
 async function loadHargaSheet() {
-  // Try to discover gid for "Data" sheet by fetching spreadsheet page
-  // Fallback: try common gids
-  var gidsToTry = ['0', '1', '2', '1654205431'];
-  // Actually we need to find the Data sheet gid
-  // Strategy: fetch spreadsheet metadata from the export URL with sheet name
-  // Google Sheets allows: /export?format=csv&sheet=Data
-  var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=csv&sheet=Data';
-  var resp = await fetch(url);
-  if (!resp.ok) {
-    // Try sheet=Data+Harga
-    url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=csv&sheet=Data%20Harga';
-    resp = await fetch(url);
-  }
+  var resp = await fetch(APPS_SCRIPT_URL + '?action=harga');
   if (!resp.ok) throw new Error('Harga HTTP ' + resp.status);
-  var text = await resp.text();
-  var rows = parseCSV(text);
-  hargaDB = parseHargaSheet(rows);
+  var data = await resp.json();
+  hargaDB = parseHargaSheet(data);
 }
 
 // Parse harga sheet: col A=Varian, B=Harga Baru, C=Harga Retail
