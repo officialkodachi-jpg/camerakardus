@@ -70,8 +70,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .db-counts{color:var(--muted);display:flex;gap:10px}
 .db-counts span{color:var(--acc2)}
 .btn-refresh-db{background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.25);border-radius:6px;
-  color:var(--acc2);font-family:var(--mono);font-size:10px;padding:2px 8px;cursor:pointer;transition:all .15s}
+  color:var(--acc2);font-family:var(--mono);font-size:10px;padding:2px 8px;cursor:pointer;transition:all .15s;
+  display:inline-flex;align-items:center;gap:5px}
 .btn-refresh-db:active{transform:scale(.95)}
+.btn-refresh-db.syncing{opacity:.7;pointer-events:none}
+.btn-refresh-db .sync-icon{display:inline-block;transition:transform .1s}
+.btn-refresh-db.syncing .sync-icon{animation:syncSpin .7s linear infinite}
+@keyframes syncSpin{to{transform:rotate(360deg)}}
 .tab-bar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;
   background:var(--s1);border-bottom:1px solid var(--brd);padding:5px 5px 0;gap:4px}
 .tab-btn{padding:10px 8px;border:none;border-radius:9px 9px 0 0;font-family:var(--sans);font-size:12px;
@@ -320,7 +325,7 @@ canvas{display:none}
       <span id="db-status-label">Memuat data...</span>
     </div>
     <div class="db-counts">Stok <span id="db-stok-count">-</span> &nbsp;Harga <span id="db-harga-count">-</span></div>
-    <button class="btn-refresh-db" onclick="loadAllData()">↻ Sync</button>
+    <button class="btn-refresh-db" id="btn-sync" onclick="loadAllData()"><span class="sync-icon">↻</span> Sync</button>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" id="tabbtn-scan" onclick="switchTab('scan')">📷 Scan Produk</button>
@@ -568,8 +573,39 @@ document.getElementById('inp-pw').addEventListener('keydown',function(e){if(e.ke
 // ═══════════════════════════════════════════════════
 // LOAD DATA GOOGLE SHEETS
 // ═══════════════════════════════════════════════════
-function csvUrl(gid){return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&gid='+gid;}
+// Proxy CORS untuk Google Sheets
+var CORS_PROXIES=[
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+  'https://cors-anywhere.herokuapp.com/'
+];
+var activeProxy=0;
+
+function csvUrl(gid){
+  return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&gid='+gid;
+}
+function csvUrlSheet(sheetName){
+  return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&sheet='+encodeURIComponent(sheetName);
+}
+async function fetchWithProxy(url){
+  // Coba direct dulu
+  try{
+    var r=await fetch(url,{mode:'cors'});
+    if(r.ok)return r;
+  }catch(e){}
+  // Coba tiap proxy
+  for(var i=0;i<CORS_PROXIES.length;i++){
+    try{
+      var r=await fetch(CORS_PROXIES[i]+encodeURIComponent(url));
+      if(r.ok){activeProxy=i;return r;}
+    }catch(e){}
+  }
+  throw new Error('Semua proxy gagal. Cek koneksi internet.');
+}
+
 async function loadAllData(){
+  var btn=document.getElementById('btn-sync');
+  if(btn)btn.classList.add('syncing');
   setDbStatus('loading','Memuat data sheets...');
   try{
     await loadStokSheet();
@@ -580,8 +616,10 @@ async function loadAllData(){
     document.getElementById('db-harga-count').textContent=hargaDB.length;
     showToast('✅ Data dimuat: '+stokDB.length+' stok, '+hargaDB.length+' harga');
   }catch(e){
-    setDbStatus('err','Gagal muat: '+e.message.substring(0,40));
-    showToast('Gagal sync: '+e.message,'err');
+    setDbStatus('err','Gagal: '+e.message.substring(0,50));
+    showToast('❌ Gagal sync: '+e.message,'err');
+  }finally{
+    if(btn)btn.classList.remove('syncing');
   }
 }
 function setDbStatus(state,label){
@@ -605,7 +643,7 @@ function parseCSV(text){
   return rows;
 }
 async function loadStokSheet(){
-  var resp=await fetch(csvUrl(GID_STOK));
+  var resp=await fetchWithProxy(csvUrl(GID_STOK));
   if(!resp.ok)throw new Error('Stok HTTP '+resp.status);
   stokDB=parseStokSheet(parseCSV(await resp.text()));
 }
@@ -658,13 +696,12 @@ function parseStokSheet(rows){
   return result;
 }
 async function loadHargaSheet(){
-  var url='https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&sheet=Data';
-  var resp=await fetch(url);
-  if(!resp.ok){
-    url='https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&sheet=Data%20Harga';
-    resp=await fetch(url);
+  var resp=null;
+  try{resp=await fetchWithProxy(csvUrlSheet('Data'));}catch(e){}
+  if(!resp||!resp.ok){
+    try{resp=await fetchWithProxy(csvUrlSheet('Data Harga'));}catch(e){}
   }
-  if(!resp.ok)throw new Error('Harga HTTP '+resp.status);
+  if(!resp||!resp.ok)throw new Error('Sheet harga tidak ditemukan');
   hargaDB=parseHargaSheet(parseCSV(await resp.text()));
 }
 function parseHargaSheet(rows){
