@@ -511,17 +511,14 @@ canvas{display:none}
 <canvas id="canvas2"></canvas>
 <script>
 // ═══════════════════════════════════════════════════
-// CONFIG — GANTI SPREADSHEET_ID SESUAI SHEET BARU
+// CONFIG
 // ═══════════════════════════════════════════════════
-var PASSWORD       = "kodachi123";
-var GEMINI_KEY     = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
-var VISION_KEY     = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
+var PASSWORD   = "kodachi123";
+var GEMINI_KEY = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
+var VISION_KEY = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
 
-// ▼▼▼ GANTI dengan Spreadsheet ID baru ▼▼▼
-var SPREADSHEET_ID = "1eC_w3qDKbGfwGAyLS_IJ8I_YT39KEoWOFfw5sicuPe0";
-// Sheet name persis seperti di Google Sheets
-var SHEET_STOK     = "Stok";        // sheet stok (format flat: Nama Produk, 34,35,...,45)
-var SHEET_HARGA    = "Harga Produk"; // sheet harga (format: Varian, Harga Baru, Harga Retail)
+// ▼▼▼ PASTE URL EXEC GOOGLE APPS SCRIPT DI SINI ▼▼▼
+var GAS_URL = "https://script.google.com/macros/s/GANTI_DENGAN_URL_EXEC_KAMU/exec";
 
 var FOTO_MAX_W=800, FOTO_MAX_H=600, FOTO_QUALITY=0.45;
 
@@ -576,39 +573,23 @@ function doLogin(){
 document.getElementById('inp-pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
 // ═══════════════════════════════════════════════════
-// LOAD DATA DARI GOOGLE SHEETS (FORMAT FLAT/CSV SEDERHANA)
+// LOAD DATA VIA GOOGLE APPS SCRIPT EXEC
 // ═══════════════════════════════════════════════════
-var CORS_PROXIES=[
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
-  'https://cors-anywhere.herokuapp.com/'
-];
-
-function csvUrlByName(sheetName){
-  return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&sheet='+encodeURIComponent(sheetName);
-}
-
-async function fetchWithProxy(url){
-  try{
-    var r=await fetch(url,{mode:'cors'});
-    if(r.ok)return r;
-  }catch(e){}
-  for(var i=0;i<CORS_PROXIES.length;i++){
-    try{
-      var r=await fetch(CORS_PROXIES[i]+encodeURIComponent(url));
-      if(r.ok)return r;
-    }catch(e){}
-  }
-  throw new Error('Semua proxy gagal. Cek koneksi atau buka spreadsheet ke publik.');
-}
-
 async function loadAllData(){
   var btn=document.getElementById('btn-sync');
   if(btn)btn.classList.add('syncing');
-  setDbStatus('loading','Memuat data sheets...');
+  setDbStatus('loading','Memuat data dari GAS...');
   try{
-    await loadStokSheet();
-    await loadHargaSheet();
+    var resp=await fetch(GAS_URL,{redirect:'follow'});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    var json=await resp.json();
+    if(json.status!=='ok')throw new Error(json.message||'GAS error');
+    // Parse stok
+    var rawStok=json.stok||[];
+    stokDB=rawStok.filter(function(r){return r.name&&r.name.trim();});
+    // Parse harga
+    var rawHarga=json.harga||[];
+    hargaDB=rawHarga.filter(function(r){return r.varian&&(r.hargaBaru||r.hargaRetail);});
     dbLoaded=true;
     setDbStatus('ok','Data tersinkron');
     document.getElementById('db-stok-count').textContent=stokDB.length;
@@ -626,106 +607,6 @@ function setDbStatus(state,label){
   document.getElementById('db-dot').className='db-dot'+(state?' '+state:'');
   document.getElementById('db-status-label').textContent=label;
 }
-
-// ── CSV Parser (handles quoted fields)
-function parseCSV(text){
-  var rows=[],lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i];if(!line.trim())continue;
-    var cells=[],inQ=false,cell='';
-    for(var j=0;j<line.length;j++){
-      var ch=line[j];
-      if(ch==='"'){if(inQ&&line[j+1]==='"'){cell+='"';j++;}else inQ=!inQ;}
-      else if(ch===','&&!inQ){cells.push(cell.trim());cell='';}
-      else cell+=ch;
-    }
-    cells.push(cell.trim());
-    rows.push(cells);
-  }
-  return rows;
-}
-
-// ── Load Sheet Stok (format flat):
-// Row 0: Nama Produk, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45
-// Row 1+: data
-async function loadStokSheet(){
-  var resp=await fetchWithProxy(csvUrlByName(SHEET_STOK));
-  if(!resp.ok)throw new Error('Stok HTTP '+resp.status);
-  var rows=parseCSV(await resp.text());
-  if(rows.length<2)throw new Error('Sheet Stok kosong');
-  
-  // Cari baris header
-  var hdrRow=-1;
-  for(var r=0;r<Math.min(5,rows.length);r++){
-    if(rows[r][0]&&rows[r][0].toLowerCase().includes('nama')){hdrRow=r;break;}
-  }
-  if(hdrRow<0)hdrRow=0;
-  
-  var headers=rows[hdrRow];
-  // Mapping kolom
-  var nameCol=0;
-  var sizeCols={};
-  for(var c=0;c<headers.length;c++){
-    var h=String(headers[c]).trim();
-    var sz=parseInt(h);
-    if(!isNaN(sz)&&sz>=30&&sz<=50)sizeCols[sz]=c;
-    if(h.toLowerCase().includes('nama'))nameCol=c;
-  }
-  
-  var result=[];
-  for(var ri=hdrRow+1;ri<rows.length;ri++){
-    var row=rows[ri];
-    var name=String(row[nameCol]||'').replace(/\r/g,'').trim();
-    if(!name||name==='-'||name.toLowerCase()==='nan')continue;
-    var sizes={};
-    Object.keys(sizeCols).forEach(function(sz){
-      var raw=String(row[sizeCols[sz]]||'').replace(/[^0-9\-]/g,'');
-      var q=parseInt(raw)||0;
-      sizes[parseInt(sz)]=Math.max(0,q);
-    });
-    result.push({name:name,sizes:sizes});
-  }
-  stokDB=result;
-  console.log('[StokDB] Loaded',stokDB.length,'produk');
-}
-
-// ── Load Sheet Harga (format flat):
-// Row 0: Varian, Harga Baru, Harga Retail
-// Row 1+: data
-async function loadHargaSheet(){
-  var resp=await fetchWithProxy(csvUrlByName(SHEET_HARGA));
-  if(!resp.ok)throw new Error('Harga HTTP '+resp.status);
-  var rows=parseCSV(await resp.text());
-  if(rows.length<2)throw new Error('Sheet Harga kosong');
-  
-  var hdrRow=0;
-  for(var r=0;r<Math.min(5,rows.length);r++){
-    var r0=String(rows[r][0]||'').toLowerCase();
-    if(r0.includes('varian')||r0.includes('nama')||r0.includes('type')){hdrRow=r;break;}
-  }
-  
-  var headers=rows[hdrRow];
-  var varCol=0,hbCol=1,hrCol=2;
-  for(var c=0;c<headers.length;c++){
-    var h=String(headers[c]).toLowerCase().trim();
-    if(h.includes('varian')||h.includes('nama')||h.includes('type'))varCol=c;
-    else if(h.includes('baru'))hbCol=c;
-    else if(h.includes('retail'))hrCol=c;
-  }
-  
-  var result=[];
-  for(var ri=hdrRow+1;ri<rows.length;ri++){
-    var row=rows[ri];
-    var varian=String(row[varCol]||'').replace(/\r/g,'').trim();
-    if(!varian||varian==='-'||varian.toLowerCase()==='nan')continue;
-    var hb=parsePrice(row[hbCol]),hr=parsePrice(row[hrCol]);
-    if(!hb&&!hr)continue;
-    result.push({varian:varian,hargaBaru:hb,hargaRetail:hr});
-  }
-  hargaDB=result;
-  console.log('[HargaDB] Loaded',hargaDB.length,'varian');
-}
-
 function parsePrice(s){if(!s)return 0;var n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?0:n;}
 
 // ═══════════════════════════════════════════════════
