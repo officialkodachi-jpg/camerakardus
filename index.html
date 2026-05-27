@@ -518,7 +518,7 @@ var GEMINI_KEY = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
 var VISION_KEY = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
 
 // ▼▼▼ PASTE URL EXEC GOOGLE APPS SCRIPT DI SINI ▼▼▼
-var GAS_URL = "https://script.google.com/macros/s/AKfycbzDMm_LAcUN6pVidhI7ArL0HsnkA0e-894jFF_TogrvkkCzOcuKB4Us7uJQQmvmETqIIg/exec";
+var GAS_URL = "https://script.google.com/macros/s/GANTI_DENGAN_URL_EXEC_KAMU/exec";
 
 var FOTO_MAX_W=800, FOTO_MAX_H=600, FOTO_QUALITY=0.45;
 
@@ -1305,8 +1305,56 @@ function submitManual(){
 }
 
 // ═══════════════════════════════════════════════════
-// CARI STOK — pakai stokDB flat
+// CARI STOK — 3 Level Referensi
+// L1: Exact match (produk yg discant)
+// L2: Keluarga (prefix angka / Sparta / Ventela / kata pertama)
+// L3: Warna serupa dari seluruh stok
 // ═══════════════════════════════════════════════════
+
+// Daftar warna yang dikenali (urutan panjang dulu supaya match lebih spesifik)
+var WARNA_LIST=[
+  'ALL BLACK','ALL WHITE','HITAM PUTIH','BLACK WHITE','DARK GREY','ASH GREY','OLIVE GREEN',
+  'LIGHT PINK','BLACK NATURAL','BLACK GUM','BROWN GUM','GREEN GUM','BROWN GREE','GREY BROWN',
+  'BLACK BROWN','WHITE BROWN','DARK YELLOW',
+  'HITAM','PUTIH','MERAH','BIRU','HIJAU','KUNING','ORANGE','NAVY','GREY','ABU',
+  'MAROON','CREAM','BROWN','COKLAT','WHITE','BLACK','RED','BLUE','GREEN','YELLOW',
+  'SILVER','EMAS','GOLD','PINK','TOSCA','ARMY','NATURAL','GUM','B/NAT','BNAT'
+];
+
+// Ekstrak prefix keluarga dari nama produk
+function getPrefix(namaUpper){
+  // Prefix angka: 8172, 8111, dll
+  var mNum=namaUpper.match(/^(\d{3,5})/);
+  if(mNum)return{type:'angka',key:mNum[1]};
+  // Brand khusus
+  var brands=['VENTELA','SPARTA','KODACHI','WARRIOR','DRAGONFLY','PATROBAS','RUNNER',
+               'GALAXY','RIVIERA','DALLAS','ARTHUR','ATHENA','VENUS','CLASSIC','AR PLUS',
+               'MB BAGUS','NEW YORKER'];
+  for(var i=0;i<brands.length;i++){
+    if(namaUpper.indexOf(brands[i])===0||namaUpper.indexOf(brands[i])!==-1)
+      return{type:'brand',key:brands[i]};
+  }
+  // Kata pertama sebagai prefix
+  var kata=namaUpper.split(/\s+/)[0];
+  return{type:'kata',key:kata};
+}
+
+// Ekstrak warna dari nama produk
+function getWarna(namaUpper){
+  var found=[];
+  for(var i=0;i<WARNA_LIST.length;i++){
+    if(namaUpper.indexOf(WARNA_LIST[i])!==-1)found.push(WARNA_LIST[i]);
+  }
+  return found;
+}
+
+// Ambil data satu produk dari stokDB untuk range size
+function getSizeData(row,minSize,maxSize){
+  var sizes={};
+  for(var sz=minSize;sz<=maxSize;sz++)sizes[sz]=(row.sizes&&row.sizes[sz])||0;
+  return sizes;
+}
+
 function cariStok(seriInput,sizeTgt){
   if(sedangCariStok)return;
   sedangCariStok=true;
@@ -1319,9 +1367,13 @@ function cariStok(seriInput,sizeTgt){
   document.getElementById('price-card').classList.remove('show');
   document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
   try{
-    var result=queryStok(seriInput,parseInt(sizeTgt),2);
+    var sizeTgtInt=parseInt(sizeTgt);
+    var minSize=sizeTgtInt-2,maxSize=sizeTgtInt+2;
+    var displaySizes=[];for(var s=minSize;s<=maxSize;s++)displaySizes.push(s);
+
+    var result=buildStokLevels(seriInput,sizeTgtInt,minSize,maxSize,displaySizes);
     var hargaInfo=queryHarga(seriInput,sizeTgt);
-    renderStokResult(result,parseInt(sizeTgt),seriInput,hargaInfo);
+    renderStokResult(result,sizeTgtInt,seriInput,hargaInfo);
   }catch(e){
     hb.className='hero-box show habis';
     document.getElementById('hero-status').className='hero-status habis';
@@ -1331,46 +1383,84 @@ function cariStok(seriInput,sizeTgt){
   sedangCariStok=false;
 }
 
-function queryStok(seriInput,sizeTarget,sizeRange){
-  var minSize=sizeTarget-sizeRange,maxSize=sizeTarget+sizeRange;
+function buildStokLevels(seriInput,sizeTgt,minSize,maxSize,displaySizes){
   var seriUpper=String(seriInput).toUpperCase().trim();
   var keywords=seriUpper.split(/[\s\/\-]+/).filter(function(k){return k.length>=2;});
-  var matched=[];
+  var prefix=getPrefix(seriUpper);
+  var warnaInput=getWarna(seriUpper);
+
+  // Set untuk track produk yang sudah masuk level sebelumnya
+  var seenKeys={};
+
+  // ── LEVEL 1: Exact match (nama persis / sangat mirip)
+  var l1=[];
   stokDB.forEach(function(row){
     var namaUpper=row.name.toUpperCase().trim();
     var score=0;
     if(namaUpper===seriUpper)score=100;
     else if(namaUpper.indexOf(seriUpper)!==-1)score=90;
-    else if(seriUpper.length>=5&&seriUpper.indexOf(namaUpper)!==-1)score=75;
+    else if(seriUpper.length>=5&&seriUpper.indexOf(namaUpper)!==-1)score=80;
     else if(keywords.length>=2){
       var allMatch=keywords.every(function(kw){return namaUpper.indexOf(kw)!==-1;});
       if(allMatch)score=70;
-      else{
-        var numKw=keywords[0];
-        if(/^\d+$/.test(numKw)&&namaUpper.indexOf(numKw)!==-1){
-          var secOk=keywords.slice(1).some(function(kw){return namaUpper.indexOf(kw)!==-1;});
-          if(secOk)score=60;
-        }
-      }
     }
     if(score===0)return;
-    var sizesData={};
-    for(var sz=minSize;sz<=maxSize;sz++)sizesData[sz]=(row.sizes&&row.sizes[sz])||0;
-    matched.push({seri:row.name,sizes:sizesData,_score:score});
+    var key=namaUpper;
+    if(seenKeys[key])return;
+    seenKeys[key]=true;
+    l1.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:score,level:1});
   });
-  // merge duplicates
-  var map={};
-  matched.forEach(function(r){
-    var key=r.seri.toUpperCase().trim();
-    if(!map[key]){map[key]={seri:r.seri,sizes:{},_score:0};for(var s=minSize;s<=maxSize;s++)map[key].sizes[s]=0;}
-    map[key]._score=Math.max(map[key]._score,r._score);
-    for(var s=minSize;s<=maxSize;s++)map[key].sizes[s]=(map[key].sizes[s]||0)+(r.sizes[s]||0);
+  l1.sort(function(a,b){return b._score-a._score;});
+
+  // ── LEVEL 2: Keluarga (prefix sama, tapi bukan exact)
+  var l2=[];
+  stokDB.forEach(function(row){
+    var namaUpper=row.name.toUpperCase().trim();
+    var key=namaUpper;
+    if(seenKeys[key])return;
+    var rowPrefix=getPrefix(namaUpper);
+    var isKeluarga=false;
+    if(prefix.key&&rowPrefix.key){
+      if(prefix.type==='angka'&&rowPrefix.type==='angka'&&rowPrefix.key===prefix.key)isKeluarga=true;
+      else if(prefix.type==='brand'&&namaUpper.indexOf(prefix.key)!==-1)isKeluarga=true;
+      else if(prefix.type==='kata'&&rowPrefix.key===prefix.key)isKeluarga=true;
+    }
+    if(!isKeluarga)return;
+    seenKeys[key]=true;
+    l2.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:50,level:2});
   });
-  var rows=Object.keys(map).map(function(k){return map[k];});
-  rows.sort(function(a,b){return b._score-a._score;});
-  if(rows.length>0)rows[0].isExact=true;
-  var displaySizes=[];for(var s=minSize;s<=maxSize;s++)displaySizes.push(s);
-  return{rows:rows,sizes:displaySizes};
+  // Sort: yang ada stok size target dulu
+  l2.sort(function(a,b){
+    var qa=(a.sizes[sizeTgt]||0),qb=(b.sizes[sizeTgt]||0);
+    if(qb!==qa)return qb-qa;
+    return a.seri.localeCompare(b.seri);
+  });
+
+  // ── LEVEL 3: Warna serupa dari seluruh stok
+  var l3=[];
+  if(warnaInput.length>0){
+    stokDB.forEach(function(row){
+      var namaUpper=row.name.toUpperCase().trim();
+      var key=namaUpper;
+      if(seenKeys[key])return;
+      var warnaRow=getWarna(namaUpper);
+      // Cek ada warna yang sama
+      var warnaMatch=warnaInput.some(function(w){return warnaRow.indexOf(w)!==-1;});
+      if(!warnaMatch)return;
+      // Hanya tampilkan yang ada stok di size target atau ±1
+      var hasStok=false;
+      for(var sz=sizeTgt-1;sz<=sizeTgt+1;sz++){if((row.sizes&&row.sizes[sz])||0)hasStok=true;}
+      if(!hasStok)return;
+      seenKeys[key]=true;
+      l3.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:20,level:3});
+    });
+    l3.sort(function(a,b){
+      var qa=(a.sizes[sizeTgt]||0),qb=(b.sizes[sizeTgt]||0);
+      return qb-qa;
+    });
+  }
+
+  return{l1:l1,l2:l2,l3:l3,sizes:displaySizes,warnaInput:warnaInput,prefix:prefix};
 }
 
 function queryHarga(seriInput,sizeTarget){
@@ -1395,8 +1485,10 @@ function buildHargaResult(h,sizeTarget){
 }
 
 function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
-  var hb=document.getElementById('hero-box'),rows=data.rows||[];
-  if(!rows.length){
+  var hb=document.getElementById('hero-box');
+  var l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
+
+  if(!l1.length&&!l2.length&&!l3.length){
     hb.className='hero-box show habis';
     document.getElementById('hero-status').className='hero-status habis';
     document.getElementById('hero-status').textContent='❌ Tidak Ditemukan';
@@ -1405,28 +1497,31 @@ function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
     document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>';
     document.getElementById('price-card').classList.remove('show');return;
   }
-  var exactRow=rows[0];
-  var exactQty=(exactRow.sizes&&exactRow.sizes[sizeTgt])||0;
-  var variantReady=rows.filter(function(r){return r!==exactRow&&((r.sizes&&r.sizes[sizeTgt])||0)>0;});
+
+  // Status hero: berdasarkan L1 exact
+  var exactRow=l1[0]||null;
+  var exactQty=exactRow?((exactRow.sizes&&exactRow.sizes[sizeTgt])||0):0;
+  var l1Ready=l1.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
+  var l2Ready=l2.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
+  var l3Ready=l3.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
+
   if(exactQty>0){
     hb.className='hero-box show ready';
     document.getElementById('hero-status').className='hero-status ready';
     document.getElementById('hero-status').textContent='✅ READY - Size '+sizeTgt;
     document.getElementById('hero-sub').textContent='Stok: '+exactQty+' pasang';
     bunyi('ok');
-  }else if(variantReady.length>0){
-    hb.className='hero-box show habis';
-    document.getElementById('hero-status').className='hero-status habis';
-    document.getElementById('hero-status').textContent='❌ HABIS - Size '+sizeTgt;
-    document.getElementById('hero-sub').textContent=variantReady.length+' varian lain ready size '+sizeTgt+' ↓';
-    bunyi('miss');
   }else{
     hb.className='hero-box show habis';
     document.getElementById('hero-status').className='hero-status habis';
     document.getElementById('hero-status').textContent='❌ HABIS - Size '+sizeTgt;
-    document.getElementById('hero-sub').textContent='Semua varian habis di size ini';
+    var altMsg=[];
+    if(l2Ready.length)altMsg.push(l2Ready.length+' keluarga ready');
+    if(l3Ready.length)altMsg.push(l3Ready.length+' warna serupa ready');
+    document.getElementById('hero-sub').textContent=altMsg.length?altMsg.join(' · ') + ' ↓':'Cek alternatif di bawah ↓';
     bunyi('miss');
   }
+
   if(hargaInfo&&hargaInfo.hargaBaru){
     document.getElementById('price-baru').textContent='Rp '+fmtNum(hargaInfo.hargaBaru);
     document.getElementById('price-retail').textContent=hargaInfo.hargaRetail>hargaInfo.hargaBaru?'Rp '+fmtNum(hargaInfo.hargaRetail):'';
@@ -1439,45 +1534,83 @@ function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
   }else{
     document.getElementById('price-card').classList.remove('show');
   }
-  renderStokTable(data,sizeTgt,exactRow,variantReady,seriInput);
+
+  renderStokTable(data,sizeTgt,seriInput);
 }
 
-function renderStokTable(data,sizeTgt,exactRow,variantReady,seriInput){
+function renderStokTable(data,sizeTgt,seriInput){
   var tbody=document.getElementById('stok-tbl-body');
   document.getElementById('stok-tbl-wrap').classList.add('show');
   var sizes=data.sizes||[];
-  var ordered=[exactRow].concat(data.rows.filter(function(r){return r!==exactRow;}));
+  var l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
+
+  function makeHeader(label,color,emoji){
+    return '<tr><td colspan="'+(sizes.length+1)+'" style="padding:5px 10px 3px;font-family:var(--mono);'
+      +'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:'+color
+      +';background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">'
+      +emoji+' '+label+'</td></tr>';
+  }
+
+  function makeRows(rows,badgeLabel,badgeColor,badgeBg){
+    var h='';
+    rows.forEach(function(row){
+      var hasTgt=((row.sizes&&row.sizes[sizeTgt])||0)>0;
+      var rowStyle='';
+      if(row.level===1&&hasTgt)rowStyle=' class="hl"';
+      else if(row.level===1&&!hasTgt)rowStyle=' style="background:rgba(244,63,94,.06)"';
+      else if(row.level===2&&hasTgt)rowStyle=' style="background:rgba(251,191,36,.05)"';
+      else if(row.level===3&&hasTgt)rowStyle=' style="background:rgba(34,211,160,.04)"';
+      h+='<tr'+rowStyle+'>';
+      var badge=' <span style="font-size:9px;background:'+badgeBg+';color:'+badgeColor
+        +';border-radius:4px;padding:1px 5px">'+badgeLabel+'</span>';
+      h+='<td class="td-nm">'+esc(row.seri)+badge+'</td>';
+      sizes.forEach(function(sz){
+        var qty=(row.sizes&&row.sizes[sz])||0;
+        var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
+        h+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';
+      });
+      h+='</tr>';
+    });
+    return h;
+  }
+
   var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
   sizes.forEach(function(sz){html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' ✦':'')+'</th>';});
   html+='</tr></thead><tbody>';
-  ordered.forEach(function(row){
-    var isExact=row===exactRow,hasTgt=((row.sizes&&row.sizes[sizeTgt])||0)>0,isVar=variantReady.indexOf(row)!==-1;
-    var rowAttr='';
-    if(isExact&&hasTgt)rowAttr=' class="hl"';
-    else if(isExact&&!hasTgt)rowAttr=' style="background:rgba(244,63,94,.06)"';
-    else if(isVar)rowAttr=' style="background:rgba(251,191,36,.05)"';
-    html+='<tr'+rowAttr+'>';
-    var badge='';
-    if(isExact)badge=' <span style="font-size:9px;background:rgba(124,106,247,.2);color:var(--acc2);border-radius:4px;padding:1px 5px">scan</span>';
-    else if(isVar)badge=' <span style="font-size:9px;background:rgba(251,191,36,.2);color:var(--amber);border-radius:4px;padding:1px 5px">varian</span>';
-    html+='<td class="td-nm">'+esc(row.seri)+badge+'</td>';
-    sizes.forEach(function(sz){
-      var qty=(row.sizes&&row.sizes[sz])||0;
-      var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
-      html+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';
-    });
-    html+='</tr>';
-    if(isExact&&ordered.length>1)
-      html+='<tr><td colspan="'+(sizes.length+1)+'" style="padding:0;height:1px;background:rgba(255,255,255,.07)"></td></tr>';
-  });
+
+  // L1
+  if(l1.length){
+    html+=makeHeader('Produk Discant','var(--acc2)','🎯');
+    html+=makeRows(l1,'scan','var(--acc2)','rgba(124,106,247,.2)');
+  }
+
+  // L2
+  if(l2.length){
+    html+=makeHeader('Keluarga '+data.prefix.key,'var(--amber)','📦');
+    html+=makeRows(l2,'keluarga','var(--amber)','rgba(251,191,36,.2)');
+  }
+
+  // L3
+  if(l3.length){
+    var warnaLabel=data.warnaInput.slice(0,2).join(', ');
+    html+=makeHeader('Warna Serupa ('+warnaLabel+')','var(--green)','🎨');
+    html+=makeRows(l3,'warna','var(--green)','rgba(34,211,160,.2)');
+  }
+
+  if(!l1.length&&!l2.length&&!l3.length){
+    html+='<tr><td colspan="'+(sizes.length+1)+'" class="stok-empty">Tidak ada stok</td></tr>';
+  }
+
   html+='</tbody></table>';
   html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'
     +'<span style="color:var(--green)">✦ = size target</span>'
-    +'<span style="color:var(--acc2)">scan = produk discani</span>'
-    +'<span style="color:var(--amber)">varian = warna lain</span>'
+    +'<span style="color:var(--acc2)">scan = produk discant</span>'
+    +'<span style="color:var(--amber)">keluarga = seri sama</span>'
+    +'<span style="color:var(--green)">warna = warna serupa</span>'
     +'<span>angka = pasang · - = habis</span></div>';
+
   document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
-  document.getElementById('stok-tbl-sub').textContent='±2 dari size '+sizeTgt;
+  document.getElementById('stok-tbl-sub').textContent='±2 size · 3 level ref';
   tbody.innerHTML=html;
 }
 
