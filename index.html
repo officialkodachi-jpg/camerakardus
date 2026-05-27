@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#7c6af7">
-<title>Scanner Produk v6 — Standalone</title>
+<title>Scanner Produk v7 — Flat DB</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
 <style>
@@ -292,9 +292,9 @@ canvas{display:none}
 <div id="login-screen">
   <div class="lcard">
     <span class="l-eye">🔎</span>
-    <div class="l-chip">Scanner v6 · Standalone · AI</div>
+    <div class="l-chip">Scanner v7 · Flat DB · AI</div>
     <div class="l-title">Scan Produk</div>
-    <div class="l-sub">OCR Gemini AI + Barcode + Cek Stok &amp; Harga Langsung</div>
+    <div class="l-sub">OCR Gemini AI + Barcode + Cek Stok &amp; Harga</div>
     <input class="l-input" type="password" id="inp-pw" placeholder="Password" autocomplete="current-password">
     <button class="l-btn" onclick="doLogin()">Masuk →</button>
     <div class="l-err" id="l-err"></div>
@@ -511,13 +511,18 @@ canvas{display:none}
 <canvas id="canvas2"></canvas>
 <script>
 // ═══════════════════════════════════════════════════
-// CONFIG
+// CONFIG — GANTI SPREADSHEET_ID SESUAI SHEET BARU
 // ═══════════════════════════════════════════════════
 var PASSWORD       = "kodachi123";
 var GEMINI_KEY     = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
 var VISION_KEY     = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
-var SPREADSHEET_ID = "1gJtL8Qr65ZXy5aNW4WWz1umKdSkFjGTZdPq7xfnJbfI";
-var GID_STOK       = "1654205431";
+
+// ▼▼▼ GANTI dengan Spreadsheet ID baru ▼▼▼
+var SPREADSHEET_ID = "1eC_w3qDKbGfwGAyLS_IJ8I_YT39KEoWOFfw5sicuPe0";
+// Sheet name persis seperti di Google Sheets
+var SHEET_STOK     = "Stok";        // sheet stok (format flat: Nama Produk, 34,35,...,45)
+var SHEET_HARGA    = "Harga Produk"; // sheet harga (format: Varian, Harga Baru, Harga Retail)
+
 var FOTO_MAX_W=800, FOTO_MAX_H=600, FOTO_QUALITY=0.45;
 
 // ═══════════════════════════════════════════════════
@@ -571,36 +576,30 @@ function doLogin(){
 document.getElementById('inp-pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
 // ═══════════════════════════════════════════════════
-// LOAD DATA GOOGLE SHEETS
+// LOAD DATA DARI GOOGLE SHEETS (FORMAT FLAT/CSV SEDERHANA)
 // ═══════════════════════════════════════════════════
-// Proxy CORS untuk Google Sheets
 var CORS_PROXIES=[
   'https://corsproxy.io/?',
   'https://api.allorigins.win/raw?url=',
   'https://cors-anywhere.herokuapp.com/'
 ];
-var activeProxy=0;
 
-function csvUrl(gid){
-  return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&gid='+gid;
-}
-function csvUrlSheet(sheetName){
+function csvUrlByName(sheetName){
   return 'https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=csv&sheet='+encodeURIComponent(sheetName);
 }
+
 async function fetchWithProxy(url){
-  // Coba direct dulu
   try{
     var r=await fetch(url,{mode:'cors'});
     if(r.ok)return r;
   }catch(e){}
-  // Coba tiap proxy
   for(var i=0;i<CORS_PROXIES.length;i++){
     try{
       var r=await fetch(CORS_PROXIES[i]+encodeURIComponent(url));
-      if(r.ok){activeProxy=i;return r;}
+      if(r.ok)return r;
     }catch(e){}
   }
-  throw new Error('Semua proxy gagal. Cek koneksi internet.');
+  throw new Error('Semua proxy gagal. Cek koneksi atau buka spreadsheet ke publik.');
 }
 
 async function loadAllData(){
@@ -627,135 +626,108 @@ function setDbStatus(state,label){
   document.getElementById('db-dot').className='db-dot'+(state?' '+state:'');
   document.getElementById('db-status-label').textContent=label;
 }
+
+// ── CSV Parser (handles quoted fields)
 function parseCSV(text){
-  var rows=[];
-  var lines=text.split('\n');
+  var rows=[],lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   for(var i=0;i<lines.length;i++){
     var line=lines[i];if(!line.trim())continue;
-    var cells=[],inQuote=false,cell='';
+    var cells=[],inQ=false,cell='';
     for(var j=0;j<line.length;j++){
       var ch=line[j];
-      if(ch==='"'){inQuote=!inQuote;}
-      else if(ch===','&&!inQuote){cells.push(cell.trim());cell='';}
-      else{cell+=ch;}
+      if(ch==='"'){if(inQ&&line[j+1]==='"'){cell+='"';j++;}else inQ=!inQ;}
+      else if(ch===','&&!inQ){cells.push(cell.trim());cell='';}
+      else cell+=ch;
     }
-    cells.push(cell.trim());rows.push(cells);
+    cells.push(cell.trim());
+    rows.push(cells);
   }
   return rows;
 }
+
+// ── Load Sheet Stok (format flat):
+// Row 0: Nama Produk, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45
+// Row 1+: data
 async function loadStokSheet(){
-  var resp=await fetchWithProxy(csvUrl(GID_STOK));
+  var resp=await fetchWithProxy(csvUrlByName(SHEET_STOK));
   if(!resp.ok)throw new Error('Stok HTTP '+resp.status);
-  stokDB=parseStokSheet(parseCSV(await resp.text()));
-}
-function parseStokSheet(rows){
-  if(!rows||rows.length<3)return[];
-  // Cari baris header ukuran (34,35,36 berurutan) sampai row 20
-  var sizeRowIdx=-1;
-  for(var r=0;r<Math.min(20,rows.length);r++){
-    for(var c=0;c<rows[r].length;c++){
-      if(parseInt(rows[r][c])===34&&parseInt(rows[r][c+1])===35&&parseInt(rows[r][c+2])===36){
-        sizeRowIdx=r;break;
-      }
-    }
-    if(sizeRowIdx>=0)break;
+  var rows=parseCSV(await resp.text());
+  if(rows.length<2)throw new Error('Sheet Stok kosong');
+  
+  // Cari baris header
+  var hdrRow=-1;
+  for(var r=0;r<Math.min(5,rows.length);r++){
+    if(rows[r][0]&&rows[r][0].toLowerCase().includes('nama')){hdrRow=r;break;}
   }
-  if(sizeRowIdx<0)sizeRowIdx=3;
-  var sizeRow=rows[sizeRowIdx],blocks=[],c=0;
-  while(c<sizeRow.length){
-    var numVal=parseInt(sizeRow[c]);
-    if(isNaN(numVal)||numVal<30||numVal>50){
-      var nextNum=parseInt(sizeRow[c+1]);
-      if(!isNaN(nextNum)&&nextNum>=30&&nextNum<=50){
-        var blk={typeCol:c,sizeMap:{}},cc=c+1;
-        while(cc<sizeRow.length){
-          var sz=parseInt(sizeRow[cc]);
-          if(!isNaN(sz)&&sz>=30&&sz<=50){blk.sizeMap[sz]=cc;cc++;}
-          else break;
-        }
-        if(Object.keys(blk.sizeMap).length>0)blocks.push(blk);
-        c=cc;
-      }else c++;
-    }else c++;
+  if(hdrRow<0)hdrRow=0;
+  
+  var headers=rows[hdrRow];
+  // Mapping kolom
+  var nameCol=0;
+  var sizeCols={};
+  for(var c=0;c<headers.length;c++){
+    var h=String(headers[c]).trim();
+    var sz=parseInt(h);
+    if(!isNaN(sz)&&sz>=30&&sz<=50)sizeCols[sz]=c;
+    if(h.toLowerCase().includes('nama'))nameCol=c;
   }
-  if(blocks.length===0){
-    var blk={typeCol:0,sizeMap:{}};
-    for(var ci=1;ci<sizeRow.length;ci++){
-      var sz=parseInt(sizeRow[ci]);
-      if(!isNaN(sz)&&sz>=30&&sz<=50)blk.sizeMap[sz]=ci;
-    }
-    if(Object.keys(blk.sizeMap).length>0)blocks=[blk];
-  }
-  if(blocks.length===0)return[];
-  var SKIP=['KODACHI','WARRIOR','VENTELA','SEPATU ANAK','TYPE','TOTAL','BRAND','NAMA','NO','PRODUK','KETERANGAN','SERI'];
-  var result=[],dataStart=sizeRowIdx+1;
-  // Baca SEMUA baris tanpa batas
-  for(var ri=dataStart;ri<rows.length;ri++){
+  
+  var result=[];
+  for(var ri=hdrRow+1;ri<rows.length;ri++){
     var row=rows[ri];
-    if(!row||row.length===0)continue;
-    for(var bi=0;bi<blocks.length;bi++){
-      var blk=blocks[bi];
-      var name=(row[blk.typeCol]||'').replace(/\r/g,'').trim();
-      if(!name||name==='-'||name==='0')continue;
-      var nameUp=name.toUpperCase();
-      var skip=false;
-      for(var si=0;si<SKIP.length;si++){if(nameUp===SKIP[si]||nameUp.startsWith(SKIP[si]+' ')){skip=true;break;}}
-      if(skip)continue;
-      var sizes={},totalQty=0;
-      Object.keys(blk.sizeMap).forEach(function(sz){
-        var raw=String(row[blk.sizeMap[sz]]||'').replace(/[^0-9\-]/g,'');
-        var q=parseInt(raw)||0;
-        if(q<0)q=0;
-        sizes[parseInt(sz)]=q;
-        totalQty+=q;
-      });
-      if(totalQty===0&&name.length<3)continue;
-      result.push({name:name,sizes:sizes});
-    }
+    var name=String(row[nameCol]||'').replace(/\r/g,'').trim();
+    if(!name||name==='-'||name.toLowerCase()==='nan')continue;
+    var sizes={};
+    Object.keys(sizeCols).forEach(function(sz){
+      var raw=String(row[sizeCols[sz]]||'').replace(/[^0-9\-]/g,'');
+      var q=parseInt(raw)||0;
+      sizes[parseInt(sz)]=Math.max(0,q);
+    });
+    result.push({name:name,sizes:sizes});
   }
-  console.log('[StokDB] Parsed',result.length,'produk dari',rows.length,'baris,',blocks.length,'blok kolom');
-  return result;
+  stokDB=result;
+  console.log('[StokDB] Loaded',stokDB.length,'produk');
 }
+
+// ── Load Sheet Harga (format flat):
+// Row 0: Varian, Harga Baru, Harga Retail
+// Row 1+: data
 async function loadHargaSheet(){
-  var resp=null;
-  try{resp=await fetchWithProxy(csvUrlSheet('Data'));}catch(e){}
-  if(!resp||!resp.ok){
-    try{resp=await fetchWithProxy(csvUrlSheet('Data Harga'));}catch(e){}
+  var resp=await fetchWithProxy(csvUrlByName(SHEET_HARGA));
+  if(!resp.ok)throw new Error('Harga HTTP '+resp.status);
+  var rows=parseCSV(await resp.text());
+  if(rows.length<2)throw new Error('Sheet Harga kosong');
+  
+  var hdrRow=0;
+  for(var r=0;r<Math.min(5,rows.length);r++){
+    var r0=String(rows[r][0]||'').toLowerCase();
+    if(r0.includes('varian')||r0.includes('nama')||r0.includes('type')){hdrRow=r;break;}
   }
-  if(!resp||!resp.ok)throw new Error('Sheet harga tidak ditemukan');
-  hargaDB=parseHargaSheet(parseCSV(await resp.text()));
-}
-function parseHargaSheet(rows){
-  if(!rows||rows.length<2)return[];
-  var result=[],dataStart=0;
-  // Cari baris header — scan sampai row 10
-  for(var r=0;r<Math.min(10,rows.length);r++){
-    var c0=(rows[r][0]||'').toUpperCase();
-    var c1=(rows[r][1]||'').toUpperCase();
-    if(c0.includes('VARIAN')||c0.includes('TYPE')||c0.includes('NAMA')||
-       c1.includes('VARIAN')||c1.includes('TYPE')||c1.includes('NAMA')){
-      dataStart=r+1;break;
-    }
-    if(r===0&&!rows[r][0]&&!rows[r][1])dataStart=1;
+  
+  var headers=rows[hdrRow];
+  var varCol=0,hbCol=1,hrCol=2;
+  for(var c=0;c<headers.length;c++){
+    var h=String(headers[c]).toLowerCase().trim();
+    if(h.includes('varian')||h.includes('nama')||h.includes('type'))varCol=c;
+    else if(h.includes('baru'))hbCol=c;
+    else if(h.includes('retail'))hrCol=c;
   }
-  // Baca SEMUA baris tanpa batas 300
-  for(var ri=dataStart;ri<rows.length;ri++){
+  
+  var result=[];
+  for(var ri=hdrRow+1;ri<rows.length;ri++){
     var row=rows[ri];
-    if(!row)continue;
-    // Coba kolom 0 atau 1 sebagai nama varian
-    var varian=(row[1]||row[0]||'').replace(/\r/g,'').trim();
-    if(!varian||varian==='-')continue;
-    var hargaBaru=parsePrice(row[2]),hargaRetail=parsePrice(row[3]);
-    // Juga coba kolom lain kalau harga 0
-    if(!hargaBaru)hargaBaru=parsePrice(row[4]);
-    if(!hargaRetail)hargaRetail=parsePrice(row[5]);
-    if(!hargaBaru&&!hargaRetail)continue;
-    result.push({varian:varian,hargaBaru:hargaBaru,hargaRetail:hargaRetail});
+    var varian=String(row[varCol]||'').replace(/\r/g,'').trim();
+    if(!varian||varian==='-'||varian.toLowerCase()==='nan')continue;
+    var hb=parsePrice(row[hbCol]),hr=parsePrice(row[hrCol]);
+    if(!hb&&!hr)continue;
+    result.push({varian:varian,hargaBaru:hb,hargaRetail:hr});
   }
-  console.log('[HargaDB] Parsed',result.length,'dari',rows.length,'baris');
-  return result;
+  hargaDB=result;
+  console.log('[HargaDB] Loaded',hargaDB.length,'varian');
 }
+
 function parsePrice(s){if(!s)return 0;var n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?0:n;}
+
 // ═══════════════════════════════════════════════════
 // BARCODE MAP VENTELA
 // ═══════════════════════════════════════════════════
@@ -788,22 +760,19 @@ function getBarcodeMapVentela(){
 }
 
 // ═══════════════════════════════════════════════════
-// PRODUCT MAPPING DATABASE (v6 LENGKAP)
+// PRODUCT MAPPING DATABASE
 // ═══════════════════════════════════════════════════
 function getMapping(){
   return [
-    // ARTHUR
     {kata:["ARTHUR","ALL BLACK"],hasil:"Slip On Arthur Hitam"},
     {kata:["ARTHUR","BLACK WHITE"],hasil:"Slip On Arthur Hitam Putih"},
     {kata:["ARTHUR","HITAM PUTIH"],hasil:"Slip On Arthur Hitam Putih"},
     {kata:["ARTHUR","BW"],hasil:"Slip On Arthur Hitam Putih"},
     {kata:["ARTHUR","WHITE"],hasil:"Slip On Arthur Putih"},
     {kata:["ARTHUR","PUTIH"],hasil:"Slip On Arthur Putih"},
-    // SPARTA HC
     {kata:["SPARTA","HC","ALL BLACK"],hasil:"Sparta HC All Black"},
     {kata:["SPARTA","HC","NEW","BBW"],hasil:"Sparta HC New BBW"},
     {kata:["SPARTA","HC","BLACK WHITE"],hasil:"Sparta HC BW"},
-    {kata:["SPARTA","HC","BLACK","WHITE"],hasil:"Sparta HC BW"},
     {kata:["SPARTA","HC","BW"],hasil:"Sparta HC BW"},
     {kata:["SPARTA","HC","WHITE"],hasil:"Sparta HC Putih"},
     {kata:["SPARTA","HC","PUTIH"],hasil:"Sparta HC Putih"},
@@ -818,12 +787,9 @@ function getMapping(){
     {kata:["SPARTA","HC","KUNING"],hasil:"Sparta HC Kuning"},
     {kata:["SPARTA","HC","NAVY"],hasil:"Sparta HC Navy"},
     {kata:["SPARTA","HC","ARMY"],hasil:"Sparta HC Army"},
-    // SPARTA LC
     {kata:["SPARTA","LC","ALL BLACK"],hasil:"Sparta LC All Black"},
-    {kata:["SPARTA","LC","ALL","BLACK"],hasil:"Sparta LC All Black"},
     {kata:["SPARTA","LC","NEW","BBW"],hasil:"Sparta LC New BBW"},
     {kata:["SPARTA","LC","BLACK WHITE"],hasil:"Sparta LC BW"},
-    {kata:["SPARTA","LC","BLACK","WHITE"],hasil:"Sparta LC BW"},
     {kata:["SPARTA","LC","BW"],hasil:"Sparta LC BW"},
     {kata:["SPARTA","LC","WHITE"],hasil:"Sparta LC Putih"},
     {kata:["SPARTA","LC","PUTIH"],hasil:"Sparta LC Putih"},
@@ -837,218 +803,124 @@ function getMapping(){
     {kata:["SPARTA","LC","YELLOW"],hasil:"Sparta LC Kuning"},
     {kata:["SPARTA","LC","KUNING"],hasil:"Sparta LC Kuning"},
     {kata:["SPARTA","LC","NAVY"],hasil:"Sparta LC Navy"},
-    {kata:["SPARTA","BBW","LOW"],hasil:"Sparta LC New BBW"},
     {kata:["SPARTA","GUM","HIGH","BLACK"],hasil:"Sparta Gum High Black"},
     {kata:["SPARTA","GUM","HIGH","WHITE"],hasil:"Sparta Gum High White"},
     {kata:["SPARTA","GUM","LOW"],hasil:"Sparta Gum Low Black"},
-    {kata:["NEO","SPARTA","HIGH","GUM"],hasil:"Warrior Neo Sparta High Gum"},
-    {kata:["NEO","SPARTA","LOW","GUM"],hasil:"Warrior Neo Sparta Low Gum"},
-    // VENUS
     {kata:["VENUS","LC","WHITE"],hasil:"Venus LC Putih"},
     {kata:["VENUS","LC","PUTIH"],hasil:"Venus LC Putih"},
     {kata:["VENUS","LC","BW"],hasil:"Venus LC BW"},
-    {kata:["VENUS","LOW","HITAM PUTIH"],hasil:"Venus LC BW"},
-    {kata:["VENUS","LOW","PUTIH"],hasil:"Venus LC Putih"},
-    // ATHENA
     {kata:["ATHENA","HC","BLACK"],hasil:"Athena HC Black White"},
     {kata:["ATHENA","HC","WHITE"],hasil:"Athena HC Putih"},
-    {kata:["ATHENA","HIGH","WHITE"],hasil:"Athena HC Putih"},
-    {kata:["ATHENA","HIGH","BLACK"],hasil:"Athena HC Black White"},
     {kata:["ATHENA","LC","BLACK"],hasil:"Athena LC Black White"},
     {kata:["ATHENA","LC","WHITE"],hasil:"Athena LC Putih"},
-    // CLASSIC HC
-    {kata:["CLASSIC","HC","BIRU TURKISH"],hasil:"Classic HC Biru Turkish"},
-    {kata:["CLASSIC","HC","ABU HIJAU"],hasil:"Classic HC Abu Hijau"},
-    {kata:["CLASSIC","HC","ABU"],hasil:"Classic HC Abu"},
-    {kata:["CLASSIC","HC","HIJAU"],hasil:"Classic HC Hijau"},
-    {kata:["CLASSIC","HC","MAROON"],hasil:"Classic HC Maroon"},
-    {kata:["CLASSIC","HC","MERAH"],hasil:"Classic HC Merah Hitam"},
-    {kata:["CLASSIC","HC","NAVY"],hasil:"Classic HC Navy"},
-    {kata:["CLASSIC","HC","PUTIH"],hasil:"Classic HC Putih"},
-    {kata:["CLASSIC","HC","SUNFLOWER"],hasil:"Classic HC Sunflower"},
     {kata:["CLASSIC","HC"],hasil:"Classic HC BW"},
-    // CLASSIC LC
-    {kata:["CLASSIC","LC","BIRU TURKISH"],hasil:"Classic LC Biru Turkish"},
-    {kata:["CLASSIC","LC","ABU HIJAU"],hasil:"Classic LC Abu Hijau"},
-    {kata:["CLASSIC","LC","ABU"],hasil:"Classic LC Abu"},
-    {kata:["CLASSIC","LC","DARK GREEN"],hasil:"Classic LC Dark Green"},
-    {kata:["CLASSIC","LC","GREY"],hasil:"Classic LC Grey"},
-    {kata:["CLASSIC","LC","KUNING"],hasil:"Classic LC Kuning"},
-    {kata:["CLASSIC","LC","MARUN"],hasil:"Classic LC Maroon"},
-    {kata:["CLASSIC","LC","MAROON"],hasil:"Classic LC Maroon"},
-    {kata:["CLASSIC","LC","MERAH"],hasil:"Classic LC Merah Hitam"},
-    {kata:["CLASSIC","LC","NAVY"],hasil:"Classic LC Navy"},
-    {kata:["CLASSIC","LC","PUTIH"],hasil:"Classic LC Putih"},
     {kata:["CLASSIC","LC"],hasil:"Classic LC BW"},
-    // WARRIOR LAIN
-    {kata:["POSEIDON","HIGH","BLACK"],hasil:"Warrior Poseidon High Black"},
-    {kata:["POSEIDON","HIGH","WHITE"],hasil:"Warrior Poseidon High White"},
-    {kata:["TRISTAN","HIGH"],hasil:"Warrior Tristan High"},
-    {kata:["TRISTAN","LOW"],hasil:"Warrior Tristan Low"},
-    {kata:["ARTEMIS","BLUE DENIM"],hasil:"Warrior Artemis Slip On Blue Denim"},
-    {kata:["HELIOS","LOW"],hasil:"Warrior Helios Low Cut"},
-    {kata:["RAINBOW","NAVY","GREY"],hasil:"Warrior Rainbow Navy Grey"},
-    {kata:["RAINBOW","NAVY","RED"],hasil:"Warrior Rainbow Navy Red"},
-    {kata:["SPORT","STYLE","BLACK"],hasil:"Warrior Sport Style Black"},
-    {kata:["SPORT","STYLE","GREY"],hasil:"Warrior Sport Style Grey"},
-    {kata:["SPORT","STYLE","BEIGE"],hasil:"Warrior Sport Style Beige"},
-    {kata:["RUNNING","ALL BLACK"],hasil:"Warrior Running All Black"},
-    {kata:["RUNNING","GREY"],hasil:"Warrior Running Grey"},
-    {kata:["RUNNING","CREAM"],hasil:"Warrior Running Cream"},
-    // 8110
     {kata:["8110","BIRU","MERAH"],hasil:"8110 Biru Merah"},
-    {kata:["8110","MERAH"],hasil:"8110 Merah"},
-    // 8111
     {kata:["8111","STRIPE","A"],hasil:"8111 A"},
     {kata:["8111","STRIPE"],hasil:"8111 Stripe"},
     {kata:["8111","ALL BLACK"],hasil:"8111 Hitam"},
     {kata:["8111","HITAM PUTIH"],hasil:"8111 H/P"},
     {kata:["8111","H/P"],hasil:"8111 H/P"},
     {kata:["8111","H/H"],hasil:"8111 H/H"},
-    {kata:["8111","HITAM","HITAM"],hasil:"8111 H/H"},
     {kata:["8111","HITAM"],hasil:"8111 Hitam"},
     {kata:["8111","DARK GREY"],hasil:"8111 Dark Grey"},
     {kata:["8111","ABU"],hasil:"8111 Dark Grey"},
     {kata:["8111","BROWN A"],hasil:"8111 Brown A"},
     {kata:["8111","BROWN B"],hasil:"8111 Brown B"},
     {kata:["8111","BROWN C"],hasil:"8111 Brown C"},
-    {kata:["8111","COKLAT A"],hasil:"8111 Brown A"},
-    {kata:["8111","COKLAT B"],hasil:"8111 Brown B"},
-    {kata:["8111","COKLAT C"],hasil:"8111 Brown C"},
     {kata:["8111","R1"],hasil:"8111 R1"},
     {kata:["8111","R2"],hasil:"8111 R2"},
     {kata:["8111","R3"],hasil:"8111 R3"},
-    {kata:["8111","RAINBOW","1"],hasil:"8111 R1"},
-    {kata:["8111","RAINBOW","2"],hasil:"8111 R2"},
-    {kata:["8111","RAINBOW","3"],hasil:"8111 R3"},
-    {kata:["8111","RAINBOW-1"],hasil:"8111 R1"},
-    {kata:["8111","RAINBOW-2"],hasil:"8111 R2"},
-    {kata:["8111","RAINBOW-3"],hasil:"8111 R3"},
     {kata:["8111","MONACO"],hasil:"8111 Monaco Checker Heel"},
-    // 8112
     {kata:["8112","NAVY"],hasil:"8112 Double Navy"},
     {kata:["8112","HITAM"],hasil:"8112 Hitam"},
-    // 8115
-    {kata:["8115","KUNING"],hasil:"8115 Kuning"},{kata:["8115","MERAH"],hasil:"8115 Merah"},
-    {kata:["8115","PUTIH"],hasil:"8115 Putih"},{kata:["8115","BIRU"],hasil:"8115 Biru"},
-    {kata:["8115","HITAM"],hasil:"8115 Hitam"},{kata:["8115","SILVER"],hasil:"8115 Silver"},
-    // 8116
+    {kata:["8115","KUNING"],hasil:"8115 Kuning"},
+    {kata:["8115","MERAH"],hasil:"8115 Merah"},
+    {kata:["8115","PUTIH"],hasil:"8115 Putih"},
+    {kata:["8115","BIRU"],hasil:"8115 Biru"},
+    {kata:["8115","HITAM"],hasil:"8115 Hitam"},
+    {kata:["8115","SILVER"],hasil:"8115 Silver"},
     {kata:["8116","PDB"],hasil:"8116 PDB (Putih Double Black)"},
     {kata:["8116","PH"],hasil:"8116 PH (Putih Hitam)"},
-    {kata:["8116","ALL BLACK"],hasil:"8116 Hitam Putih Double Black"},
-    {kata:["8116","GREY","DOUBLE"],hasil:"8116 Grey Double Black"},
     {kata:["8116","BIRU","SILVER"],hasil:"8116 Biru Silver"},
     {kata:["8116","MERAH","SILVER"],hasil:"8116 Merah Silver"},
     {kata:["8116","KUNING","BIRU"],hasil:"8116 Kuning Biru"},
     {kata:["8116","MERAH","BIRU"],hasil:"8116 Merah Biru"},
     {kata:["8116","HITAM","SILVER"],hasil:"8116 Hitam Silver"},
     {kata:["8116","HITAM","PUTIH"],hasil:"8116 Hitam Putih"},
-    // 8118
-    {kata:["8118","BIRU","SILVER"],hasil:"8118 Biru Silver"},
-    {kata:["8118","KUNING","BIRU"],hasil:"8118 Kuning Biru"},
-    {kata:["8118","MERAH","BIRU"],hasil:"8118 Merah Biru"},
-    {kata:["8118","MERAH","SILVER"],hasil:"8118 Merah Silver"},
-    // 8119
+    {kata:["8116","GREY","DOUBLE"],hasil:"8116 Grey Double Black"},
+    {kata:["8118","KB"],hasil:"8118 KB"},
+    {kata:["8118","BS"],hasil:"8118 BS"},
+    {kata:["8118","MB"],hasil:"8118 MB"},
+    {kata:["8118","MS"],hasil:"8118 MS"},
     {kata:["8119","ALL BLACK"],hasil:"8119 Star Full Black"},
     {kata:["8119","FULL BLACK"],hasil:"8119 Star Full Black"},
     {kata:["8119","HITAM PUTIH"],hasil:"8119 Star Hitam Putih"},
-    {kata:["8119","BLACK WHITE"],hasil:"8119 Star Hitam Putih"},
     {kata:["8119","PUTIH"],hasil:"8119 Star Putih"},
-    {kata:["8119","WHITE"],hasil:"8119 Star Putih"},
     {kata:["8119","MERAH"],hasil:"8119 Merah"},
-    {kata:["8119","RED"],hasil:"8119 Merah"},
-    // 8136
-    {kata:["8136","HITAM","CREAM"],hasil:"8136 Classic Slip On Hitam Cream"},
-    {kata:["8136","HITAM CREAM"],hasil:"8136 Classic Slip On Hitam Cream"},
-    {kata:["8136","PUTIH"],hasil:"8136 Classic Slip On Putih"},
-    {kata:["8136","HIJAU CREAM"],hasil:"8136 Classic Slip On Hijau Cream"},
-    {kata:["8136","TOSCA CREAM"],hasil:"8136 Classic Slip On Tosca Cream"},
-    {kata:["8136","HITAM"],hasil:"8136 Classic Slip On Hitam"},
-    {kata:["8136","CLASSIC","SLIP"],hasil:"8136 Classic Slip On"},
-    // 8172
-    {kata:["8172","HC","DOUBLE BLACK"],hasil:"8172 HC Double Black"},
-    {kata:["8172","HP","DOUBLE BLACK"],hasil:"8172 HP Double Black"},
-    {kata:["8172","MP","ALAS MERAH"],hasil:"8172 MP (Alas Merah)"},
+    {kata:["8136","HITAM","CREAM"],hasil:"8136 Hitam/Cream"},
+    {kata:["8136","PUTIH"],hasil:"8136 Putih"},
+    {kata:["8136","HIJAU","CREAM"],hasil:"8136 Hijau/Cream"},
+    {kata:["8136","TOSCA","CREAM"],hasil:"8136 Tosca/Cream"},
+    {kata:["8136","HITAM"],hasil:"8136 Hitam"},
+    {kata:["8172","HC","DOUBLE"],hasil:"8172 HC Double Black"},
     {kata:["8172","HH","ALL BLACK"],hasil:"8172 HH All Black"},
-    {kata:["8172","HITAM","ALL BLACK"],hasil:"8172 HH All Black"},
     {kata:["8172","HIJAU","ARMY"],hasil:"8172 Hijau Army"},
     {kata:["8172","ASH","GREY"],hasil:"8172 Ash Grey"},
     {kata:["8172","ABU"],hasil:"8172 Ash Grey"},
     {kata:["8172","ROSE","GOLD"],hasil:"8172 P/Rose Gold"},
     {kata:["8172","ORANGE","HIJAU"],hasil:"8172 OHJ"},
     {kata:["8172","HIJAU","KUNING"],hasil:"8172 HjK - Hijau Kuning"},
-    {kata:["8172","KUNING","HIJAU"],hasil:"8172 KHJ"},
     {kata:["8172","KUNING","HITAM"],hasil:"8172 KH"},
     {kata:["8172","NAVY","PUTIH"],hasil:"8172 NP"},
     {kata:["8172","PUTIH"],hasil:"8172 Putih"},
-    {kata:["8172","HC"],hasil:"8172 HC"},{kata:["8172","HP"],hasil:"8172 HP"},
-    {kata:["8172","PH"],hasil:"8172 PH"},{kata:["8172","MP"],hasil:"8172 MP"},
-    {kata:["8172","PNM"],hasil:"8172 PNM"},{kata:["8172","PN/M"],hasil:"8172 PNM"},
-    {kata:["8172","PHJ"],hasil:"8172 PHj/M"},{kata:["8172","NP"],hasil:"8172 NP"},
-    {kata:["8172","KHJ"],hasil:"8172 KHJ"},{kata:["8172","KH"],hasil:"8172 KH"},
-    {kata:["8172","HO"],hasil:"8172 HO"},{kata:["8172","OHJ"],hasil:"8172 OHJ"},
+    {kata:["8172","HC"],hasil:"8172 HC"},
+    {kata:["8172","HP"],hasil:"8172 HP"},
+    {kata:["8172","PH"],hasil:"8172 PH"},
+    {kata:["8172","MP"],hasil:"8172 MP"},
+    {kata:["8172","PNM"],hasil:"8172 PNM"},
+    {kata:["8172","NP"],hasil:"8172 NP"},
+    {kata:["8172","KHJ"],hasil:"8172 KHJ"},
+    {kata:["8172","KH"],hasil:"8172 KH"},
+    {kata:["8172","HO"],hasil:"8172 HO"},
+    {kata:["8172","OHJ"],hasil:"8172 OHJ"},
     {kata:["8172","PHM"],hasil:"8172 PHM"},
-    {kata:["8172","HJK"],hasil:"8172 HjK - Hijau Kuning"},
-    {kata:["8172","SERIES"],hasil:"8172 Series"},
-    // 8175
-    {kata:["8175","ASH","GREY"],hasil:"8175 Ash Grey"},
-    {kata:["8175","ABU"],hasil:"8175 Ash Grey"},
+    {kata:["8175","ASH","GREY"],hasil:"8175 Abu"},
+    {kata:["8175","ABU"],hasil:"8175 Abu"},
     {kata:["8175","BIRU"],hasil:"8175 Biru"},
-    {kata:["8175","HIJAU","ARMY"],hasil:"8175 Olive Green"},
     {kata:["8175","OLIVE","GREEN"],hasil:"8175 Olive Green"},
-    {kata:["8175","KUNING"],hasil:"8175 Kuning Y2"},
+    {kata:["8175","KUNING"],hasil:"8175 Kuning"},
     {kata:["8175","ORANGE","HBK"],hasil:"8175 Orange HBK"},
-    {kata:["8175","ORANGE"],hasil:"8175 Orange"},
-    // 8178
-    {kata:["8178","PUTIH","ORANGE"],hasil:"8178 P/O (Putih Orange)"},
-    // GALAXY / GLX
+    {kata:["8178","PUTIH","ORANGE"],hasil:"8178 PO"},
     {kata:["GALAXY","ALL BLACK"],hasil:"Galaxy All Black"},
     {kata:["GALAXY","ALL WHITE"],hasil:"Galaxy All White"},
     {kata:["GALAXY","PUTIH","HITAM"],hasil:"Galaxy Putih Hitam"},
     {kata:["GALAXY","HITAM","ORANGE"],hasil:"Galaxy Hitam Orange"},
     {kata:["GALAXY","KUNING","HITAM"],hasil:"Galaxy Kuning Hitam"},
     {kata:["GALAXY","HITAM","EMAS"],hasil:"Galaxy Hitam Emas"},
-    {kata:["GALAXY","HITAM","GOLD"],hasil:"Galaxy Hitam Emas"},
-    {kata:["GALAXY","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Biru Silver"},
+    {kata:["GALAXY","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Silver Biru"},
     {kata:["GALAXY","PUTIH","KUNING","BIRU"],hasil:"Galaxy Putih Kuning Biru"},
     {kata:["GALAXY","PUTIH","MERAH","BIRU"],hasil:"Galaxy Putih Merah Biru"},
-    {kata:["GALAXY","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih Merah Silver"},
-    {kata:["GLX","ALL BLACK"],hasil:"Galaxy All Black"},
-    {kata:["GLX","ALL WHITE"],hasil:"Galaxy All White"},
-    {kata:["GLX","PUTIH","HITAM"],hasil:"Galaxy Putih Hitam"},
-    {kata:["GLX","HITAM","ORANGE"],hasil:"Galaxy Hitam Orange"},
-    {kata:["GLX","KUNING","HITAM"],hasil:"Galaxy Kuning Hitam"},
-    {kata:["GLX","HITAM","EMAS"],hasil:"Galaxy Hitam Emas"},
-    {kata:["GLX","HITAM","GOLD"],hasil:"Galaxy Hitam Emas"},
-    {kata:["GLX","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Biru Silver"},
-    {kata:["GLX","PUTIH","KUNING","BIRU"],hasil:"Galaxy Putih Kuning Biru"},
-    {kata:["GLX","PUTIH","MERAH","BIRU"],hasil:"Galaxy Putih Merah Biru"},
-    {kata:["GLX","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih Merah Silver"},
-    // RIVIERA
-    {kata:["RIVIERA","MAROON"],hasil:"Riviera Maroon"},{kata:["RVR","MAROON"],hasil:"Riviera Maroon"},
-    {kata:["RIVIERA","GREY"],hasil:"Riviera Grey"},{kata:["RVR","GREY"],hasil:"Riviera Grey"},
-    {kata:["RIVIERA","ABU"],hasil:"Riviera Grey"},{kata:["RVR","ABU"],hasil:"Riviera Grey"},
-    {kata:["RIVIERA","NAVY"],hasil:"Riviera Navy"},{kata:["RVR","NAVY"],hasil:"Riviera Navy"},
-    {kata:["RIVIERA","PUTIH"],hasil:"Riviera Putih"},{kata:["RVR","PUTIH"],hasil:"Riviera Putih"},
-    {kata:["RIVIERA","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},{kata:["RVR","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},
-    {kata:["RIVIERA","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},{kata:["RVR","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},
-    {kata:["RIVIERA","ALL BLACK"],hasil:"Riviera All Black"},{kata:["RVR","ALL BLACK"],hasil:"Riviera All Black"},
-    {kata:["RIVIERA","SLIP","ON"],hasil:"Riviera Slip On"},{kata:["RVR","SLIP","ON"],hasil:"Riviera Slip On"},
-    // KODACHI MAX
+    {kata:["GALAXY","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih SIlver Merah"},
+    {kata:["GALAXY","HIJAU","KUNING"],hasil:"Galaxy Hijau Kuning"},
+    {kata:["RIVIERA","MAROON"],hasil:"Riviera Maroon"},
+    {kata:["RIVIERA","GREY"],hasil:"Riviera Grey"},
+    {kata:["RIVIERA","NAVY"],hasil:"Riviera Navy"},
+    {kata:["RIVIERA","PUTIH"],hasil:"Riviera Putih"},
+    {kata:["RIVIERA","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},
+    {kata:["RIVIERA","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},
+    {kata:["RIVIERA","ALL BLACK"],hasil:"Riviera Hitam Hitam"},
     {kata:["MAX","ALL BLACK"],hasil:"Kodachi Max All Black"},
     {kata:["MAX","ALL WHITE"],hasil:"Kodachi Max All White"},
     {kata:["MAX","HITAM","CREAM"],hasil:"Kodachi Max Hitam/Cream"},
     {kata:["MAX","HITAM","MERAH"],hasil:"Kodachi Max Hitam/Merah"},
     {kata:["MAX","NAVY","PUTIH"],hasil:"Kodachi Max Navy/Putih"},
     {kata:["MAX","MAROON"],hasil:"Kodachi Max Maroon/Cream"},
-    {kata:["MAX","MERAH","PUTIH"],hasil:"Kodachi Max Merah/Putih"},
+    {kata:["MAX","MERAH","PUTIH"],hasil:"Kodachi Max Merah Putih"},
     {kata:["MAX","PMB"],hasil:"Kodachi Max PMB"},
-    {kata:["MAX","GREY"],hasil:"Kodachi Max Grey"},
-    {kata:["MAX","INTERNATIONAL"],hasil:"Kodachi Max International"},
-    // NEW YORKER
+    {kata:["MAX","GREY"],hasil:"Kodachi Max Abu/Putih"},
     {kata:["NEW YORKER","HIGH"],hasil:"New Yorker High Cream/Hitam"},
     {kata:["NEW YORKER","LOW"],hasil:"New Yorker Low Cream/Hitam"},
-    // UNIVERSITY
     {kata:["UNIVERSITY","LOW","HITAM PUTIH"],hasil:"Kodachi University Low Hitam Putih"},
     {kata:["UNIVERSITY","LOW","PUTIH"],hasil:"Kodachi University Low Putih"},
     {kata:["UNIVERSITY","LOW","GREY"],hasil:"Kodachi University Low Grey"},
@@ -1057,218 +929,92 @@ function getMapping(){
     {kata:["UNIVERSITY","LOW","BLACK"],hasil:"Kodachi University Low Hitam Hitam"},
     {kata:["UNIVERSITY","LOW","HITAM"],hasil:"Kodachi University Low Hitam Hitam"},
     {kata:["UNIVERSITY","HIGH","BLACK"],hasil:"Kodachi University High Hitam Hitam"},
-    {kata:["UNIVERSITY","HIGH","HITAM"],hasil:"Kodachi University High Hitam Hitam"},
     {kata:["UNIVERSITY","HIGH","WHITE"],hasil:"Kodachi University High Hitam Putih"},
-    // CHICAGO / K2428
-    {kata:["CHICAGO","HIGH"],hasil:"Chicago High Hitam Putih"},
     {kata:["K2428","ALL WHITE"],hasil:"K2428 All White"},
     {kata:["K2428","ALL BLACK"],hasil:"K2428 All Black"},
-    {kata:["K2428","BLACK WHITE"],hasil:"K2428 Hitam/Putih"},
-    {kata:["K2428","HITAM PUTIH"],hasil:"K2428 Hitam/Putih"},
     {kata:["K2428","HITAM","PUTIH"],hasil:"K2428 Hitam/Putih"},
-    {kata:["K2428","H","P"],hasil:"K2428 Hitam/Putih"},
-    {kata:["K2428","BIRU","COKLAT"],hasil:"K2428 Biru Coklat"},
-    {kata:["K2428","BLUE","BROWN"],hasil:"K2428 Biru Coklat"},
-    {kata:["K2428","GREEN","GREY"],hasil:"K2428 Hijau Abu"},
-    {kata:["K2428","HIJAU","ABU"],hasil:"K2428 Hijau Abu"},
-    {kata:["K2428","H","A"],hasil:"K2428 Hijau Abu"},
-    // AR PLUS
+    {kata:["K2428","BIRU","COKLAT"],hasil:"K2428 Biru/Coklat"},
+    {kata:["K2428","HIJAU","ABU"],hasil:"K2428 Hijau/Abu"},
     {kata:["AR PLUS","PUTIH","BIRU"],hasil:"AR Plus Putih Biru"},
     {kata:["AR PLUS","PUTIH","MERAH"],hasil:"AR Plus Putih Merah"},
     {kata:["AR PLUS","PUTIH","HITAM"],hasil:"AR Plus Putih Hitam"},
     {kata:["AR PLUS","MONACO","NAVY"],hasil:"AR Plus Speed Monaco Navy"},
-    {kata:["AR PLUS","FRANCE","NAVY"],hasil:"AR Plus Speed France Navy"},
     {kata:["AR PLUS","PROVENCE","BBM"],hasil:"AR Plus Provence BBM"},
     {kata:["AR PLUS","PROVENCE","NAVY"],hasil:"AR Plus Provence Navy"},
-    {kata:["AR PLUS","PROVENCE","HHH"],hasil:"AR Plus Provence Hitam/Hitam"},
-    {kata:["AR PLUS","PROVENCE","HH"],hasil:"AR Plus Provence Hitam/Hitam"},
-    {kata:["AR PLUS","PROVENCE","ALL BLACK"],hasil:"AR Plus Provence Hitam/Hitam"},
-    {kata:["AR","PLUS","PUTIH","BIRU"],hasil:"AR Plus Putih Biru"},
-    {kata:["AR","PLUS","PUTIH","MERAH"],hasil:"AR Plus Putih Merah"},
-    {kata:["AR","PLUS","PUTIH","HITAM"],hasil:"AR Plus Putih Hitam"},
-    {kata:["AR","PLUS","MONACO","NAVY"],hasil:"AR Plus Speed Monaco Navy"},
-    {kata:["AR","PLUS","FRANCE","NAVY"],hasil:"AR Plus Speed France Navy"},
-    {kata:["AR","PLUS","PROVENCE","BBM"],hasil:"AR Plus Provence BBM"},
-    {kata:["AR","PLUS","PROVENCE","NAVY"],hasil:"AR Plus Provence Navy"},
-    {kata:["AR","PLUS","PROVENCE","HHH"],hasil:"AR Plus Provence P/HHH"},
-    {kata:["AR","PLUS","PROVENCE","HITAM","PUTIH"],hasil:"AR Plus Provence P/HHH"},
-    {kata:["AR","PLUS","PROVENCE","HITAM","HITAM"],hasil:"AR Plus Provence Hitam Hitam"},
-    // ASTORIA / MATRIX
+    {kata:["AR PLUS","PROVENCE","HITAM","HITAM"],hasil:"AR Plus Provence Hitam/Hitam"},
     {kata:["ASTORIA","BBM"],hasil:"Astoria P/BBM"},
     {kata:["ASTORIA","HP"],hasil:"Astoria HP"},
-    {kata:["ASTORIA","HITAM PUTIH"],hasil:"Astoria HP"},
     {kata:["MATRIX","HITAM"],hasil:"Kodachi Matrix Hitam"},
     {kata:["MATRIX","PUTIH"],hasil:"Kodachi Matrix Putih"},
-    {kata:["MATRIX","CASUAL"],hasil:"Kodachi Matrix Putih"},
-    // VENTELA PUBLIC / P76
-    {kata:["P'76","LOW","JR","BLACK","NATURAL"],hasil:"Ventela Public Low Junior BNat"},
-    {kata:["P76","LOW","JR","BLACK","NATURAL"],hasil:"Ventela Public Low Junior BNat"},
-    {kata:["PUBLIC","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},
-    {kata:["P'76","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},
     {kata:["PUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},
-    {kata:["P'76","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},
-    {kata:["P76","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},
     {kata:["PUBLIC","LOW","CREAM"],hasil:"Ventela Public Low Cream"},
-    {kata:["P'76","LOW","CREAM"],hasil:"Ventela Public Low Cream"},
-    {kata:["P76","LOW","CREAM"],hasil:"Ventela Public Low Cream"},
     {kata:["PUBLIC","LOW","GREY"],hasil:"Ventela Public Low Grey"},
-    {kata:["P'76","LOW","GREY"],hasil:"Ventela Public Low Grey"},
-    {kata:["P76","LOW","GREY"],hasil:"Ventela Public Low Grey"},
-    {kata:["PUBLIC","LOW","ALL BLACK"],hasil:"Ventela Public Low All Black"},
-    {kata:["PUBLIC","LOW","WHITE"],hasil:"Ventela Public Low White"},
-    {kata:["PUBLIC","LOW","NAVY"],hasil:"Ventela Public Low Navy"},
-    {kata:["PUBLIC","HIGH","CREAM"],hasil:"Ventela Public High Cream"},
-    {kata:["P'76","HIGH","CREAM"],hasil:"Ventela Public High Cream"},
-    {kata:["P76","HIGH","CREAM"],hasil:"Ventela Public High Cream"},
+    {kata:["PUBLIC","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},
     {kata:["PUBLIC","HIGH","WHITE"],hasil:"Ventela Public High White"},
-    {kata:["P'76","HIGH","WHITE"],hasil:"Ventela Public High White"},
-    {kata:["P76","HIGH","WHITE"],hasil:"Ventela Public High White"},
     {kata:["PUBLIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},
-    {kata:["P'76","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},
-    {kata:["P76","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},
+    {kata:["PUBLIC","HIGH","CREAM"],hasil:"Ventela Public High Cream"},
     {kata:["PUBLIC","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},
-    {kata:["P'76","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},
-    {kata:["P76","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},
     {kata:["PUBLIC","HIGH","NAVY"],hasil:"Ventela Public High Navy"},
-    {kata:["P'76","HIGH","NAVY"],hasil:"Ventela Public High Navy"},
-    {kata:["P76","HIGH","NAVY"],hasil:"Ventela Public High Navy"},
-    {kata:["PUBLIC","HIGH","DARK","YELLOW"],hasil:"Ventela Public High Dark Yellow"},
-    {kata:["NEW","PUBLIC","LOW","BLACK","NATURAL"],hasil:"New Public Low B/Nat"},
-    // VENTELA BASIC
+    {kata:["NEW","PUBLIC","LOW"],hasil:"New Public Low B/Nat"},
     {kata:["BASIC","HIGH","ALL BLACK"],hasil:"Ventela Basic High All Black"},
     {kata:["BASIC","HIGH","WHITE"],hasil:"Ventela Basic High White"},
     {kata:["BASIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Basic High B/Nat"},
     {kata:["BASIC","LOW","ALL BLACK"],hasil:"Ventela Basic Low All Black"},
     {kata:["BASIC","LOW","BLACK","NATURAL"],hasil:"Ventela Basic Low BNat"},
-    {kata:["BASIC","LOW","ALL WHITE"],hasil:"Ventela Basic Low All White"},
-    // VENTELA ETHNIC
     {kata:["ETHNIC","HIGH","ALL BLACK"],hasil:"Ventela Ethnic High All Black"},
     {kata:["ETHNIC","HIGH","WHITE"],hasil:"Ventela Ethnic High White"},
     {kata:["ETHNIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Ethnic High BNat"},
-    {kata:["ETHNIC","LOW","ALL BLACK"],hasil:"Ventela Ethnic Low All Black"},
-    {kata:["ETHNIC","LOW","WHITE"],hasil:"Ventela Ethnic Low All White"},
     {kata:["ETHNIC","LOW","BLACK","NATURAL"],hasil:"Ventela Ethnic Low BNat"},
-    // VENTELA CLASS
+    {kata:["ETHNIC","LOW","ALL BLACK"],hasil:"Ventela Ethnic Low All Black"},
     {kata:["CLASS","LOW","ALL BLACK"],hasil:"Ventela Class Low All Black"},
     {kata:["CLASS","LOW","BLACK","NATURAL"],hasil:"Ventela Class Low BNat"},
     {kata:["CLASS","HIGH","ALL BLACK"],hasil:"Ventela Class High All Black"},
     {kata:["CLASS","HIGH","BLACK","NATURAL"],hasil:"Ventela Class High BNat"},
-    // VENTELA 70S
-    {kata:["70'S","HIGH","CREAM"],hasil:"Ventela 70's High Cream"},
     {kata:["70","HIGH","CREAM"],hasil:"Ventela 70's High Cream"},
-    {kata:["70'S","HIGH","BLACK","NATURAL"],hasil:"Ventela 70's High B/Nat"},
     {kata:["70","HIGH","BLACK","NATURAL"],hasil:"Ventela 70's High B/Nat"},
-    {kata:["70'S","HIGH","BLACK","GUM"],hasil:"Ventela 70's High Black Gum"},
-    {kata:["70'S","HIGH","NAVY"],hasil:"Ventela 70's High Navy"},
-    {kata:["70'S","HIGH","GREY"],hasil:"Ventela 70's High Grey"},
-    {kata:["70'S","HIGH","PUTIH"],hasil:"Ventela 70's High Putih"},
-    {kata:["70'S","LOW","BLACK","NATURAL"],hasil:"Ventela 70's Low B/Nat"},
+    {kata:["70","HIGH","BLACK","GUM"],hasil:"Ventela 70's High Black Gum"},
     {kata:["70","LOW","BLACK","NATURAL"],hasil:"Ventela 70's Low B/Nat"},
-    {kata:["70'S","LOW","CREAM"],hasil:"Ventela 70's Low Cream"},
-    {kata:["70'S","LOW","GREEN"],hasil:"Ventela 70's Low Green"},
-    {kata:["70'S","LOW","NAVY"],hasil:"Ventela 70's Low Navy"},
-    // VENTELA ICON & ALPHA
+    {kata:["70","LOW","CREAM"],hasil:"Ventela 70's Low Cream"},
+    {kata:["70","LOW","GREEN"],hasil:"Ventela 70's Low Green"},
     {kata:["ICON","WHITE"],hasil:"Ventela Icon White"},
-    {kata:["ICON","ALL WHITE"],hasil:"Ventela Icon White"},
     {kata:["ICON","BLACK"],hasil:"Ventela Icon Black"},
     {kata:["ALPHA","BLACK","NATURAL"],hasil:"Ventela Alpha B/Nat"},
     {kata:["ALPHA","ALL BLACK"],hasil:"Ventela Alpha All Black"},
-    {kata:["ALPHA","ALL WHITE"],hasil:"Ventela Alpha All White"},
-    // VENTELA REBORN
-    {kata:["REBORN","REFLECTIVE","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},
-    {kata:["REBORN","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},
-    {kata:["REBORN","CREAM"],hasil:"Ventela Reborn Reflective Cream"},
-    {kata:["REBORN","NAVY"],hasil:"Ventela Reborn Reflective Navy"},
-    // VENTELA REPUBLIC
-    {kata:["REPUBLIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Republic High B/Nat"},
-    {kata:["REPUBLIC","HIGH","GREY"],hasil:"Ventela Republic High Grey"},
     {kata:["REPUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Republic Low B/Nat"},
     {kata:["REPUBLIC","LOW","CREAM"],hasil:"Ventela Republic Low Cream"},
-    {kata:["REPUBLIC","LOW","GUM","HITAM"],hasil:"Ventela Republic Low Gum Hitam"},
-    {kata:["REPUBLIC","LOW","GREY"],hasil:"Ventela Republic Low Grey"},
-    {kata:["REPUBLIC","LOW","NAVY"],hasil:"Ventela Republic Low Navy"},
-    // VENTELA FATBOY
-    {kata:["FAT","BOY","BLACK","NATURAL"],hasil:"Ventela Fatboy BNat"},
+    {kata:["REPUBLIC","LOW","GUM"],hasil:"Ventela Republic Low Gum Hitam"},
+    {kata:["REBORN","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},
+    {kata:["REBORN","CREAM"],hasil:"Ventela Reborn Reflective Cream"},
     {kata:["FATBOY","BLACK","NATURAL"],hasil:"Ventela Fatboy BNat"},
-    {kata:["FAT","BOY","BLACK","GUM"],hasil:"Ventela Fatboy Black Gum"},
     {kata:["FATBOY","BLACK","GUM"],hasil:"Ventela Fatboy Black Gum"},
-    // VENTELA OLYMPIC
     {kata:["OLYMPIC","WHITE","BROWN"],hasil:"Ventela Olympic White Brown"},
     {kata:["OLYMPIC","BLACK","BROWN"],hasil:"Ventela Olympic Black Brown"},
-    // VENTELA V23
-    {kata:["V-23","BROWN","GUM"],hasil:"Ventela V23 Brown Gum"},
     {kata:["V23","BROWN","GUM"],hasil:"Ventela V23 Brown Gum"},
-    {kata:["V-23","GREEN","GUM"],hasil:"Ventela V23 Green Gum"},
     {kata:["V23","GREEN","GUM"],hasil:"Ventela V23 Green Gum"},
-    {kata:["V-23","LIGHT","PINK"],hasil:"Ventela V23 Light Pink"},
     {kata:["V23","LIGHT","PINK"],hasil:"Ventela V23 Light Pink"},
-    {kata:["V-23","BLACK","BROWN"],hasil:"Ventela V23 Black Brown"},
     {kata:["V23","BLACK","BROWN"],hasil:"Ventela V23 Black Brown"},
-    {kata:["V-23","GREY","BROWN"],hasil:"Ventela V23 Grey Brown"},
     {kata:["V23","GREY","BROWN"],hasil:"Ventela V23 Grey Brown"},
-    // VENTELA V46
-    {kata:["V-46","ALL BLACK"],hasil:"Ventela V46 All Black"},
     {kata:["V46","ALL BLACK"],hasil:"Ventela V46 All Black"},
-    {kata:["V-46","GREY"],hasil:"Ventela V46 Grey"},
     {kata:["V46","GREY"],hasil:"Ventela V46 Grey"},
-    // VENTELA SPECIAL
-    {kata:["POKEMON","CREAM"],hasil:"Ventela Pokemon Cream"},
-    {kata:["POKEMON","BLACK","NATURAL"],hasil:"Ventela Pokemon B/Nat"},
-    {kata:["SANG","SEKERTA","HIGH","LOHITA"],hasil:"Ventela Sang Sekerta High Lohita"},
-    {kata:["LEAVING","A","LEGACY","BLACK","NATURAL"],hasil:"Ventela Leaving A Legacy Low BW"},
+    {kata:["SANG","SEKERTA"],hasil:"Ventela Sang Sekerta High Lohita"},
+    {kata:["LEAVING","LEGACY"],hasil:"Ventela Leaving A Legacy Low BW"},
     {kata:["EVERGREEN","HIGH","WHITE"],hasil:"Ventela Evergreen High White"},
     {kata:["EVERGREEN","HIGH","BLACK"],hasil:"Ventela Evergreen High Black"},
     {kata:["EVERGREEN","LOW","BLACK"],hasil:"Ventela Evergreen Low Black"},
-    {kata:["CHAMPION","BLACK","NATURAL"],hasil:"Ventela Champion B/Nat"},
-    // PATROBAS
     {kata:["PATROBAS","IVAN"],hasil:"Patrobas New Ivan Low B/W"},
-    {kata:["PATROBAS","EQUIP","LOW","BLACK WHITE"],hasil:"Patrobas Equip Low BW"},
-    {kata:["PATROBAS","EQUIP","CHARCOAL"],hasil:"Patrobas Equip Low Charcoal"},
-    {kata:["PATROBAS","EQUIP","GREY"],hasil:"Patrobas Equip Low Charcoal"},
     {kata:["PATROBAS","EQUIP"],hasil:"Patrobas Equip Low BW"},
     {kata:["PATROBAS","SLIP"],hasil:"Patrobas Cloud Slip On B/W"},
-    {kata:["PATROBAS","CLOUD","WHITE","RED"],hasil:"Patrobas Cloud White Red"},
-    // DRAGONFLY
-    {kata:["DRAGONFLY","ALPHA","BLACK","GREY"],hasil:"Dragonfly Alpha Black Grey"},
-    {kata:["DRAGONFLY","ALPHA","WHITE","BLUE"],hasil:"Dragonfly Alpha White Blue"},
-    {kata:["DRAGONFLY","ALPHA","WHITE","NAVY"],hasil:"Dragonfly Alpha White Navy"},
-    {kata:["DRAGONFLY","FALCON","ALL BLACK"],hasil:"Dragonfly Falcon All Black"},
-    {kata:["DRAGONFLY","FALCON","BLACK WHITE"],hasil:"Dragonfly Falcon Black White"},
-    {kata:["DRAGONFLY","FALCON","WHITE"],hasil:"Dragonfly Falcon Putih"},
-    {kata:["DRAGONFLY","FALCON","BLACK"],hasil:"Dragonfly Falcon Hitam"},
-    {kata:["DRAGONFLY","FALCON","BIRU"],hasil:"Dragonfly Falcon Biru"},
-    {kata:["DRAGONFLY","FALCON","KUNING"],hasil:"Dragonfly Falcon Kuning"},
-    {kata:["DRAGONFLY","FALCON","MERAH"],hasil:"Dragonfly Falcon Merah"},
-    {kata:["DRAGONFLY","FALCON","HIJAU"],hasil:"Dragonfly Falcon Hijau"},
-    {kata:["DRAGONFLY","NEW AMAZON","BLACK"],hasil:"Dragonfly New Amazon Black"},
-    {kata:["DRAGONFLY"],hasil:"DRAGONFLY"},
-    // RUNNER
-    {kata:["RUNNER","401"],hasil:"Runner 401 Low Cut"},
-    {kata:["RUNNER","431","BLACK WHITE"],hasil:"Runner 431 LC Black White"},
-    {kata:["RUNNER","431","FULL BLACK"],hasil:"Runner 431 LC Full Black"},
-    {kata:["RUNNER","801","BIRU"],hasil:"Runner 801 Low Biru"},
-    {kata:["RUNNER","801","LOW"],hasil:"Runner 801 Low"},
-    {kata:["RUNNER","802","HC"],hasil:"Runner 802 HC"},
-    {kata:["RUNNER","901","HITAM PUTIH"],hasil:"Runner 901 Low Hitam Putih"},
-    // MB BAGUS FLASH
-    {kata:["FLASH","HITAM"],hasil:"MB Bagus Flash Hitam"},
-    {kata:["FLASH","MERAH"],hasil:"MB Bagus Flash Merah"},
-    {kata:["FLASH","YELLOW"],hasil:"MB Bagus Flash Yellow"},
-    {kata:["FLASH","KUNING"],hasil:"MB Bagus Flash Yellow"},
-    // DALLAS
-    {kata:["DALLAS","CAMPUSS","HITAM PUTIH"],hasil:"Dallas Campuss Low Cut Hitam Putih"},
-    // AKSESORIS
-    {kata:["BOX","TAMBAHAN"],hasil:"Box Tambahan Packing"},
-    {kata:["TALI","SEPATU","KLASIK"],hasil:"Tali Sepatu Klasik"},
-    {kata:["KAOS KAKI","OLD SKOOL"],hasil:"Kaos Kaki Old Skool Putih"},
-    {kata:["KAOS KAKI","OLD SCHOOL"],hasil:"Kaos Kaki Old School"},
-    {kata:["KAOS KAKI","CLASSIC"],hasil:"Kaos Kaki Classic"},
-    {kata:["KAOS KAKI","MOTIF"],hasil:"Kaos Kaki Motif"},
-    {kata:["KAOS KAKI","PENDEK"],hasil:"Kaos Kaki Pendek Strip"},
-    {kata:["KAOS KAKI","PANJANG"],hasil:"Kaos Kaki Old School Panjang 3/4"},
-    {kata:["TAS","SELEMPANG"],hasil:"Tas Selempang Slingbag Casual"}
+    {kata:["DRAGONFLY","ALPHA","BLACK"],hasil:"Alpha Black Grey"},
+    {kata:["DRAGONFLY","ALPHA","WHITE"],hasil:"Alpha Putih Biru"},
+    {kata:["WARRIOR","SPORT","STYLE","BLACK"],hasil:"Warrior Sport Style Black"},
+    {kata:["WARRIOR","SPORT","STYLE","GREY"],hasil:"Warrior Sport Style Grey"},
+    {kata:["WARRIOR","SPORT","STYLE","BEIGE"],hasil:"Warrior Sport Style Beige"},
+    {kata:["WARRIOR","RUNNING","ALL BLACK"],hasil:"Warrior Running All Black"},
+    {kata:["WARRIOR","RUNNING","GREY"],hasil:"Warrior Running Grey"},
+    {kata:["WARRIOR","RUNNING","CREAM"],hasil:"Warrior Running Cream"}
   ];
 }
+
 // ═══════════════════════════════════════════════════
 // TEXT PROCESSING
 // ═══════════════════════════════════════════════════
@@ -1282,7 +1028,7 @@ function bersihkanTeks(teks){
     /SNI\.?\s*[\w\-:]+/g,/\b\d{8,}\b/g,/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g,
     /MFD\.?:?\s*[\w\/\-]+/g,/EXP\.?:?\s*[\w\/\-]+/g,/MADE IN \w+/g,/www\.\S+/gi,
     /ARTICLE\.?\s*[:\-]?\s*[\w\-\/]+/gi,/SIZE\s*[:\-]?\s*[\w\-\/]+/gi,
-    /COLOR\s*[:\-]?\s*[\w\-\/]+/gi,/\bSHOES\b/gi,/\bSPORT\b/gi,/\bCASUAL\b/gi,/\s*&\s*/g];
+    /COLOR\s*[:\-]?\s*[\w\-\/]+/gi,/\bSHOES\b/gi,/\s*&\s*/g];
   noise.forEach(function(p){t=t.replace(p,' ');});
   return t.replace(/\s{2,}/g,' ').trim();
 }
@@ -1307,19 +1053,6 @@ function fuzzyMatch(teksBersih){
   }
   return{model:modelTerbaik||"Tidak dikenali",skor:Math.min(skorTerbaik,1.0)};
 }
-function cekUrutanKata(teksBersih){
-  var aturan=[
-    {syarat:["GLX","HIJAU","KUNING"],urutan:["HIJAU","KUNING"],hasil_a:"Galaxy Hijau Kuning",hasil_b:"Galaxy Kuning Hijau"},
-    {syarat:["8172","HITAM","PUTIH"],urutan:["HITAM","PUTIH"],hasil_a:"8172 HP",hasil_b:"8172 PH"},
-    {syarat:["8172","HIJAU","KUNING"],urutan:["HIJAU","KUNING"],hasil_a:"8172 HjK - Hijau Kuning",hasil_b:"8172 KHJ"}
-  ];
-  for(var i=0;i<aturan.length;i++){
-    var a=aturan[i];
-    var semuaAda=a.syarat.every(function(k){return teksBersih.indexOf(k)!==-1;});
-    if(semuaAda){var posA=teksBersih.indexOf(a.urutan[0]),posB=teksBersih.indexOf(a.urutan[1]);return posA<posB?a.hasil_a:a.hasil_b;}
-  }
-  return null;
-}
 function cekKoreksiDB(rawText,teksBersih){
   var rawUpper=rawText.toUpperCase().replace(/\s+/g,' ').trim();
   for(var i=koreksiDB.length-1;i>=0;i--){
@@ -1337,7 +1070,7 @@ function cekKoreksiDB(rawText,teksBersih){
 }
 
 // ═══════════════════════════════════════════════════
-// GEMINI VISION OCR
+// GEMINI / VISION OCR
 // ═══════════════════════════════════════════════════
 async function prosesGambar(base64Image){
   var visionUrl='https://vision.googleapis.com/v1/images:annotate?key='+VISION_KEY;
@@ -1354,16 +1087,16 @@ async function prosesGambar(base64Image){
 function prosesTeks(rawText){
   var teksBersih=bersihkanTeks(rawText);
   var hasilK=cekKoreksiDB(rawText,teksBersih);
-  if(hasilK){return{model:hasilK,size:extractSize(rawText),tipe:'ok',isAI:false};}
-  var hasilU=cekUrutanKata(teksBersih);
-  if(hasilU){return{model:hasilU,size:extractSize(rawText),tipe:'ok',isAI:false};}
+  if(hasilK)return{model:hasilK,size:extractSize(rawText),tipe:'ok',isAI:false};
   var hasilF=fuzzyMatch(teksBersih);
-  if(hasilF.skor>=0.75){return{model:hasilF.model,size:extractSize(rawText),tipe:'ok',isAI:false};}
+  if(hasilF.skor>=0.75)return{model:hasilF.model,size:extractSize(rawText),tipe:'ok',isAI:false};
   return{model:hasilF.model,size:extractSize(rawText),tipe:'pending',isAI:false,rawText:rawText,teksBersih:teksBersih,fuzzySkor:hasilF.skor};
 }
 async function tanyaGemini(rawText,teksBersih,fuzzyCand,fuzzySkor){
   var mapping=getMapping(),daftar=[],seen={};
   mapping.forEach(function(m){if(!seen[m.hasil]){daftar.push(m.hasil);seen[m.hasil]=true;}});
+  // Tambah nama dari stokDB
+  stokDB.slice(0,50).forEach(function(s){if(!seen[s.name]){daftar.push(s.name);seen[s.name]=true;}});
   var koreksiStr='';
   koreksiDB.slice(-15).forEach(function(k){if(k.salah&&k.benar)koreksiStr+='JIKA mirip "'+k.salah+'" GUNAKAN: "'+k.benar+'"\n';});
   var prompt="Kamu sistem pengenal nama produk sepatu dari teks OCR.\n\n"+
@@ -1372,18 +1105,14 @@ async function tanyaGemini(rawText,teksBersih,fuzzyCand,fuzzySkor){
     "TEKS OCR:\n\""+rawText.replace(/\n/g,' ').substring(0,400)+"\"\n\n"+
     "TEKS BERSIH:\n\""+teksBersih.substring(0,250)+"\"\n\n"+
     (fuzzySkor>=0.25?"KANDIDAT FUZZY (skor "+Math.round(fuzzySkor*100)+"%):\n"+fuzzyCand+"\n\n":"")+
-    "INSTRUKSI:\n- Pilih nama PALING COCOK dari daftar\n- Prioritaskan nomor seri/nama model\n"+
-    "- Tulis TIDAK_DIKENALI hanya jika benar-benar tidak ada\n- Balas HANYA nama produk\n\nJAWABAN:";
+    "INSTRUKSI:\n- Pilih nama PALING COCOK dari daftar\n- Tulis TIDAK_DIKENALI hanya jika benar-benar tidak ada\n- Balas HANYA nama produk\n\nJAWABAN:";
   var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY;
-  var resp=await fetch(url,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.02,maxOutputTokens:80}})
-  });
+  var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.02,maxOutputTokens:80}})});
   if(!resp.ok)return null;
   var json=await resp.json();
-  if(json.candidates&&json.candidates[0]&&json.candidates[0].content){
+  if(json.candidates&&json.candidates[0]&&json.candidates[0].content)
     return json.candidates[0].content.parts[0].text.trim().replace(/^["']|["']$/g,'').replace(/\.$/,'').trim();
-  }
   return null;
 }
 async function prosesFotoKirim(base64Image){
@@ -1391,20 +1120,18 @@ async function prosesFotoKirim(base64Image){
     var hasil=await prosesGambar(base64Image);
     if(hasil.tipe==='pending'){
       var aiJawaban=await tanyaGemini(hasil.rawText,hasil.teksBersih,hasil.model,hasil.fuzzySkor);
-      if(aiJawaban&&aiJawaban!=='TIDAK_DIKENALI'){
+      if(aiJawaban&&aiJawaban!=='TIDAK_DIKENALI')
         hasil={model:aiJawaban,size:hasil.size,tipe:'ai',isAI:true};
-      }else if(hasil.fuzzySkor>=0.50&&hasil.model!=='Tidak dikenali'){
+      else if(hasil.fuzzySkor>=0.50&&hasil.model!=='Tidak dikenali')
         hasil={model:hasil.model,size:hasil.size,tipe:'warn',isAI:false};
-      }else{
+      else
         hasil={model:'? CEK MANUAL',size:hasil.size,tipe:'err',isAI:false};
-      }
     }
     return hasil;
   }catch(e){return{model:'Error: '+e.message.substring(0,40),size:'-',tipe:'err',isAI:false};}
 }
 function resizeCanvas(srcCanvas,maxW,maxH){
-  var w=srcCanvas.width,h=srcCanvas.height;
-  var scale=Math.min(maxW/w,maxH/h,1);
+  var w=srcCanvas.width,h=srcCanvas.height,scale=Math.min(maxW/w,maxH/h,1);
   if(scale>=1)return srcCanvas;
   var dst=document.createElement('canvas');
   dst.width=Math.round(w*scale);dst.height=Math.round(h*scale);
@@ -1413,7 +1140,7 @@ function resizeCanvas(srcCanvas,maxW,maxH){
 }
 
 // ═══════════════════════════════════════════════════
-// TAB SCAN - LOGIKA
+// TAB SCAN
 // ═══════════════════════════════════════════════════
 function switchTab(tab){
   ['scan','stok'].forEach(function(t){
@@ -1509,19 +1236,14 @@ async function startBarcodeScanner(){
     });
   }catch(e){setStatus('Scanner error: '+e.message,'err');stopScan();}
 }
-// PROSES BARCODE TAB1 — cek Ventela map dulu
 function prosesBarcode(barcode){
-  sedangKirim=true;
-  setStatus('Memproses barcode...','loading');
-  tutupKoreksi();
-  var barcodeMap=getBarcodeMapVentela();
-  var barcodeUpper=barcode.toUpperCase().trim();
+  sedangKirim=true;setStatus('Memproses barcode...','loading');tutupKoreksi();
+  var barcodeMap=getBarcodeMapVentela(),barcodeUpper=barcode.toUpperCase().trim();
   if(barcodeMap[barcodeUpper]){
     tampilHasilScan({model:barcodeMap[barcodeUpper],size:extractSize(barcode),tipe:'ok',isAI:false},'barcode');
     sedangKirim=false;return;
   }
-  var teksBersih=bersihkanTeks(barcode);
-  var hasilF=fuzzyMatch(teksBersih);
+  var teksBersih=bersihkanTeks(barcode),hasilF=fuzzyMatch(teksBersih);
   var model=hasilF.skor>=0.5?hasilF.model:'? BARCODE: '+barcode.substring(0,30);
   var tipe=hasilF.skor>=0.5?'ok':'warn';
   tampilHasilScan({model:model,size:extractSize(barcode),tipe:tipe,isAI:false},'barcode');
@@ -1535,8 +1257,7 @@ function tampilHasilScan(hasil,sumber){
   setStatus(icon+' <b>'+model+'</b>&ensp;Size: '+size+aiBadge,tipe==='ok'?'ok':(isAI?'ai':(tipe==='warn'?'warn':'err')));
   if(tipe==='ok'||isAI||tipe==='warn')tampilKoreksi(model);
   if(isAI){cntAI++;bunyi('ai');}else if(tipe==='ok'){cntOk++;bunyi('ok');}else{cntMiss++;bunyi('miss');}
-  updateStats();
-  tambahHistory(model,size,isAI?'ai':tipe,isAI,sumber);
+  updateStats();tambahHistory(model,size,isAI?'ai':tipe,isAI,sumber);
 }
 function tampilKoreksi(m){
   document.getElementById('hasil-terdeteksi').textContent=m;
@@ -1549,8 +1270,7 @@ function kirimKoreksi(){
   if(!benar){showToast('Isi nama produk yang benar dulu.');return;}
   koreksiDB.push({raw:hasilTerakhirModel,salah:hasilTerakhirModel,benar:benar});
   tutupKoreksi();bunyi('ok');
-  setStatus('✅ Koreksi tersimpan: '+benar,'ok');
-  showToast('Koreksi disimpan: '+benar);
+  setStatus('✅ Koreksi tersimpan: '+benar,'ok');showToast('Koreksi disimpan: '+benar);
 }
 function updateStats(){
   document.getElementById('cnt-ok').textContent=cntOk;
@@ -1639,15 +1359,9 @@ async function mulaiScan2(){
         if(valUpper===lastScan2&&now-lastScanTime2<4000)return;
         lastScan2=valUpper;lastScanTime2=now;
         bunyi('read');
-        // Cek barcode map Ventela dulu
-        var barcodeMap=getBarcodeMapVentela();
-        var model;
-        if(barcodeMap[valUpper]){
-          model=barcodeMap[valUpper];
-        }else{
-          var hasilF=fuzzyMatch(bersihkanTeks(val));
-          model=hasilF.skor>=0.5?hasilF.model:val;
-        }
+        var barcodeMap=getBarcodeMapVentela(),model;
+        if(barcodeMap[valUpper]){model=barcodeMap[valUpper];}
+        else{var hasilF=fuzzyMatch(bersihkanTeks(val));model=hasilF.skor>=0.5?hasilF.model:val;}
         prosesModel2(model);
       });
     }catch(e){showToast('Scanner error: '+e.message);stopScan2();}
@@ -1710,7 +1424,7 @@ function submitManual(){
 }
 
 // ═══════════════════════════════════════════════════
-// CARI STOK
+// CARI STOK — pakai stokDB flat
 // ═══════════════════════════════════════════════════
 function cariStok(seriInput,sizeTgt){
   if(sedangCariStok)return;
@@ -1724,9 +1438,9 @@ function cariStok(seriInput,sizeTgt){
   document.getElementById('price-card').classList.remove('show');
   document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
   try{
-    var result=queryStok(seriInput,sizeTgt,2);
+    var result=queryStok(seriInput,parseInt(sizeTgt),2);
     var hargaInfo=queryHarga(seriInput,sizeTgt);
-    renderStokResult(result,sizeTgt,seriInput,hargaInfo);
+    renderStokResult(result,parseInt(sizeTgt),seriInput,hargaInfo);
   }catch(e){
     hb.className='hero-box show habis';
     document.getElementById('hero-status').className='hero-status habis';
@@ -1735,50 +1449,49 @@ function cariStok(seriInput,sizeTgt){
   }
   sedangCariStok=false;
 }
+
 function queryStok(seriInput,sizeTarget,sizeRange){
-  sizeTarget=parseInt(sizeTarget);sizeRange=parseInt(sizeRange)||2;
   var minSize=sizeTarget-sizeRange,maxSize=sizeTarget+sizeRange;
   var seriUpper=String(seriInput).toUpperCase().trim();
   var keywords=seriUpper.split(/[\s\/\-]+/).filter(function(k){return k.length>=2;});
-  var matchSeri=seriUpper.match(/\d{3,5}/);
-  var keywordSeri=matchSeri?matchSeri[0]:null;
   var matched=[];
   stokDB.forEach(function(row){
     var namaUpper=row.name.toUpperCase().trim();
-    var isMatch=false,matchScore=0;
-    if(namaUpper===seriUpper){isMatch=true;matchScore=100;}
-    else if(namaUpper.indexOf(seriUpper)!==-1){isMatch=true;matchScore=90;}
-    else if(namaUpper.length>=8&&seriUpper.indexOf(namaUpper)!==-1){isMatch=true;matchScore=75;}
+    var score=0;
+    if(namaUpper===seriUpper)score=100;
+    else if(namaUpper.indexOf(seriUpper)!==-1)score=90;
+    else if(seriUpper.length>=5&&seriUpper.indexOf(namaUpper)!==-1)score=75;
     else if(keywords.length>=2){
-      var allKw=keywords.every(function(kw){return namaUpper.indexOf(kw)!==-1;});
-      if(allKw){isMatch=true;matchScore=70;}
+      var allMatch=keywords.every(function(kw){return namaUpper.indexOf(kw)!==-1;});
+      if(allMatch)score=70;
       else{
-        var numKw=keywords[0],isNum=/^\d+$/.test(numKw);
-        if(isNum&&namaUpper.indexOf(numKw)!==-1){
-          var secondOk=keywords.slice(1).some(function(kw){return namaUpper.indexOf(kw)!==-1;});
-          if(secondOk){isMatch=true;matchScore=65;}
+        var numKw=keywords[0];
+        if(/^\d+$/.test(numKw)&&namaUpper.indexOf(numKw)!==-1){
+          var secOk=keywords.slice(1).some(function(kw){return namaUpper.indexOf(kw)!==-1;});
+          if(secOk)score=60;
         }
       }
     }
-    if(!isMatch&&keywordSeri&&namaUpper.indexOf(keywordSeri)!==-1){isMatch=true;matchScore=50;}
-    if(!isMatch)return;
+    if(score===0)return;
     var sizesData={};
     for(var sz=minSize;sz<=maxSize;sz++)sizesData[sz]=(row.sizes&&row.sizes[sz])||0;
-    matched.push({seri:row.name,sizes:sizesData,_score:matchScore});
+    matched.push({seri:row.name,sizes:sizesData,_score:score});
   });
-  var mergedMap={};
+  // merge duplicates
+  var map={};
   matched.forEach(function(r){
     var key=r.seri.toUpperCase().trim();
-    if(!mergedMap[key]){mergedMap[key]={seri:r.seri,sizes:{},_score:0};for(var s=minSize;s<=maxSize;s++)mergedMap[key].sizes[s]=0;}
-    mergedMap[key]._score=Math.max(mergedMap[key]._score,r._score);
-    for(var s=minSize;s<=maxSize;s++)mergedMap[key].sizes[s]=(mergedMap[key].sizes[s]||0)+(r.sizes[s]||0);
+    if(!map[key]){map[key]={seri:r.seri,sizes:{},_score:0};for(var s=minSize;s<=maxSize;s++)map[key].sizes[s]=0;}
+    map[key]._score=Math.max(map[key]._score,r._score);
+    for(var s=minSize;s<=maxSize;s++)map[key].sizes[s]=(map[key].sizes[s]||0)+(r.sizes[s]||0);
   });
-  var finalRows=Object.keys(mergedMap).map(function(k){return mergedMap[k];});
-  finalRows.sort(function(a,b){return b._score-a._score;});
-  if(finalRows.length>0)finalRows[0].isExact=true;
+  var rows=Object.keys(map).map(function(k){return map[k];});
+  rows.sort(function(a,b){return b._score-a._score;});
+  if(rows.length>0)rows[0].isExact=true;
   var displaySizes=[];for(var s=minSize;s<=maxSize;s++)displaySizes.push(s);
-  return{rows:finalRows,sizes:displaySizes};
+  return{rows:rows,sizes:displaySizes};
 }
+
 function queryHarga(seriInput,sizeTarget){
   var seriUpper=String(seriInput).toUpperCase().trim();
   for(var i=0;i<hargaDB.length;i++){
@@ -1787,30 +1500,29 @@ function queryHarga(seriInput,sizeTarget){
   }
   for(var i=0;i<hargaDB.length;i++){
     var h=hargaDB[i];if(!h.varian)continue;
-    var hUpper=h.varian.toUpperCase().trim();
-    if(hUpper.indexOf(seriUpper)!==-1||seriUpper.indexOf(hUpper)!==-1)return buildHargaResult(h,sizeTarget);
+    var hU=h.varian.toUpperCase().trim();
+    if(hU.indexOf(seriUpper)!==-1||seriUpper.indexOf(hU)!==-1)return buildHargaResult(h,sizeTarget);
   }
   return null;
 }
 function buildHargaResult(h,sizeTarget){
-  var hargaBaru=h.hargaBaru||0,hargaRetail=h.hargaRetail||0;
-  var sz=parseInt(sizeTarget),size44plus=false;
-  if(sz===44||sz===45){hargaBaru+=5000;size44plus=true;}
-  var diskonRupiah=Math.max(0,hargaRetail-hargaBaru);
-  var diskonPersen=hargaRetail>0?Math.round(diskonRupiah/hargaRetail*100):0;
-  return{hargaBaru:hargaBaru,hargaRetail:hargaRetail,diskonRupiah:diskonRupiah,diskonPersen:diskonPersen,size44plus:size44plus};
+  var hb=h.hargaBaru||0,hr=h.hargaRetail||0;
+  var sz=parseInt(sizeTarget),plus=false;
+  if(sz===44||sz===45){hb+=5000;plus=true;}
+  var diskonR=Math.max(0,hr-hb),diskonP=hr>0?Math.round(diskonR/hr*100):0;
+  return{hargaBaru:hb,hargaRetail:hr,diskonRupiah:diskonR,diskonPersen:diskonP,size44plus:plus};
 }
+
 function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
   var hb=document.getElementById('hero-box'),rows=data.rows||[];
   if(!rows.length){
     hb.className='hero-box show habis';
     document.getElementById('hero-status').className='hero-status habis';
     document.getElementById('hero-status').textContent='❌ Tidak Ditemukan';
-    document.getElementById('hero-sub').textContent='Produk "'+seriInput+'" tidak ada di stok';
+    document.getElementById('hero-sub').textContent='"'+seriInput+'" tidak ada di database stok';
     bunyi('miss');
     document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>';
-    document.getElementById('price-card').classList.remove('show');
-    return;
+    document.getElementById('price-card').classList.remove('show');return;
   }
   var exactRow=rows[0];
   var exactQty=(exactRow.sizes&&exactRow.sizes[sizeTgt])||0;
@@ -1848,6 +1560,7 @@ function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
   }
   renderStokTable(data,sizeTgt,exactRow,variantReady,seriInput);
 }
+
 function renderStokTable(data,sizeTgt,exactRow,variantReady,seriInput){
   var tbody=document.getElementById('stok-tbl-body');
   document.getElementById('stok-tbl-wrap').classList.add('show');
