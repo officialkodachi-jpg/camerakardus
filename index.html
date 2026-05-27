@@ -7,88 +7,56 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#7c6af7">
-<title>Scanner Produk v7 — Flat DB</title>
+<title>Scanner Produk v8</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
 <style>
-:root {
-  --bg:#0b0c10;--s1:#13151f;--s2:#1a1d2e;--s3:#22263a;
-  --acc:#7c6af7;--acc2:#a594f9;
-  --green:#22d3a0;--red:#f43f5e;--amber:#fbbf24;
-  --ai:#e879f9;--ai-dim:rgba(232,121,249,.12);
-  --text:#e8eaf6;--muted:#5b6080;--muted2:#8890b8;
-  --brd:rgba(255,255,255,.06);
-  --mono:'Fira Code',monospace;--sans:'Syne',sans-serif;
-  --r:12px;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
-}
+:root{--bg:#0b0c10;--s1:#13151f;--s2:#1a1d2e;--s3:#22263a;--acc:#7c6af7;--acc2:#a594f9;--green:#22d3a0;--red:#f43f5e;--amber:#fbbf24;--ai:#e879f9;--ai-dim:rgba(232,121,249,.12);--text:#e8eaf6;--muted:#5b6080;--muted2:#8890b8;--brd:rgba(255,255,255,.06);--mono:'Fira Code',monospace;--sans:'Syne',sans-serif;--r:12px;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--bg);color:var(--text)}
-#login-screen{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:radial-gradient(ellipse at 30% 20%,rgba(124,106,247,.15) 0%,transparent 60%),
-  radial-gradient(ellipse at 80% 80%,rgba(34,211,160,.08) 0%,transparent 50%),var(--bg)}
+#login-screen{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 30% 20%,rgba(124,106,247,.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(34,211,160,.08) 0%,transparent 50%),var(--bg)}
 #login-screen.hidden{display:none}
 .lcard{width:100%;max-width:360px;background:var(--s1);border:1px solid var(--brd);border-radius:20px;padding:36px 28px;position:relative}
-.lcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--acc),var(--ai),var(--green));border-radius:20px 20px 0 0}
+.lcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--acc),var(--ai),var(--green));border-radius:20px 20px 0 0}
 .l-eye{font-size:40px;margin-bottom:16px;display:block}
-.l-chip{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--acc2);
-  background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.25);border-radius:99px;padding:3px 10px;margin-bottom:14px;text-transform:uppercase}
+.l-chip{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--acc2);background:rgba(124,106,247,.12);border:1px solid rgba(124,106,247,.25);border-radius:99px;padding:3px 10px;margin-bottom:14px;text-transform:uppercase}
 .l-title{font-size:26px;font-weight:800;margin-bottom:6px}
 .l-sub{font-size:13px;color:var(--muted2);margin-bottom:28px}
-.l-input{width:100%;background:var(--s2);border:1.5px solid var(--brd);border-radius:10px;padding:14px 16px;
-  font-size:15px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s;margin-bottom:12px}
+.l-input{width:100%;background:var(--s2);border:1.5px solid var(--brd);border-radius:10px;padding:14px 16px;font-size:15px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s;margin-bottom:12px}
 .l-input:focus{border-color:var(--acc)}
 .l-input::placeholder{color:var(--muted)}
-.l-btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:15px;
-  font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:opacity .15s,transform .1s}
-.l-btn:active{opacity:.85;transform:scale(.98)}
+.l-btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans)}
 .l-err{margin-top:12px;color:var(--red);font-size:13px;text-align:center;min-height:18px}
-.l-db-status{margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center}
 #app{display:none;height:100%;flex-direction:column;overflow:hidden;padding-top:var(--safe-top);padding-bottom:var(--safe-bot)}
 #app.visible{display:flex}
-.topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-  padding:12px 18px 10px;background:rgba(11,12,16,.9);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--brd);z-index:50}
+.topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:12px 18px 10px;background:rgba(11,12,16,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--brd);z-index:50}
 .tb-left{display:flex;align-items:center;gap:12px}
-.tb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),#4e6cf7);
-  border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.tb-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--acc),#4e6cf7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .tb-chip{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase}
 .tb-name{font-size:14px;font-weight:700;line-height:1.2;margin-top:1px}
-.tb-right{display:flex;align-items:center;gap:8px}
 .tb-badge{background:var(--s2);border:1px solid var(--brd);border-radius:10px;padding:5px 12px;text-align:center}
 .badge-n{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--acc2);line-height:1}
 .badge-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:1px}
-.db-status-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-  padding:5px 14px;background:rgba(13,15,25,.95);border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:10px}
+.db-status-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:5px 14px;background:rgba(13,15,25,.95);border-bottom:1px solid var(--brd);font-family:var(--mono);font-size:10px}
 .db-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);margin-right:5px;flex-shrink:0}
-.db-dot.ok{background:var(--green)}.db-dot.err{background:var(--red);animation:blink 1s infinite}
-.db-dot.loading{background:var(--amber);animation:blink .6s infinite}
+.db-dot.ok{background:var(--green)}.db-dot.err{background:var(--red);animation:blink 1s infinite}.db-dot.loading{background:var(--amber);animation:blink .6s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .db-label{color:var(--muted2);display:flex;align-items:center;gap:5px}
-.db-counts{color:var(--muted);display:flex;gap:10px}
-.db-counts span{color:var(--acc2)}
-.btn-refresh-db{background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.25);border-radius:6px;
-  color:var(--acc2);font-family:var(--mono);font-size:10px;padding:2px 8px;cursor:pointer;transition:all .15s;
-  display:inline-flex;align-items:center;gap:5px}
-.btn-refresh-db:active{transform:scale(.95)}
+.db-counts{color:var(--muted)}.db-counts span{color:var(--acc2)}
+.btn-refresh-db{background:rgba(124,106,247,.15);border:1px solid rgba(124,106,247,.25);border-radius:6px;color:var(--acc2);font-family:var(--mono);font-size:10px;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .btn-refresh-db.syncing{opacity:.7;pointer-events:none}
-.btn-refresh-db .sync-icon{display:inline-block;transition:transform .1s}
+.sync-icon{display:inline-block}
 .btn-refresh-db.syncing .sync-icon{animation:syncSpin .7s linear infinite}
 @keyframes syncSpin{to{transform:rotate(360deg)}}
-.tab-bar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;
-  background:var(--s1);border-bottom:1px solid var(--brd);padding:5px 5px 0;gap:4px}
-.tab-btn{padding:10px 8px;border:none;border-radius:9px 9px 0 0;font-family:var(--sans);font-size:12px;
-  font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;
-  gap:5px;background:transparent;color:var(--muted2);border-bottom:2px solid transparent}
+.tab-bar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--s1);border-bottom:1px solid var(--brd);padding:5px 5px 0;gap:4px}
+.tab-btn{padding:10px 8px;border:none;border-radius:9px 9px 0 0;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;background:transparent;color:var(--muted2);border-bottom:2px solid transparent}
 .tab-btn.active{background:rgba(124,106,247,.15);color:var(--acc2);border-bottom-color:var(--acc)}
 .tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
 .tab-panel.active{display:flex}
+/* SCAN */
 .top-controls{flex-shrink:0;padding:10px 14px 0;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
 .mode-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:4px;gap:4px}
-.mode-btn{padding:9px;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;
-  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:var(--muted2)}
+.mode-btn{padding:9px;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:var(--muted2)}
 .mode-btn.active{background:var(--acc);color:#fff;box-shadow:0 0 16px rgba(124,106,247,.35)}
 .cam-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden}
 .cam-header{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 7px}
@@ -96,45 +64,34 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .cam-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s}
 .cam-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s ease-in-out infinite}
 .cam-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase}
-.ai-badge-top{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--ai);
-  background:var(--ai-dim);border:1px solid rgba(232,121,249,.2);border-radius:99px;padding:2px 8px}
+.ai-badge-top{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--ai);background:var(--ai-dim);border:1px solid rgba(232,121,249,.2);border-radius:99px;padding:2px 8px}
 .cam-wrap{position:relative;width:100%;height:185px;background:#000;overflow:hidden}
 #video{width:100%;height:100%;object-fit:cover;display:block}
 .aim-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .aim-box{width:175px;height:125px;position:relative}
 .aim-c{position:absolute;width:20px;height:20px}
 .aim-c svg{width:100%;height:100%}
-.aim-c.tl{top:0;left:0}.aim-c.tr{top:0;right:0;transform:scaleX(-1)}
-.aim-c.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c.br{bottom:0;right:0;transform:scale(-1,-1)}
-.scan-line{position:absolute;left:8%;width:84%;height:2px;
-  background:linear-gradient(90deg,transparent,var(--acc),transparent);
-  box-shadow:0 0 10px var(--acc);display:none;animation:sline 2s ease-in-out infinite}
+.aim-c.tl{top:0;left:0}.aim-c.tr{top:0;right:0;transform:scaleX(-1)}.aim-c.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c.br{bottom:0;right:0;transform:scale(-1,-1)}
+.scan-line{position:absolute;left:8%;width:84%;height:2px;background:linear-gradient(90deg,transparent,var(--acc),transparent);box-shadow:0 0 10px var(--acc);display:none;animation:sline 2s ease-in-out infinite}
 @keyframes sline{0%,100%{top:12%}50%{top:86%}}
-.cam-idle{position:absolute;inset:0;background:rgba(0,0,0,.7);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.cam-idle{position:absolute;inset:0;background:rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 .idle-icon{font-size:38px}.idle-text{font-size:12px;color:var(--muted2)}
 .btn-row{display:flex;gap:8px;padding:10px 12px 12px}
-.btn{flex:1;padding:12px 8px;border:none;border-radius:10px;font-size:13px;font-weight:700;
-  cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;
-  gap:6px;transition:opacity .15s,transform .1s;letter-spacing:.2px}
+.btn{flex:1;padding:12px 8px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s,transform .1s}
 .btn:active{opacity:.75;transform:scale(.97)}
-.btn-start{background:var(--acc);color:#fff;box-shadow:0 4px 20px rgba(124,106,247,.3)}
-.btn-stop{background:var(--red);color:#fff;display:none}
+.btn-start{background:var(--acc);color:#fff}.btn-stop{background:var(--red);color:#fff;display:none}
 .btn-cap{background:var(--green);color:#0b0c10;display:none}
 .btn-reset{flex:0 0 auto;width:46px;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);font-size:16px}
-.status-box{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
-  padding:11px 14px;font-size:13px;line-height:1.5;transition:all .2s;flex-shrink:0}
+.status-box{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:11px 14px;font-size:13px;line-height:1.5;transition:all .2s;flex-shrink:0}
 .status-box.ok{border-color:var(--green);background:rgba(34,211,160,.08);color:#6effd6}
 .status-box.err{border-color:var(--red);background:rgba(244,63,94,.08);color:#fca5a5}
 .status-box.loading{border-color:var(--acc);background:rgba(124,106,247,.08);color:var(--acc2)}
 .status-box.ai{border-color:var(--ai);background:var(--ai-dim);color:#f0abfc}
 .status-box.warn{border-color:var(--amber);background:rgba(251,191,36,.08);color:var(--amber)}
-.koreksi-wrap{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
-  padding:12px 14px;display:none;flex-direction:column;gap:8px;flex-shrink:0}
+.koreksi-wrap{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;display:none;flex-direction:column;gap:8px;flex-shrink:0}
 .koreksi-wrap.visible{display:flex}
-.koreksi-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px}
-.koreksi-input{background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;
-  padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;width:100%;transition:border-color .2s}
+.koreksi-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase}
+.koreksi-input{background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;width:100%;transition:border-color .2s}
 .koreksi-input:focus{border-color:var(--amber)}
 .koreksi-input::placeholder{color:var(--muted)}
 .koreksi-row{display:flex;gap:8px}
@@ -153,33 +110,25 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .sec-right{display:flex;gap:8px;align-items:center}
 .hist-count{font-family:var(--mono);font-size:9px;color:var(--muted)}
 .btn-clear{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans);padding:4px 8px}
-.btn-clear:hover{color:var(--red)}
 #riwayat{display:flex;flex-direction:column;gap:5px}
-.hist-item{display:grid;grid-template-columns:20px 1fr auto auto;align-items:center;gap:8px;
-  background:var(--s1);border:1px solid var(--brd);border-left:3px solid var(--green);
-  border-radius:9px;padding:8px 12px;font-size:13px;animation:fadeup .2s ease}
+.hist-item{display:grid;grid-template-columns:20px 1fr auto auto;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--brd);border-left:3px solid var(--green);border-radius:9px;padding:8px 12px;font-size:13px;animation:fadeup .2s ease}
 @keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.hist-item.err{border-left-color:var(--red)}
-.hist-item.ai{border-left-color:var(--ai);background:rgba(232,121,249,.04)}
-.hist-item.warn{border-left-color:var(--amber)}
+.hist-item.err{border-left-color:var(--red)}.hist-item.ai{border-left-color:var(--ai);background:rgba(232,121,249,.04)}.hist-item.warn{border-left-color:var(--amber)}
 .hist-icon{font-size:14px;text-align:center}
-.hist-name{font-family:var(--mono);font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-name{font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hist-size{font-family:var(--mono);font-size:10px;color:var(--acc2);flex-shrink:0}
 .hist-time{font-size:10px;color:var(--muted);flex-shrink:0}
 .hist-empty{text-align:center;padding:24px 0;color:var(--muted);font-size:13px;font-family:var(--mono)}
+/* STOK */
 .stok-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 14px 20px}
-.stok-scroll::-webkit-scrollbar{width:3px}
-.stok-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+.stok-scroll::-webkit-scrollbar{width:3px}.stok-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
 .size-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:10px}
-.size-card-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.size-input{width:100%;background:var(--s2);border:2px solid var(--brd);border-radius:10px;
-  padding:12px;font-size:24px;font-weight:800;color:var(--green);font-family:var(--mono);
-  outline:none;text-align:center;transition:border-color .2s;letter-spacing:3px}
+.size-card-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase;margin-bottom:10px}
+.size-input{width:100%;background:var(--s2);border:2px solid var(--brd);border-radius:10px;padding:12px;font-size:24px;font-weight:800;color:var(--green);font-family:var(--mono);outline:none;text-align:center;transition:border-color .2s;letter-spacing:3px}
 .size-input:focus{border-color:var(--green)}
 .size-input::placeholder{color:var(--muted);font-size:14px;font-weight:400;letter-spacing:0}
 .size-chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
-.size-chip{padding:5px 12px;background:var(--s2);border:1px solid var(--brd);border-radius:7px;
-  font-family:var(--mono);font-size:12px;color:var(--muted2);cursor:pointer;transition:all .15s;user-select:none}
+.size-chip{padding:5px 12px;background:var(--s2);border:1px solid var(--brd);border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--muted2);cursor:pointer;user-select:none}
 .size-chip.on{background:var(--green);color:#0b0c10;border-color:var(--green);font-weight:700}
 .scan2-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
 .scan2-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 7px}
@@ -188,16 +137,12 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .cam-label2{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase}
 .cam-wrap2{position:relative;width:100%;height:150px;background:#000;overflow:hidden}
 #video2{width:100%;height:100%;object-fit:cover;display:block}
-.scan-line2{position:absolute;left:8%;width:84%;height:2px;
-  background:linear-gradient(90deg,transparent,var(--green),transparent);
-  box-shadow:0 0 10px var(--green);display:none;animation:sline2 2s ease-in-out infinite}
+.scan-line2{position:absolute;left:8%;width:84%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 10px var(--green);display:none;animation:sline2 2s ease-in-out infinite}
 @keyframes sline2{0%,100%{top:12%}50%{top:86%}}
 .aim-overlay2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .aim-box2{width:155px;height:90px;position:relative}
-.aim-c2{position:absolute;width:18px;height:18px}
-.aim-c2 svg{width:100%;height:100%}
-.aim-c2.tl{top:0;left:0}.aim-c2.tr{top:0;right:0;transform:scaleX(-1)}
-.aim-c2.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c2.br{bottom:0;right:0;transform:scale(-1,-1)}
+.aim-c2{position:absolute;width:18px;height:18px}.aim-c2 svg{width:100%;height:100%}
+.aim-c2.tl{top:0;left:0}.aim-c2.tr{top:0;right:0;transform:scaleX(-1)}.aim-c2.bl{bottom:0;left:0;transform:scaleY(-1)}.aim-c2.br{bottom:0;right:0;transform:scale(-1,-1)}
 .cam-idle2{position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .cam-processing{position:absolute;inset:0;background:rgba(11,12,16,.82);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:10}
 .cam-processing.show{display:flex}
@@ -206,17 +151,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .proc-label{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase}
 .proc-sub{font-size:10px;color:var(--muted2)}
 .btn-row2{display:flex;gap:8px;padding:8px 10px 10px}
-.btn2{flex:1;padding:11px 8px;border:none;border-radius:10px;font-size:12px;font-weight:700;
-  cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
-.btn2:active{opacity:.75}
-.btn2-start{background:var(--green);color:#0b0c10}
-.btn2-stop{background:var(--red);color:#fff;display:none}
+.btn2{flex:1;padding:11px 8px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:5px}
+.btn2-start{background:var(--green);color:#0b0c10}.btn2-stop{background:var(--red);color:#fff;display:none}
 .btn2-foto{background:var(--acc);color:#fff;display:none}
 .btn2-manual{flex:0 0 auto;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);padding:11px 13px}
 .manual-wrap{background:var(--s2);border-radius:var(--r);padding:10px;margin-bottom:10px;display:none}
 .manual-wrap.show{display:block}
-.manual-inp{width:100%;background:var(--s1);border:1.5px solid var(--brd);border-radius:9px;
-  padding:11px 13px;font-size:13px;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .2s}
+.manual-inp{width:100%;background:var(--s1);border:1.5px solid var(--brd);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--text);font-family:var(--mono);outline:none;transition:border-color .2s}
 .manual-inp:focus{border-color:var(--acc)}
 .manual-inp::placeholder{color:var(--muted)}
 .manual-btn{margin-top:7px;width:100%;background:var(--acc);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)}
@@ -250,12 +191,55 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .stok-tbl td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.02)}
 .stok-tbl tr:last-child td{border-bottom:none}
 .stok-tbl tr.hl td{background:rgba(34,211,160,.05)}
-.td-nm{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)}
+.td-nm{font-family:var(--mono);font-size:11px;font-weight:600}
 .td-sz{font-family:var(--mono);font-size:12px;font-weight:700;text-align:center}
 .td-sz.tgt{color:var(--green)}.td-sz.near{color:var(--acc2)}.td-sz.zero{color:var(--s3)}
 .stok-empty{text-align:center;padding:20px;color:var(--muted);font-family:var(--mono);font-size:12px}
 .loading-dots::after{content:'';animation:dots 1.2s infinite}
 @keyframes dots{0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}}
+.mode2-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px}
+.mode2-btn{padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted2)}
+.mode2-btn.active-foto{background:var(--acc);color:#fff}.mode2-btn.active-barcode{background:var(--green);color:#0b0c10}
+/* MAPPING TAB */
+.map-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 14px 20px}
+.map-scroll::-webkit-scrollbar{width:3px}.map-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+.map-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.map-stat{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:9px 8px;text-align:center}
+.map-stat-n{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--acc2)}
+.map-stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.map-tab-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:4px;gap:4px;margin-bottom:10px}
+.map-tab-btn{padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted2)}
+.map-tab-btn.active{background:var(--acc);color:#fff}
+.map-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.map-card-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--acc2);text-transform:uppercase;margin-bottom:10px}
+.map-inp{width:100%;background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;margin-bottom:8px;transition:border-color .2s}
+.map-inp:focus{border-color:var(--acc)}
+.map-inp.green:focus{border-color:var(--green)}
+.map-inp::placeholder{color:var(--muted)}
+.tag-area{min-height:38px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;padding:6px 10px;margin-bottom:8px}
+.tag-item{display:inline-flex;align-items:center;gap:4px;background:rgba(124,106,247,.2);border:1px solid rgba(124,106,247,.35);border-radius:6px;padding:3px 8px;font-family:var(--mono);font-size:11px;color:var(--acc2)}
+.tag-del{background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;line-height:1;padding:0 1px}
+.tag-placeholder{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.preset-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.preset-btn{padding:4px 10px;background:var(--s2);border:1px solid var(--brd);border-radius:7px;font-family:var(--mono);font-size:11px;color:var(--muted2);cursor:pointer}
+.btn-simpan-map{width:100%;padding:12px;background:var(--green);color:#0b0c10;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.map-search{width:100%;background:var(--s2);border:1.5px solid var(--brd);border-radius:9px;padding:9px 13px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;margin-bottom:10px;transition:border-color .2s}
+.map-search:focus{border-color:var(--acc)}.map-search::placeholder{color:var(--muted)}
+.map-filter-row{display:flex;gap:6px;margin-bottom:10px}
+.map-filter-btn{flex:1;padding:7px;background:var(--s2);color:var(--muted2);border:1px solid var(--brd);border-radius:8px;font-size:11px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.map-filter-btn.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.map-list{display:flex;flex-direction:column;gap:5px}
+.map-item{display:flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--brd);border-left:3px solid var(--muted);border-radius:9px;padding:8px 12px;animation:fadeup .2s ease}
+.map-item.custom{border-left-color:var(--green)}
+.map-item-info{flex:1;min-width:0}
+.map-item-hasil{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-item-kata{font-family:var(--mono);font-size:10px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.map-badge{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:5px;flex-shrink:0;white-space:nowrap}
+.map-badge.builtin{background:rgba(91,96,128,.2);color:var(--muted2)}
+.map-badge.custom{background:rgba(34,211,160,.15);color:var(--green)}
+.btn-del-map{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:4px;flex-shrink:0}
+.btn-del-map:hover{color:var(--red)}
+/* MODAL & TOAST */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center;display:none}
 .modal-bg.open{display:flex}
 .modal{background:var(--s1);border-top:1px solid var(--brd);border-radius:18px 18px 0 0;padding:24px 24px calc(24px + var(--safe-bot));width:100%;max-width:480px}
@@ -264,124 +248,82 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 .modal-actions{display:flex;gap:10px}
 .modal-cancel{flex:1;padding:13px;background:var(--s2);border:1px solid var(--brd);border-radius:10px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
 .modal-confirm{flex:1;padding:13px;background:var(--red);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans)}
-#toast{position:fixed;bottom:calc(24px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(80px);
-  background:var(--s1);border:1px solid var(--brd);color:var(--text);font-size:13px;padding:12px 20px;
-  border-radius:12px;z-index:400;opacity:0;transition:all .25s;max-width:90vw;text-align:center;pointer-events:none}
+#toast{position:fixed;bottom:calc(24px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(80px);background:var(--s1);border:1px solid var(--brd);color:var(--text);font-size:13px;padding:12px 20px;border-radius:12px;z-index:400;opacity:0;transition:all .25s;max-width:90vw;text-align:center;pointer-events:none}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.err{border-color:var(--red);color:#fca5a5}
-#toast-big{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);
-  background:var(--s1);border:2px solid var(--red);border-radius:16px;padding:20px 24px;z-index:600;
-  opacity:0;transition:all .25s;pointer-events:none;max-width:85vw;text-align:center;min-width:240px}
-#toast-big.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-#toast-big .tb-icon-big{font-size:32px;margin-bottom:8px}
-#toast-big .tb-title{font-size:15px;font-weight:700;color:var(--red);margin-bottom:4px}
-#toast-big .tb-msg{font-size:12px;color:var(--muted2);line-height:1.5}
-#toast-big.warn{border-color:var(--amber)}
-#toast-big.warn .tb-title{color:var(--amber)}
-#toast-big.ok{border-color:var(--green)}
-#toast-big.ok .tb-title{color:var(--green)}
 canvas{display:none}
-.mode2-toggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 10px 8px}
-.mode2-btn{padding:8px;border:none;border-radius:9px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted2);transition:all .2s}
-.mode2-btn.active-foto{background:var(--acc);color:#fff}
-.mode2-btn.active-barcode{background:var(--green);color:#0b0c10}
 </style>
 </head>
 <body>
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="lcard">
     <span class="l-eye">🔎</span>
-    <div class="l-chip">Scanner v7 · Flat DB · AI</div>
+    <div class="l-chip">Scanner v8 · AI + Custom Mapping</div>
     <div class="l-title">Scan Produk</div>
-    <div class="l-sub">OCR Gemini AI + Barcode + Cek Stok &amp; Harga</div>
+    <div class="l-sub">OCR Gemini AI + Barcode + Stok & Harga</div>
     <input class="l-input" type="password" id="inp-pw" placeholder="Password" autocomplete="current-password">
     <button class="l-btn" onclick="doLogin()">Masuk →</button>
     <div class="l-err" id="l-err"></div>
-    <div class="l-db-status" id="l-db-status">Menunggu login...</div>
   </div>
 </div>
-
-<!-- APP -->
 <div id="app">
   <div class="topbar">
     <div class="tb-left">
       <div class="tb-icon">🔎</div>
-      <div>
-        <div class="tb-chip">Scanner Produk</div>
-        <div class="tb-name">Sepatu &amp; Aksesoris</div>
-      </div>
+      <div><div class="tb-chip">Scanner v8</div><div class="tb-name">Sepatu &amp; Aksesoris</div></div>
     </div>
     <div class="tb-right">
-      <div class="tb-badge">
-        <div class="badge-n" id="total-count">0</div>
-        <div class="badge-l">Total Scan</div>
-      </div>
+      <div class="tb-badge"><div class="badge-n" id="total-count">0</div><div class="badge-l">Total Scan</div></div>
     </div>
   </div>
   <div class="db-status-bar">
-    <div class="db-label">
-      <div class="db-dot" id="db-dot"></div>
-      <span id="db-status-label">Memuat data...</span>
-    </div>
-    <div class="db-counts">Stok <span id="db-stok-count">-</span> &nbsp;Harga <span id="db-harga-count">-</span></div>
+    <div class="db-label"><div class="db-dot" id="db-dot"></div><span id="db-status-label">Memuat...</span></div>
+    <div class="db-counts">Stok <span id="db-stok-count">-</span> Harga <span id="db-harga-count">-</span></div>
     <button class="btn-refresh-db" id="btn-sync" onclick="loadAllData()"><span class="sync-icon">↻</span> Sync</button>
   </div>
   <div class="tab-bar">
-    <button class="tab-btn active" id="tabbtn-scan" onclick="switchTab('scan')">📷 Scan Produk</button>
-    <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">🔎 Cek Stok</button>
+    <button class="tab-btn active" id="tabbtn-scan" onclick="switchTab('scan')">📷 Scan</button>
+    <button class="tab-btn" id="tabbtn-stok" onclick="switchTab('stok')">🔎 Stok</button>
+    <button class="tab-btn" id="tabbtn-mapping" onclick="switchTab('mapping')">🗂 Mapping</button>
   </div>
-
   <!-- TAB SCAN -->
   <div class="tab-panel active" id="panel-scan">
     <div class="top-controls">
       <div class="mode-toggle">
-        <button class="mode-btn active" id="btn-mode-foto" onclick="setMode('foto')">📷 Mode Foto <small style="font-size:10px;opacity:.7">(OCR)</small></button>
-        <button class="mode-btn" id="btn-mode-barcode" onclick="setMode('barcode')">📲 Mode Barcode</button>
+        <button class="mode-btn active" id="btn-mode-foto" onclick="setMode('foto')">📷 Foto <small style="font-size:10px;opacity:.7">(OCR)</small></button>
+        <button class="mode-btn" id="btn-mode-barcode" onclick="setMode('barcode')">📲 Barcode</button>
       </div>
       <div class="cam-card">
         <div class="cam-header">
-          <div class="cam-status">
-            <div class="cam-dot" id="cam-dot"></div>
-            <span class="cam-label" id="cam-label">Kamera tidak aktif</span>
-          </div>
+          <div class="cam-status"><div class="cam-dot" id="cam-dot"></div><span class="cam-label" id="cam-label">Kamera tidak aktif</span></div>
           <span class="ai-badge-top">✦ Gemini Flash</span>
         </div>
         <div class="cam-wrap">
           <video id="video" autoplay playsinline muted></video>
           <div id="scan-line" class="scan-line"></div>
-          <div class="aim-overlay">
-            <div class="aim-box">
-              <div class="aim-c tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            </div>
-          </div>
-          <div class="cam-processing" id="cam-processing-scan">
-            <div class="proc-spinner"></div>
-            <div class="proc-label">Memproses OCR</div>
-            <div class="proc-sub">Gemini AI sedang analisa...</div>
-          </div>
-          <div class="cam-idle" id="idle-screen">
-            <div class="idle-icon">🔎</div>
-            <div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div>
-          </div>
+          <div class="aim-overlay"><div class="aim-box">
+            <div class="aim-c tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#7c6af7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div></div>
+          <div class="cam-processing" id="cam-processing-scan"><div class="proc-spinner"></div><div class="proc-label">Memproses OCR</div><div class="proc-sub">Gemini AI sedang analisa...</div></div>
+          <div class="cam-idle" id="idle-screen"><div class="idle-icon">🔎</div><div class="idle-text">Tekan Mulai untuk mengaktifkan kamera</div></div>
         </div>
         <div class="btn-row">
           <button class="btn btn-start" id="btn-start" onclick="mulaiScan()">▶ Mulai</button>
           <button class="btn btn-stop" id="btn-stop" onclick="stopScan()">⏹ Stop</button>
           <button class="btn btn-cap" id="btn-cap" onclick="ambilFoto()">📷 Foto</button>
-          <button class="btn btn-reset" onclick="showResetModal()" title="Reset">↺</button>
+          <button class="btn btn-reset" onclick="showResetModal()">↺</button>
         </div>
       </div>
       <div class="status-box" id="status-box">Siap — pilih mode lalu tekan Mulai.</div>
       <div class="koreksi-wrap" id="koreksi-wrap">
-        <div class="koreksi-title"><span>✎</span> Koreksi Hasil</div>
-        <div style="font-size:12px;color:var(--muted2)">Hasil terdeteksi: <b id="hasil-terdeteksi" style="color:var(--amber)">—</b></div>
+        <div class="koreksi-title">✎ Koreksi Hasil</div>
+        <div style="font-size:12px;color:var(--muted2)">Terdeteksi: <b id="hasil-terdeteksi" style="color:var(--amber)">—</b></div>
         <input class="koreksi-input" id="inp-koreksi" placeholder="Ketik nama produk yang benar..."/>
         <div class="koreksi-row">
-          <button class="btn-koreksi-ok" onclick="kirimKoreksi()">✓ Simpan Koreksi</button>
+          <button class="btn-koreksi-ok" onclick="kirimKoreksi()">✓ Simpan</button>
           <button class="btn-koreksi-batal" onclick="tutupKoreksi()">Batal</button>
         </div>
       </div>
@@ -394,36 +336,24 @@ canvas{display:none}
     <div class="scroll-area">
       <div class="sec-header">
         <div class="sec-title">Riwayat Scan</div>
-        <div class="sec-right">
-          <span class="hist-count" id="hist-count">0 item</span>
-          <button class="btn-clear" onclick="clearHistory()">Hapus</button>
-        </div>
+        <div class="sec-right"><span class="hist-count" id="hist-count">0 item</span><button class="btn-clear" onclick="clearHistory()">Hapus</button></div>
       </div>
       <div id="riwayat"><div class="hist-empty">Belum ada hasil scan</div></div>
     </div>
   </div>
-
-  <!-- TAB CEK STOK -->
+  <!-- TAB STOK -->
   <div class="tab-panel" id="panel-stok">
     <div class="stok-scroll">
       <div class="size-card">
         <div class="size-card-title">📱 Ukuran yang Dicari</div>
         <input class="size-input" type="number" id="inp-size" placeholder="Ketik size..." min="30" max="50" oninput="onSizeInput()">
         <div class="size-chips">
-          <span class="size-chip" onclick="setSize(34)">34</span><span class="size-chip" onclick="setSize(35)">35</span>
-          <span class="size-chip" onclick="setSize(36)">36</span><span class="size-chip" onclick="setSize(37)">37</span>
-          <span class="size-chip" onclick="setSize(38)">38</span><span class="size-chip" onclick="setSize(39)">39</span>
-          <span class="size-chip" onclick="setSize(40)">40</span><span class="size-chip" onclick="setSize(41)">41</span>
-          <span class="size-chip" onclick="setSize(42)">42</span><span class="size-chip" onclick="setSize(43)">43</span>
-          <span class="size-chip" onclick="setSize(44)">44</span><span class="size-chip" onclick="setSize(45)">45</span>
+          <span class="size-chip" onclick="setSize(34)">34</span><span class="size-chip" onclick="setSize(35)">35</span><span class="size-chip" onclick="setSize(36)">36</span><span class="size-chip" onclick="setSize(37)">37</span><span class="size-chip" onclick="setSize(38)">38</span><span class="size-chip" onclick="setSize(39)">39</span><span class="size-chip" onclick="setSize(40)">40</span><span class="size-chip" onclick="setSize(41)">41</span><span class="size-chip" onclick="setSize(42)">42</span><span class="size-chip" onclick="setSize(43)">43</span><span class="size-chip" onclick="setSize(44)">44</span><span class="size-chip" onclick="setSize(45)">45</span>
         </div>
       </div>
       <div class="scan2-card">
         <div class="scan2-hdr">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="cam-dot2" id="cam-dot2"></div>
-            <span class="cam-label2" id="cam-label2">Kamera tidak aktif</span>
-          </div>
+          <div style="display:flex;align-items:center;gap:8px"><div class="cam-dot2" id="cam-dot2"></div><span class="cam-label2" id="cam-label2">Kamera tidak aktif</span></div>
           <span style="font-family:var(--mono);font-size:9px;color:var(--green);background:rgba(34,211,160,.1);border:1px solid rgba(34,211,160,.2);border-radius:99px;padding:2px 8px">📦 Cek Stok</span>
         </div>
         <div class="mode2-toggle">
@@ -433,23 +363,14 @@ canvas{display:none}
         <div class="cam-wrap2">
           <video id="video2" autoplay playsinline muted></video>
           <div id="scan-line2" class="scan-line2"></div>
-          <div class="aim-overlay2">
-            <div class="aim-box2">
-              <div class="aim-c2 tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c2 tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c2 bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-              <div class="aim-c2 br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            </div>
-          </div>
-          <div class="cam-idle2" id="idle2">
-            <div style="font-size:30px">🔎</div>
-            <div style="font-size:12px;color:var(--muted2)">Tekan Mulai untuk mengaktifkan kamera</div>
-          </div>
-          <div class="cam-processing" id="cam-processing">
-            <div class="proc-spinner"></div>
-            <div class="proc-label">Memproses OCR</div>
-            <div class="proc-sub">Gemini AI sedang analisa foto</div>
-          </div>
+          <div class="aim-overlay2"><div class="aim-box2">
+            <div class="aim-c2 tl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c2 tr"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c2 bl"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="aim-c2 br"><svg viewBox="0 0 24 24" fill="none"><path d="M2 8V2h6" stroke="#22d3a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div></div>
+          <div class="cam-idle2" id="idle2"><div style="font-size:30px">🔎</div><div style="font-size:12px;color:var(--muted2)">Tekan Mulai</div></div>
+          <div class="cam-processing" id="cam-processing"><div class="proc-spinner"></div><div class="proc-label">Memproses OCR</div><div class="proc-sub">Gemini AI analisa foto</div></div>
         </div>
         <div class="btn-row2">
           <button class="btn2 btn2-start" id="btn2-start" onclick="mulaiScan2()">▶ Mulai Scan</button>
@@ -459,38 +380,93 @@ canvas{display:none}
         </div>
       </div>
       <div class="manual-wrap" id="manual-wrap">
-        <input class="manual-inp" type="text" id="inp-manual" placeholder="Ketik kode seri (misal: 8111, SPARTA HC)..." onkeydown="if(event.key==='Enter')submitManual()">
+        <input class="manual-inp" type="text" id="inp-manual" placeholder="Ketik kode seri..." onkeydown="if(event.key==='Enter')submitManual()">
         <button class="manual-btn" onclick="submitManual()">🔍 Cari Stok</button>
       </div>
-      <div class="detected-bar" id="detected-bar">
-        <div class="det-label">Produk Terdeteksi</div>
-        <div class="det-val" id="det-val">-</div>
-      </div>
-      <div class="hero-box" id="hero-box">
-        <div class="hero-status" id="hero-status">-</div>
-        <div class="hero-sub" id="hero-sub">-</div>
-      </div>
+      <div class="detected-bar" id="detected-bar"><div class="det-label">Produk Terdeteksi</div><div class="det-val" id="det-val">-</div></div>
+      <div class="hero-box" id="hero-box"><div class="hero-status" id="hero-status">-</div><div class="hero-sub" id="hero-sub">-</div></div>
       <div class="price-card" id="price-card">
-        <div class="price-row">
-          <span class="price-baru" id="price-baru">-</span>
-          <div style="display:flex;align-items:baseline;gap:6px">
-            <span class="price-retail" id="price-retail"></span>
-            <span class="price-diskon" id="price-diskon"></span>
-          </div>
-        </div>
+        <div class="price-row"><span class="price-baru" id="price-baru">-</span><div style="display:flex;align-items:baseline;gap:6px"><span class="price-retail" id="price-retail"></span><span class="price-diskon" id="price-diskon"></span></div></div>
         <div class="price-note" id="price-note"></div>
       </div>
       <div class="stok-tbl-wrap" id="stok-tbl-wrap">
-        <div class="stok-tbl-hdr">
-          <span class="stok-tbl-title" id="stok-tbl-title">Stok</span>
-          <span class="stok-tbl-sub" id="stok-tbl-sub"></span>
-        </div>
+        <div class="stok-tbl-hdr"><span class="stok-tbl-title" id="stok-tbl-title">Stok</span><span class="stok-tbl-sub" id="stok-tbl-sub"></span></div>
         <div id="stok-tbl-body"><div class="stok-empty">Scan produk untuk melihat stok</div></div>
       </div>
     </div>
   </div>
+  <!-- TAB MAPPING -->
+  <div class="tab-panel" id="panel-mapping">
+    <div class="map-scroll">
+      <div class="map-stats">
+        <div class="map-stat"><div class="map-stat-n" id="mstat-builtin">0</div><div class="map-stat-l">Bawaan</div></div>
+        <div class="map-stat"><div class="map-stat-n" id="mstat-custom" style="color:var(--green)">0</div><div class="map-stat-l">Custom</div></div>
+        <div class="map-stat"><div class="map-stat-n" id="mstat-total">0</div><div class="map-stat-l">Total</div></div>
+      </div>
+      <div class="map-tab-toggle">
+        <button class="map-tab-btn active" id="maptab-tambah" onclick="showMapTab('tambah')">➕ Tambah</button>
+        <button class="map-tab-btn" id="maptab-daftar" onclick="showMapTab('daftar')">📋 Daftar</button>
+      </div>
+      <!-- TAMBAH -->
+      <div id="mappanel-tambah">
+        <div class="map-card">
+          <div class="map-card-title">Nama Hasil Produk</div>
+          <input class="map-inp green" type="text" id="map-inp-hasil" placeholder="Contoh: Sparta HC Merah Baru">
+          <div style="font-size:11px;color:var(--muted)">Nama yang tampil saat produk berhasil dikenali.</div>
+        </div>
+        <div class="map-card">
+          <div class="map-card-title">Kata Kunci Pemicu</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input class="map-inp" type="text" id="map-inp-kata" placeholder="Ketik kata kunci..." style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();tambahMapTag()}">
+            <button onclick="tambahMapTag()" style="padding:10px 14px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:13px;cursor:pointer;font-weight:700;white-space:nowrap">+ Tambah</button>
+          </div>
+          <div class="tag-area" id="map-tag-area"><span class="tag-placeholder">Belum ada kata kunci...</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Semua kata kunci harus muncul di teks OCR agar mapping ini cocok.</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Preset Cepat</div>
+          <div class="preset-wrap">
+            <button class="preset-btn" onclick="addMapPreset('HC')">HC</button>
+            <button class="preset-btn" onclick="addMapPreset('LC')">LC</button>
+            <button class="preset-btn" onclick="addMapPreset('HIGH')">HIGH</button>
+            <button class="preset-btn" onclick="addMapPreset('LOW')">LOW</button>
+            <button class="preset-btn" onclick="addMapPreset('ALL BLACK')">ALL BLACK</button>
+            <button class="preset-btn" onclick="addMapPreset('ALL WHITE')">ALL WHITE</button>
+            <button class="preset-btn" onclick="addMapPreset('HITAM')">HITAM</button>
+            <button class="preset-btn" onclick="addMapPreset('PUTIH')">PUTIH</button>
+            <button class="preset-btn" onclick="addMapPreset('MERAH')">MERAH</button>
+            <button class="preset-btn" onclick="addMapPreset('BIRU')">BIRU</button>
+            <button class="preset-btn" onclick="addMapPreset('HIJAU')">HIJAU</button>
+            <button class="preset-btn" onclick="addMapPreset('KUNING')">KUNING</button>
+            <button class="preset-btn" onclick="addMapPreset('NAVY')">NAVY</button>
+            <button class="preset-btn" onclick="addMapPreset('MAROON')">MAROON</button>
+            <button class="preset-btn" onclick="addMapPreset('GREY')">GREY</button>
+            <button class="preset-btn" onclick="addMapPreset('ABU')">ABU</button>
+            <button class="preset-btn" onclick="addMapPreset('ARMY')">ARMY</button>
+            <button class="preset-btn" onclick="addMapPreset('CREAM')">CREAM</button>
+            <button class="preset-btn" onclick="addMapPreset('GUM')">GUM</button>
+            <button class="preset-btn" onclick="addMapPreset('BW')">BW</button>
+            <button class="preset-btn" onclick="addMapPreset('BLACK')">BLACK</button>
+            <button class="preset-btn" onclick="addMapPreset('WHITE')">WHITE</button>
+            <button class="preset-btn" onclick="addMapPreset('NATURAL')">NATURAL</button>
+            <button class="preset-btn" onclick="addMapPreset('BROWN')">BROWN</button>
+            <button class="preset-btn" onclick="addMapPreset('SILVER')">SILVER</button>
+          </div>
+        </div>
+        <button class="btn-simpan-map" onclick="simpanCustomMapping()">✓ Simpan ke Mapping</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;padding-bottom:4px">Tersimpan di browser · tidak hilang saat refresh</div>
+      </div>
+      <!-- DAFTAR -->
+      <div id="mappanel-daftar" style="display:none">
+        <input class="map-search" type="text" id="map-search" placeholder="Cari nama atau kata kunci..." oninput="renderMapList()">
+        <div class="map-filter-row">
+          <button class="map-filter-btn active" id="mf-semua" onclick="filterMapType('semua')">Semua</button>
+          <button class="map-filter-btn" id="mf-custom" onclick="filterMapType('custom')">Custom</button>
+          <button class="map-filter-btn" id="mf-builtin" onclick="filterMapType('builtin')">Bawaan</button>
+        </div>
+        <div class="map-list" id="map-list"><div class="hist-empty">Membuka daftar...</div></div>
+      </div>
+    </div>
+  </div>
 </div>
-
 <div class="modal-bg" id="modal-reset">
   <div class="modal">
     <h3>Reset Counter?</h3>
@@ -502,11 +478,6 @@ canvas{display:none}
   </div>
 </div>
 <div id="toast"></div>
-<div id="toast-big">
-  <div class="tb-icon-big" id="tbb-icon">❌</div>
-  <div class="tb-title" id="tbb-title">Produk Tidak Terdeteksi</div>
-  <div class="tb-msg" id="tbb-msg">Coba foto ulang</div>
-</div>
 <canvas id="canvas"></canvas>
 <canvas id="canvas2"></canvas>
 <script>
@@ -516,11 +487,8 @@ canvas{display:none}
 var PASSWORD   = "kodachi123";
 var GEMINI_KEY = "AIzaSyDBfJCIIuAm6YJKV6MmSeitja7ZAnv03N0";
 var VISION_KEY = "AIzaSyAH3Mj7RR7VMi_kX48Vh3qrEkhUjunqTfI";
-
-// ▼▼▼ PASTE URL EXEC GOOGLE APPS SCRIPT DI SINI ▼▼▼
-var GAS_URL = "https://script.google.com/macros/s/AKfycbzDMm_LAcUN6pVidhI7ArL0HsnkA0e-894jFF_TogrvkkCzOcuKB4Us7uJQQmvmETqIIg/exec";
-
-var FOTO_MAX_W=800, FOTO_MAX_H=600, FOTO_QUALITY=0.45;
+var GAS_URL    = "https://script.google.com/macros/s/AKfycbzDMm_LAcUN6pVidhI7ArL0HsnkA0e-894jFF_TogrvkkCzOcuKB4Us7uJQQmvmETqIIg/exec";
+var FOTO_MAX_W=800,FOTO_MAX_H=600,FOTO_QUALITY=0.45;
 
 // ═══════════════════════════════════════════════════
 // STATE
@@ -532,6 +500,11 @@ var audioCtx;
 var mode2='foto',stok2Running=false,stream2=null,codeReader2=null;
 var sizeTarget=null,seriDetected=null,sedangCariStok=false;
 var lastScan2='',lastScanTime2=0;
+var customMappings=[],mapTags=[],mapFilterType='semua';
+
+(function(){
+  try{var s=localStorage.getItem('custom_mapping_v1');if(s)customMappings=JSON.parse(s);}catch(e){}
+})();
 
 // ═══════════════════════════════════════════════════
 // AUDIO
@@ -546,12 +519,8 @@ function bunyi(tipe){
   var o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.connect(g);g.connect(audioCtx.destination);
   var t=audioCtx.currentTime;
-  var cfg={ok:{type:'sine',freqs:[[880,0],[1200,.07]],dur:.12,gain:.35},
-    ai:{type:'sine',freqs:[[700,0],[950,.06],[1100,.12]],dur:.18,gain:.3},
-    miss:{type:'square',freqs:[[280,0]],dur:.25,gain:.18},
-    read:{type:'triangle',freqs:[[600,0]],dur:.08,gain:.2}};
-  var c=cfg[tipe]||cfg.read;
-  o.type=c.type;
+  var cfg={ok:{type:'sine',freqs:[[880,0],[1200,.07]],dur:.12,gain:.35},ai:{type:'sine',freqs:[[700,0],[950,.06],[1100,.12]],dur:.18,gain:.3},miss:{type:'square',freqs:[[280,0]],dur:.25,gain:.18},read:{type:'triangle',freqs:[[600,0]],dur:.08,gain:.2}};
+  var c=cfg[tipe]||cfg.read;o.type=c.type;
   c.freqs.forEach(function(f){o.frequency.setValueAtTime(f[0],t+f[1]);});
   g.gain.setValueAtTime(c.gain,t);g.gain.linearRampToValueAtTime(0,t+c.dur);
   o.start(t);o.stop(t+c.dur);
@@ -564,7 +533,7 @@ function doLogin(){
   if(document.getElementById('inp-pw').value===PASSWORD){
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('app').classList.add('visible');
-    initAudio();loadAllData();
+    initAudio();loadAllData();updateMapStats();
   }else{
     document.getElementById('l-err').textContent='Password salah.';
     document.getElementById('inp-pw').value='';
@@ -573,353 +542,125 @@ function doLogin(){
 document.getElementById('inp-pw').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
 // ═══════════════════════════════════════════════════
-// LOAD DATA VIA GOOGLE APPS SCRIPT EXEC
+// LOAD DATA
 // ═══════════════════════════════════════════════════
 async function loadAllData(){
   var btn=document.getElementById('btn-sync');
   if(btn)btn.classList.add('syncing');
-  setDbStatus('loading','Memuat data dari GAS...');
+  setDbStatus('loading','Memuat data...');
   try{
     var resp=await fetch(GAS_URL,{redirect:'follow'});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     var json=await resp.json();
     if(json.status!=='ok')throw new Error(json.message||'GAS error');
-    // Parse stok
-    var rawStok=json.stok||[];
-    stokDB=rawStok.filter(function(r){return r.name&&r.name.trim();});
-    // Parse harga
-    var rawHarga=json.harga||[];
-    hargaDB=rawHarga.filter(function(r){return r.varian&&(r.hargaBaru||r.hargaRetail);});
+    stokDB=(json.stok||[]).filter(function(r){return r.name&&r.name.trim();});
+    hargaDB=(json.harga||[]).filter(function(r){return r.varian&&(r.hargaBaru||r.hargaRetail);});
     dbLoaded=true;
-    setDbStatus('ok','Data tersinkron');
+    setDbStatus('ok','Tersinkron');
     document.getElementById('db-stok-count').textContent=stokDB.length;
     document.getElementById('db-harga-count').textContent=hargaDB.length;
     showToast('✅ '+stokDB.length+' stok · '+hargaDB.length+' harga');
-    document.getElementById('db-status-label').textContent='Stok: '+stokDB.length+' · Harga: '+hargaDB.length;
   }catch(e){
-    setDbStatus('err','Gagal: '+e.message.substring(0,50));
-    showToast('❌ Gagal sync: '+e.message,'err');
-  }finally{
-    if(btn)btn.classList.remove('syncing');
-  }
+    setDbStatus('err','Gagal: '+e.message.substring(0,40));
+    showToast('❌ Gagal sync','err');
+  }finally{if(btn)btn.classList.remove('syncing');}
 }
 function setDbStatus(state,label){
   document.getElementById('db-dot').className='db-dot'+(state?' '+state:'');
   document.getElementById('db-status-label').textContent=label;
 }
-function parsePrice(s){if(!s)return 0;var n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?0:n;}
 
 // ═══════════════════════════════════════════════════
 // BARCODE MAP VENTELA
 // ═══════════════════════════════════════════════════
 function getBarcodeMapVentela(){
-  return {
-    "VAU.056A.023":"Ventela Basic High All Black","VAU.056A.011":"Ventela Basic High White",
-    "VAU.056A.025":"Ventela Basic High B/Nat","VAU.037A.023":"Ventela Basic Low All Black",
-    "VAU.037A.025":"Ventela Basic Low BNat","VAU.022A.023":"Ventela Ethnic High All Black",
-    "VAU.022A.011":"Ventela Ethnic High White","VAU.021A.025":"Ventela Ethnic Low BNat",
-    "VAU.014A.025":"Ventela 70's High B/Nat","VAU.014A.061":"Ventela 70's High Cream",
-    "VAU.013A.025":"Ventela 70's Low B/Nat","VAU.020A.011":"Ventela Public High White",
-    "VAU.020A.025":"Ventela Public High B/Nat","VAU.020A.061":"Ventela Public High Cream",
-    "VAU.020A.043":"Ventela Public High Maroon","VAU.020A.032":"Ventela Public High Navy",
-    "VAU.019A.025":"Ventela Public Low B/Nat","VAU.019A.061":"Ventela Public Low Cream",
-    "VAU.019A.081":"Ventela Public Low Grey","VAU.019A.302":"Ventela Public Low Dark Yellow",
-    "VAU.054A.025":"New Public Low B/Nat","VAU.068A.025":"Ventela Public Low Jr B/Nat",
-    "VAU.055A.025":"Ventela Republic Low B/Nat","VAU.055A.061":"Ventela Republic Low Cream",
-    "VAU.071A.025":"Ventela Alpha B/Nat","VAU.076A.025":"Ventela Champion B/Nat",
-    "VAU.085A.023":"Ventela Class Low All Black","VAU.085A.025":"Ventela Class Low BNat",
-    "VAU.084A.025":"Ventela Class High BNat","VAU.061A.011":"Ventela Evergreen High White",
-    "VAU.061A.021":"Ventela Evergreen High Black","VAU.078A.128":"Ventela V23 Black Brown",
-    "VAU.078A.086":"Ventela V23 Grey Brown","VAU.078B.052":"Ventela V23 Light Pink",
-    "VAU.078B.206":"Ventela V23 Brown Gum","VAU.078B.309":"Ventela V23 Green Gum",
-    "VAU.082B.081":"Ventela V46 Grey","VAU.073A.128":"Ventela Olympic Black Brown",
-    "VAU.073A.113":"Ventela Olympic White Brown","VAU.074A.025":"Ventela Fatboy BNat",
-    "VAU.074A.022":"Ventela Fatboy Black Gum","VAU.063A.127":"Ventela Reborn Reflective B/Nat",
-    "VAU.045A.801":"Ventela Sang Sekerta High Lohita","VAU.062A.025":"Ventela Leaving A Legacy Low BW",
-    "VAU.059A.111":"Ventela Icon White"
-  };
+  return {"VAU.056A.023":"Ventela Basic High All Black","VAU.056A.011":"Ventela Basic High White","VAU.056A.025":"Ventela Basic High B/Nat","VAU.037A.023":"Ventela Basic Low All Black","VAU.037A.025":"Ventela Basic Low BNat","VAU.022A.023":"Ventela Ethnic High All Black","VAU.022A.011":"Ventela Ethnic High White","VAU.021A.025":"Ventela Ethnic Low BNat","VAU.014A.025":"Ventela 70's High B/Nat","VAU.014A.061":"Ventela 70's High Cream","VAU.013A.025":"Ventela 70's Low B/Nat","VAU.020A.011":"Ventela Public High White","VAU.020A.025":"Ventela Public High B/Nat","VAU.020A.061":"Ventela Public High Cream","VAU.020A.043":"Ventela Public High Maroon","VAU.020A.032":"Ventela Public High Navy","VAU.019A.025":"Ventela Public Low B/Nat","VAU.019A.061":"Ventela Public Low Cream","VAU.019A.081":"Ventela Public Low Grey","VAU.019A.302":"Ventela Public Low Dark Yellow","VAU.054A.025":"New Public Low B/Nat","VAU.068A.025":"Ventela Public Low Jr B/Nat","VAU.055A.025":"Ventela Republic Low B/Nat","VAU.055A.061":"Ventela Republic Low Cream","VAU.071A.025":"Ventela Alpha B/Nat","VAU.076A.025":"Ventela Champion B/Nat","VAU.085A.023":"Ventela Class Low All Black","VAU.085A.025":"Ventela Class Low BNat","VAU.084A.025":"Ventela Class High BNat","VAU.061A.011":"Ventela Evergreen High White","VAU.061A.021":"Ventela Evergreen High Black","VAU.078A.128":"Ventela V23 Black Brown","VAU.078A.086":"Ventela V23 Grey Brown","VAU.078B.052":"Ventela V23 Light Pink","VAU.078B.206":"Ventela V23 Brown Gum","VAU.078B.309":"Ventela V23 Green Gum","VAU.082B.081":"Ventela V46 Grey","VAU.073A.128":"Ventela Olympic Black Brown","VAU.073A.113":"Ventela Olympic White Brown","VAU.074A.025":"Ventela Fatboy BNat","VAU.074A.022":"Ventela Fatboy Black Gum","VAU.063A.127":"Ventela Reborn Reflective B/Nat","VAU.045A.801":"Ventela Sang Sekerta High Lohita","VAU.062A.025":"Ventela Leaving A Legacy Low BW","VAU.059A.111":"Ventela Icon White"};
 }
 
 // ═══════════════════════════════════════════════════
-// PRODUCT MAPPING DATABASE
+// BUILT-IN MAPPING (lengkap)
 // ═══════════════════════════════════════════════════
-function getMapping(){
+function getBuiltinMapping(){
   return [
-    {kata:["ARTHUR","ALL BLACK"],hasil:"Slip On Arthur Hitam"},
-    {kata:["ARTHUR","BLACK WHITE"],hasil:"Slip On Arthur Hitam Putih"},
-    {kata:["ARTHUR","HITAM PUTIH"],hasil:"Slip On Arthur Hitam Putih"},
-    {kata:["ARTHUR","BW"],hasil:"Slip On Arthur Hitam Putih"},
-    {kata:["ARTHUR","WHITE"],hasil:"Slip On Arthur Putih"},
-    {kata:["ARTHUR","PUTIH"],hasil:"Slip On Arthur Putih"},
-    {kata:["SPARTA","HC","ALL BLACK"],hasil:"Sparta HC All Black"},
-    {kata:["SPARTA","HC","NEW","BBW"],hasil:"Sparta HC New BBW"},
-    {kata:["SPARTA","HC","BLACK WHITE"],hasil:"Sparta HC BW"},
-    {kata:["SPARTA","HC","BW"],hasil:"Sparta HC BW"},
-    {kata:["SPARTA","HC","WHITE"],hasil:"Sparta HC Putih"},
-    {kata:["SPARTA","HC","PUTIH"],hasil:"Sparta HC Putih"},
-    {kata:["SPARTA","HC","MAROON"],hasil:"Sparta HC Maroon"},
-    {kata:["SPARTA","HC","RED"],hasil:"Sparta HC Merah"},
-    {kata:["SPARTA","HC","MERAH"],hasil:"Sparta HC Merah"},
-    {kata:["SPARTA","HC","GREY"],hasil:"Sparta HC Grey"},
-    {kata:["SPARTA","HC","ABU"],hasil:"Sparta HC Grey"},
-    {kata:["SPARTA","HC","GREEN"],hasil:"Sparta HC Hijau"},
-    {kata:["SPARTA","HC","HIJAU"],hasil:"Sparta HC Hijau"},
-    {kata:["SPARTA","HC","YELLOW"],hasil:"Sparta HC Kuning"},
-    {kata:["SPARTA","HC","KUNING"],hasil:"Sparta HC Kuning"},
-    {kata:["SPARTA","HC","NAVY"],hasil:"Sparta HC Navy"},
-    {kata:["SPARTA","HC","ARMY"],hasil:"Sparta HC Army"},
-    {kata:["SPARTA","LC","ALL BLACK"],hasil:"Sparta LC All Black"},
-    {kata:["SPARTA","LC","NEW","BBW"],hasil:"Sparta LC New BBW"},
-    {kata:["SPARTA","LC","BLACK WHITE"],hasil:"Sparta LC BW"},
-    {kata:["SPARTA","LC","BW"],hasil:"Sparta LC BW"},
-    {kata:["SPARTA","LC","WHITE"],hasil:"Sparta LC Putih"},
-    {kata:["SPARTA","LC","PUTIH"],hasil:"Sparta LC Putih"},
-    {kata:["SPARTA","LC","MAROON"],hasil:"Sparta LC Maroon"},
-    {kata:["SPARTA","LC","RED"],hasil:"Sparta LC Merah"},
-    {kata:["SPARTA","LC","MERAH"],hasil:"Sparta LC Merah"},
-    {kata:["SPARTA","LC","ARMY"],hasil:"Sparta LC Army"},
-    {kata:["SPARTA","LC","GREY"],hasil:"Sparta LC Grey"},
-    {kata:["SPARTA","LC","GREEN"],hasil:"Sparta LC Hijau"},
-    {kata:["SPARTA","LC","HIJAU"],hasil:"Sparta LC Hijau"},
-    {kata:["SPARTA","LC","YELLOW"],hasil:"Sparta LC Kuning"},
-    {kata:["SPARTA","LC","KUNING"],hasil:"Sparta LC Kuning"},
-    {kata:["SPARTA","LC","NAVY"],hasil:"Sparta LC Navy"},
-    {kata:["SPARTA","GUM","HIGH","BLACK"],hasil:"Sparta Gum High Black"},
-    {kata:["SPARTA","GUM","HIGH","WHITE"],hasil:"Sparta Gum High White"},
-    {kata:["SPARTA","GUM","LOW"],hasil:"Sparta Gum Low Black"},
-    {kata:["VENUS","LC","WHITE"],hasil:"Venus LC Putih"},
-    {kata:["VENUS","LC","PUTIH"],hasil:"Venus LC Putih"},
-    {kata:["VENUS","LC","BW"],hasil:"Venus LC BW"},
-    {kata:["ATHENA","HC","BLACK"],hasil:"Athena HC Black White"},
-    {kata:["ATHENA","HC","WHITE"],hasil:"Athena HC Putih"},
-    {kata:["ATHENA","LC","BLACK"],hasil:"Athena LC Black White"},
-    {kata:["ATHENA","LC","WHITE"],hasil:"Athena LC Putih"},
-    {kata:["CLASSIC","HC"],hasil:"Classic HC BW"},
-    {kata:["CLASSIC","LC"],hasil:"Classic LC BW"},
-    {kata:["8110","BIRU","MERAH"],hasil:"8110 Biru Merah"},
-    {kata:["8111","STRIPE","A"],hasil:"8111 A"},
-    {kata:["8111","STRIPE"],hasil:"8111 Stripe"},
-    {kata:["8111","ALL BLACK"],hasil:"8111 Hitam"},
-    {kata:["8111","HITAM PUTIH"],hasil:"8111 H/P"},
-    {kata:["8111","H/P"],hasil:"8111 H/P"},
-    {kata:["8111","H/H"],hasil:"8111 H/H"},
-    {kata:["8111","HITAM"],hasil:"8111 Hitam"},
-    {kata:["8111","DARK GREY"],hasil:"8111 Dark Grey"},
-    {kata:["8111","ABU"],hasil:"8111 Dark Grey"},
-    {kata:["8111","BROWN A"],hasil:"8111 Brown A"},
-    {kata:["8111","BROWN B"],hasil:"8111 Brown B"},
-    {kata:["8111","BROWN C"],hasil:"8111 Brown C"},
-    {kata:["8111","R1"],hasil:"8111 R1"},
-    {kata:["8111","R2"],hasil:"8111 R2"},
-    {kata:["8111","R3"],hasil:"8111 R3"},
-    {kata:["8111","MONACO"],hasil:"8111 Monaco Checker Heel"},
-    {kata:["8112","NAVY"],hasil:"8112 Double Navy"},
-    {kata:["8112","HITAM"],hasil:"8112 Hitam"},
-    {kata:["8115","KUNING"],hasil:"8115 Kuning"},
-    {kata:["8115","MERAH"],hasil:"8115 Merah"},
-    {kata:["8115","PUTIH"],hasil:"8115 Putih"},
-    {kata:["8115","BIRU"],hasil:"8115 Biru"},
-    {kata:["8115","HITAM"],hasil:"8115 Hitam"},
-    {kata:["8115","SILVER"],hasil:"8115 Silver"},
-    {kata:["8116","PDB"],hasil:"8116 PDB (Putih Double Black)"},
-    {kata:["8116","PH"],hasil:"8116 PH (Putih Hitam)"},
-    {kata:["8116","BIRU","SILVER"],hasil:"8116 Biru Silver"},
-    {kata:["8116","MERAH","SILVER"],hasil:"8116 Merah Silver"},
-    {kata:["8116","KUNING","BIRU"],hasil:"8116 Kuning Biru"},
-    {kata:["8116","MERAH","BIRU"],hasil:"8116 Merah Biru"},
-    {kata:["8116","HITAM","SILVER"],hasil:"8116 Hitam Silver"},
-    {kata:["8116","HITAM","PUTIH"],hasil:"8116 Hitam Putih"},
-    {kata:["8116","GREY","DOUBLE"],hasil:"8116 Grey Double Black"},
-    {kata:["8118","KB"],hasil:"8118 KB"},
-    {kata:["8118","BS"],hasil:"8118 BS"},
-    {kata:["8118","MB"],hasil:"8118 MB"},
-    {kata:["8118","MS"],hasil:"8118 MS"},
-    {kata:["8119","ALL BLACK"],hasil:"8119 Star Full Black"},
-    {kata:["8119","FULL BLACK"],hasil:"8119 Star Full Black"},
-    {kata:["8119","HITAM PUTIH"],hasil:"8119 Star Hitam Putih"},
-    {kata:["8119","PUTIH"],hasil:"8119 Star Putih"},
-    {kata:["8119","MERAH"],hasil:"8119 Merah"},
-    {kata:["8136","HITAM","CREAM"],hasil:"8136 Hitam/Cream"},
-    {kata:["8136","PUTIH"],hasil:"8136 Putih"},
-    {kata:["8136","HIJAU","CREAM"],hasil:"8136 Hijau/Cream"},
-    {kata:["8136","TOSCA","CREAM"],hasil:"8136 Tosca/Cream"},
-    {kata:["8136","HITAM"],hasil:"8136 Hitam"},
-    {kata:["8172","HC","DOUBLE"],hasil:"8172 HC Double Black"},
-    {kata:["8172","HH","ALL BLACK"],hasil:"8172 HH All Black"},
-    {kata:["8172","HIJAU","ARMY"],hasil:"8172 Hijau Army"},
-    {kata:["8172","ASH","GREY"],hasil:"8172 Ash Grey"},
-    {kata:["8172","ABU"],hasil:"8172 Ash Grey"},
-    {kata:["8172","ROSE","GOLD"],hasil:"8172 P/Rose Gold"},
-    {kata:["8172","ORANGE","HIJAU"],hasil:"8172 OHJ"},
-    {kata:["8172","HIJAU","KUNING"],hasil:"8172 HjK - Hijau Kuning"},
-    {kata:["8172","KUNING","HITAM"],hasil:"8172 KH"},
-    {kata:["8172","NAVY","PUTIH"],hasil:"8172 NP"},
-    {kata:["8172","PUTIH"],hasil:"8172 Putih"},
-    {kata:["8172","HC"],hasil:"8172 HC"},
-    {kata:["8172","HP"],hasil:"8172 HP"},
-    {kata:["8172","PH"],hasil:"8172 PH"},
-    {kata:["8172","MP"],hasil:"8172 MP"},
-    {kata:["8172","PNM"],hasil:"8172 PNM"},
-    {kata:["8172","NP"],hasil:"8172 NP"},
-    {kata:["8172","KHJ"],hasil:"8172 KHJ"},
-    {kata:["8172","KH"],hasil:"8172 KH"},
-    {kata:["8172","HO"],hasil:"8172 HO"},
-    {kata:["8172","OHJ"],hasil:"8172 OHJ"},
-    {kata:["8172","PHM"],hasil:"8172 PHM"},
-    {kata:["8175","ASH","GREY"],hasil:"8175 Abu"},
-    {kata:["8175","ABU"],hasil:"8175 Abu"},
-    {kata:["8175","BIRU"],hasil:"8175 Biru"},
-    {kata:["8175","OLIVE","GREEN"],hasil:"8175 Olive Green"},
-    {kata:["8175","KUNING"],hasil:"8175 Kuning"},
-    {kata:["8175","ORANGE","HBK"],hasil:"8175 Orange HBK"},
-    {kata:["8178","PUTIH","ORANGE"],hasil:"8178 PO"},
-    {kata:["GALAXY","ALL BLACK"],hasil:"Galaxy All Black"},
-    {kata:["GALAXY","ALL WHITE"],hasil:"Galaxy All White"},
-    {kata:["GALAXY","PUTIH","HITAM"],hasil:"Galaxy Putih Hitam"},
-    {kata:["GALAXY","HITAM","ORANGE"],hasil:"Galaxy Hitam Orange"},
-    {kata:["GALAXY","KUNING","HITAM"],hasil:"Galaxy Kuning Hitam"},
-    {kata:["GALAXY","HITAM","EMAS"],hasil:"Galaxy Hitam Emas"},
-    {kata:["GALAXY","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Silver Biru"},
-    {kata:["GALAXY","PUTIH","KUNING","BIRU"],hasil:"Galaxy Putih Kuning Biru"},
-    {kata:["GALAXY","PUTIH","MERAH","BIRU"],hasil:"Galaxy Putih Merah Biru"},
-    {kata:["GALAXY","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih SIlver Merah"},
-    {kata:["GALAXY","HIJAU","KUNING"],hasil:"Galaxy Hijau Kuning"},
-    {kata:["RIVIERA","MAROON"],hasil:"Riviera Maroon"},
-    {kata:["RIVIERA","GREY"],hasil:"Riviera Grey"},
-    {kata:["RIVIERA","NAVY"],hasil:"Riviera Navy"},
-    {kata:["RIVIERA","PUTIH"],hasil:"Riviera Putih"},
-    {kata:["RIVIERA","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},
-    {kata:["RIVIERA","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},
-    {kata:["RIVIERA","ALL BLACK"],hasil:"Riviera Hitam Hitam"},
-    {kata:["MAX","ALL BLACK"],hasil:"Kodachi Max All Black"},
-    {kata:["MAX","ALL WHITE"],hasil:"Kodachi Max All White"},
-    {kata:["MAX","HITAM","CREAM"],hasil:"Kodachi Max Hitam/Cream"},
-    {kata:["MAX","HITAM","MERAH"],hasil:"Kodachi Max Hitam/Merah"},
-    {kata:["MAX","NAVY","PUTIH"],hasil:"Kodachi Max Navy/Putih"},
-    {kata:["MAX","MAROON"],hasil:"Kodachi Max Maroon/Cream"},
-    {kata:["MAX","MERAH","PUTIH"],hasil:"Kodachi Max Merah Putih"},
-    {kata:["MAX","PMB"],hasil:"Kodachi Max PMB"},
-    {kata:["MAX","GREY"],hasil:"Kodachi Max Abu/Putih"},
-    {kata:["NEW YORKER","HIGH"],hasil:"New Yorker High Cream/Hitam"},
-    {kata:["NEW YORKER","LOW"],hasil:"New Yorker Low Cream/Hitam"},
-    {kata:["UNIVERSITY","LOW","HITAM PUTIH"],hasil:"Kodachi University Low Hitam Putih"},
-    {kata:["UNIVERSITY","LOW","PUTIH"],hasil:"Kodachi University Low Putih"},
-    {kata:["UNIVERSITY","LOW","GREY"],hasil:"Kodachi University Low Grey"},
-    {kata:["UNIVERSITY","LOW","ABU"],hasil:"Kodachi University Low Grey"},
-    {kata:["UNIVERSITY","LOW","HIJAU"],hasil:"Kodachi University Low Hijau Army"},
-    {kata:["UNIVERSITY","LOW","BLACK"],hasil:"Kodachi University Low Hitam Hitam"},
-    {kata:["UNIVERSITY","LOW","HITAM"],hasil:"Kodachi University Low Hitam Hitam"},
-    {kata:["UNIVERSITY","HIGH","BLACK"],hasil:"Kodachi University High Hitam Hitam"},
-    {kata:["UNIVERSITY","HIGH","WHITE"],hasil:"Kodachi University High Hitam Putih"},
-    {kata:["K2428","ALL WHITE"],hasil:"K2428 All White"},
-    {kata:["K2428","ALL BLACK"],hasil:"K2428 All Black"},
-    {kata:["K2428","HITAM","PUTIH"],hasil:"K2428 Hitam/Putih"},
-    {kata:["K2428","BIRU","COKLAT"],hasil:"K2428 Biru/Coklat"},
-    {kata:["K2428","HIJAU","ABU"],hasil:"K2428 Hijau/Abu"},
-    {kata:["AR PLUS","PUTIH","BIRU"],hasil:"AR Plus Putih Biru"},
-    {kata:["AR PLUS","PUTIH","MERAH"],hasil:"AR Plus Putih Merah"},
-    {kata:["AR PLUS","PUTIH","HITAM"],hasil:"AR Plus Putih Hitam"},
-    {kata:["AR PLUS","MONACO","NAVY"],hasil:"AR Plus Speed Monaco Navy"},
-    {kata:["AR PLUS","PROVENCE","BBM"],hasil:"AR Plus Provence BBM"},
-    {kata:["AR PLUS","PROVENCE","NAVY"],hasil:"AR Plus Provence Navy"},
-    {kata:["AR PLUS","PROVENCE","HITAM","HITAM"],hasil:"AR Plus Provence Hitam/Hitam"},
-    {kata:["ASTORIA","BBM"],hasil:"Astoria P/BBM"},
-    {kata:["ASTORIA","HP"],hasil:"Astoria HP"},
-    {kata:["MATRIX","HITAM"],hasil:"Kodachi Matrix Hitam"},
-    {kata:["MATRIX","PUTIH"],hasil:"Kodachi Matrix Putih"},
-    {kata:["PUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},
-    {kata:["PUBLIC","LOW","CREAM"],hasil:"Ventela Public Low Cream"},
-    {kata:["PUBLIC","LOW","GREY"],hasil:"Ventela Public Low Grey"},
-    {kata:["PUBLIC","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},
-    {kata:["PUBLIC","HIGH","WHITE"],hasil:"Ventela Public High White"},
-    {kata:["PUBLIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},
-    {kata:["PUBLIC","HIGH","CREAM"],hasil:"Ventela Public High Cream"},
-    {kata:["PUBLIC","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},
-    {kata:["PUBLIC","HIGH","NAVY"],hasil:"Ventela Public High Navy"},
-    {kata:["NEW","PUBLIC","LOW"],hasil:"New Public Low B/Nat"},
-    {kata:["BASIC","HIGH","ALL BLACK"],hasil:"Ventela Basic High All Black"},
-    {kata:["BASIC","HIGH","WHITE"],hasil:"Ventela Basic High White"},
-    {kata:["BASIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Basic High B/Nat"},
-    {kata:["BASIC","LOW","ALL BLACK"],hasil:"Ventela Basic Low All Black"},
-    {kata:["BASIC","LOW","BLACK","NATURAL"],hasil:"Ventela Basic Low BNat"},
-    {kata:["ETHNIC","HIGH","ALL BLACK"],hasil:"Ventela Ethnic High All Black"},
-    {kata:["ETHNIC","HIGH","WHITE"],hasil:"Ventela Ethnic High White"},
-    {kata:["ETHNIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Ethnic High BNat"},
-    {kata:["ETHNIC","LOW","BLACK","NATURAL"],hasil:"Ventela Ethnic Low BNat"},
-    {kata:["ETHNIC","LOW","ALL BLACK"],hasil:"Ventela Ethnic Low All Black"},
-    {kata:["CLASS","LOW","ALL BLACK"],hasil:"Ventela Class Low All Black"},
-    {kata:["CLASS","LOW","BLACK","NATURAL"],hasil:"Ventela Class Low BNat"},
-    {kata:["CLASS","HIGH","ALL BLACK"],hasil:"Ventela Class High All Black"},
-    {kata:["CLASS","HIGH","BLACK","NATURAL"],hasil:"Ventela Class High BNat"},
-    {kata:["70","HIGH","CREAM"],hasil:"Ventela 70's High Cream"},
-    {kata:["70","HIGH","BLACK","NATURAL"],hasil:"Ventela 70's High B/Nat"},
-    {kata:["70","HIGH","BLACK","GUM"],hasil:"Ventela 70's High Black Gum"},
-    {kata:["70","LOW","BLACK","NATURAL"],hasil:"Ventela 70's Low B/Nat"},
-    {kata:["70","LOW","CREAM"],hasil:"Ventela 70's Low Cream"},
-    {kata:["70","LOW","GREEN"],hasil:"Ventela 70's Low Green"},
-    {kata:["ICON","WHITE"],hasil:"Ventela Icon White"},
-    {kata:["ICON","BLACK"],hasil:"Ventela Icon Black"},
-    {kata:["ALPHA","BLACK","NATURAL"],hasil:"Ventela Alpha B/Nat"},
-    {kata:["ALPHA","ALL BLACK"],hasil:"Ventela Alpha All Black"},
-    {kata:["REPUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Republic Low B/Nat"},
-    {kata:["REPUBLIC","LOW","CREAM"],hasil:"Ventela Republic Low Cream"},
-    {kata:["REPUBLIC","LOW","GUM"],hasil:"Ventela Republic Low Gum Hitam"},
-    {kata:["REBORN","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},
-    {kata:["REBORN","CREAM"],hasil:"Ventela Reborn Reflective Cream"},
-    {kata:["FATBOY","BLACK","NATURAL"],hasil:"Ventela Fatboy BNat"},
-    {kata:["FATBOY","BLACK","GUM"],hasil:"Ventela Fatboy Black Gum"},
-    {kata:["OLYMPIC","WHITE","BROWN"],hasil:"Ventela Olympic White Brown"},
-    {kata:["OLYMPIC","BLACK","BROWN"],hasil:"Ventela Olympic Black Brown"},
-    {kata:["V23","BROWN","GUM"],hasil:"Ventela V23 Brown Gum"},
-    {kata:["V23","GREEN","GUM"],hasil:"Ventela V23 Green Gum"},
-    {kata:["V23","LIGHT","PINK"],hasil:"Ventela V23 Light Pink"},
-    {kata:["V23","BLACK","BROWN"],hasil:"Ventela V23 Black Brown"},
-    {kata:["V23","GREY","BROWN"],hasil:"Ventela V23 Grey Brown"},
-    {kata:["V46","ALL BLACK"],hasil:"Ventela V46 All Black"},
-    {kata:["V46","GREY"],hasil:"Ventela V46 Grey"},
-    {kata:["SANG","SEKERTA"],hasil:"Ventela Sang Sekerta High Lohita"},
-    {kata:["LEAVING","LEGACY"],hasil:"Ventela Leaving A Legacy Low BW"},
-    {kata:["EVERGREEN","HIGH","WHITE"],hasil:"Ventela Evergreen High White"},
-    {kata:["EVERGREEN","HIGH","BLACK"],hasil:"Ventela Evergreen High Black"},
-    {kata:["EVERGREEN","LOW","BLACK"],hasil:"Ventela Evergreen Low Black"},
-    {kata:["PATROBAS","IVAN"],hasil:"Patrobas New Ivan Low B/W"},
-    {kata:["PATROBAS","EQUIP"],hasil:"Patrobas Equip Low BW"},
-    {kata:["PATROBAS","SLIP"],hasil:"Patrobas Cloud Slip On B/W"},
-    {kata:["DRAGONFLY","ALPHA","BLACK"],hasil:"Alpha Black Grey"},
-    {kata:["DRAGONFLY","ALPHA","WHITE"],hasil:"Alpha Putih Biru"},
-    {kata:["WARRIOR","SPORT","STYLE","BLACK"],hasil:"Warrior Sport Style Black"},
-    {kata:["WARRIOR","SPORT","STYLE","GREY"],hasil:"Warrior Sport Style Grey"},
-    {kata:["WARRIOR","SPORT","STYLE","BEIGE"],hasil:"Warrior Sport Style Beige"},
-    {kata:["WARRIOR","RUNNING","ALL BLACK"],hasil:"Warrior Running All Black"},
-    {kata:["WARRIOR","RUNNING","GREY"],hasil:"Warrior Running Grey"},
-    {kata:["WARRIOR","RUNNING","CREAM"],hasil:"Warrior Running Cream"}
+    {kata:["ARTHUR","ALL BLACK"],hasil:"Slip On Arthur Hitam"},{kata:["ARTHUR","BLACK WHITE"],hasil:"Slip On Arthur Hitam Putih"},{kata:["ARTHUR","HITAM PUTIH"],hasil:"Slip On Arthur Hitam Putih"},{kata:["ARTHUR","BW"],hasil:"Slip On Arthur Hitam Putih"},{kata:["ARTHUR","WHITE"],hasil:"Slip On Arthur Putih"},{kata:["ARTHUR","PUTIH"],hasil:"Slip On Arthur Putih"},
+    {kata:["SPARTA","HC","ALL BLACK"],hasil:"Sparta HC All Black"},{kata:["SPARTA","HC","NEW","BBW"],hasil:"Sparta HC New BBW"},{kata:["SPARTA","HC","BLACK WHITE"],hasil:"Sparta HC BW"},{kata:["SPARTA","HC","BLACK","WHITE"],hasil:"Sparta HC BW"},{kata:["SPARTA","HC","BW"],hasil:"Sparta HC BW"},{kata:["SPARTA","HC","WHITE"],hasil:"Sparta HC Putih"},{kata:["SPARTA","HC","PUTIH"],hasil:"Sparta HC Putih"},{kata:["SPARTA","HC","MAROON"],hasil:"Sparta HC Maroon"},{kata:["SPARTA","HC","RED"],hasil:"Sparta HC Merah"},{kata:["SPARTA","HC","MERAH"],hasil:"Sparta HC Merah"},{kata:["SPARTA","HC","GREY"],hasil:"Sparta HC Grey"},{kata:["SPARTA","HC","ABU"],hasil:"Sparta HC Grey"},{kata:["SPARTA","HC","GREEN"],hasil:"Sparta HC Hijau"},{kata:["SPARTA","HC","HIJAU"],hasil:"Sparta HC Hijau"},{kata:["SPARTA","HC","YELLOW"],hasil:"Sparta HC Kuning"},{kata:["SPARTA","HC","KUNING"],hasil:"Sparta HC Kuning"},{kata:["SPARTA","HC","NAVY"],hasil:"Sparta HC Navy"},{kata:["SPARTA","HC","ARMY"],hasil:"Sparta HC Army"},
+    {kata:["SPARTA","LC","ALL BLACK"],hasil:"Sparta LC All Black"},{kata:["SPARTA","LC","ALL","BLACK"],hasil:"Sparta LC All Black"},{kata:["SPARTA","LC","NEW","BBW"],hasil:"Sparta LC New BBW"},{kata:["SPARTA","LC","BLACK WHITE"],hasil:"Sparta LC BW"},{kata:["SPARTA","LC","BLACK","WHITE"],hasil:"Sparta LC BW"},{kata:["SPARTA","LC","BW"],hasil:"Sparta LC BW"},{kata:["SPARTA","LC","WHITE"],hasil:"Sparta LC Putih"},{kata:["SPARTA","LC","PUTIH"],hasil:"Sparta LC Putih"},{kata:["SPARTA","LC","MAROON"],hasil:"Sparta LC Maroon"},{kata:["SPARTA","LC","RED"],hasil:"Sparta LC Merah"},{kata:["SPARTA","LC","MERAH"],hasil:"Sparta LC Merah"},{kata:["SPARTA","LC","ARMY"],hasil:"Sparta LC Army"},{kata:["SPARTA","LC","GREY"],hasil:"Sparta LC Grey"},{kata:["SPARTA","LC","GREEN"],hasil:"Sparta LC Hijau"},{kata:["SPARTA","LC","HIJAU"],hasil:"Sparta LC Hijau"},{kata:["SPARTA","LC","YELLOW"],hasil:"Sparta LC Kuning"},{kata:["SPARTA","LC","KUNING"],hasil:"Sparta LC Kuning"},{kata:["SPARTA","LC","NAVY"],hasil:"Sparta LC Navy"},
+    {kata:["SPARTA","BBW","LOW"],hasil:"Sparta LC New BBW"},{kata:["SPARTA","GUM","HIGH","BLACK"],hasil:"Sparta Gum High Black"},{kata:["SPARTA","GUM","HIGH","WHITE"],hasil:"Sparta Gum High White"},{kata:["SPARTA","GUM","LOW"],hasil:"Sparta Gum Low Black"},{kata:["NEO","SPARTA","HIGH","GUM"],hasil:"Warrior Neo Sparta High Gum"},{kata:["NEO","SPARTA","LOW","GUM"],hasil:"Warrior Neo Sparta Low Gum"},
+    {kata:["VENUS","LC","WHITE"],hasil:"Venus LC Putih"},{kata:["VENUS","LC","PUTIH"],hasil:"Venus LC Putih"},{kata:["VENUS","LC","BW"],hasil:"Venus LC BW"},{kata:["VENUS","LOW","HITAM PUTIH"],hasil:"Venus LC BW"},{kata:["VENUS","LOW","PUTIH"],hasil:"Venus LC Putih"},
+    {kata:["ATHENA","HC","BLACK"],hasil:"Athena HC Black White"},{kata:["ATHENA","HC","WHITE"],hasil:"Athena HC Putih"},{kata:["ATHENA","HIGH","WHITE"],hasil:"Athena HC Putih"},{kata:["ATHENA","HIGH","BLACK"],hasil:"Athena HC Black White"},{kata:["ATHENA","LC","BLACK"],hasil:"Athena LC Black White"},{kata:["ATHENA","LC","WHITE"],hasil:"Athena LC Putih"},
+    {kata:["CLASSIC","HC","BIRU TURKISH"],hasil:"Classic HC Biru Turkish"},{kata:["CLASSIC","HC","ABU HIJAU"],hasil:"Classic HC Abu Hijau"},{kata:["CLASSIC","HC","ABU"],hasil:"Classic HC Abu"},{kata:["CLASSIC","HC","HIJAU"],hasil:"Classic HC Hijau"},{kata:["CLASSIC","HC","MAROON"],hasil:"Classic HC Maroon"},{kata:["CLASSIC","HC","MERAH"],hasil:"Classic HC Merah Hitam"},{kata:["CLASSIC","HC","NAVY"],hasil:"Classic HC Navy"},{kata:["CLASSIC","HC","PUTIH"],hasil:"Classic HC Putih"},{kata:["CLASSIC","HC","SUNFLOWER"],hasil:"Classic HC Sunflower"},{kata:["CLASSIC","HC"],hasil:"Classic HC BW"},
+    {kata:["CLASSIC","LC","BIRU TURKISH"],hasil:"Classic LC Biru Turkish"},{kata:["CLASSIC","LC","ABU HIJAU"],hasil:"Classic LC Abu Hijau"},{kata:["CLASSIC","LC","ABU"],hasil:"Classic LC Abu"},{kata:["CLASSIC","LC","DARK GREEN"],hasil:"Classic LC Dark Green"},{kata:["CLASSIC","LC","GREY"],hasil:"Classic LC Grey"},{kata:["CLASSIC","LC","KUNING"],hasil:"Classic LC Kuning"},{kata:["CLASSIC","LC","MARUN"],hasil:"Classic LC Maroon"},{kata:["CLASSIC","LC","MAROON"],hasil:"Classic LC Maroon"},{kata:["CLASSIC","LC","MERAH"],hasil:"Classic LC Merah Hitam"},{kata:["CLASSIC","LC","NAVY"],hasil:"Classic LC Navy"},{kata:["CLASSIC","LC","PUTIH"],hasil:"Classic LC Putih"},{kata:["CLASSIC","LC"],hasil:"Classic LC BW"},
+    {kata:["POSEIDON","HIGH","BLACK"],hasil:"Warrior Poseidon High Black"},{kata:["POSEIDON","HIGH","WHITE"],hasil:"Warrior Poseidon High White"},
+    {kata:["TRISTAN","HIGH"],hasil:"Warrior Tristan High"},{kata:["TRISTAN","LOW"],hasil:"Warrior Tristan Low"},
+    {kata:["ARTEMIS","BLUE DENIM"],hasil:"Warrior Artemis Slip On Blue Denim"},
+    {kata:["HELIOS","LOW"],hasil:"Warrior Helios Low Cut"},
+    {kata:["RAINBOW","NAVY","GREY"],hasil:"Warrior Rainbow Navy Grey"},{kata:["RAINBOW","NAVY","RED"],hasil:"Warrior Rainbow Navy Red"},
+    {kata:["SPORT","STYLE","BLACK"],hasil:"Warrior Sport Style Black"},{kata:["SPORT","STYLE","GREY"],hasil:"Warrior Sport Style Grey"},{kata:["SPORT","STYLE","BEIGE"],hasil:"Warrior Sport Style Beige"},
+    {kata:["RUNNING","ALL BLACK"],hasil:"Warrior Running All Black"},{kata:["RUNNING","GREY"],hasil:"Warrior Running Grey"},{kata:["RUNNING","CREAM"],hasil:"Warrior Running Cream"},
+    {kata:["8110","BIRU","MERAH"],hasil:"8110 Biru Merah"},{kata:["8110","MERAH"],hasil:"8110 Merah"},
+    {kata:["8111","STRIPE","A"],hasil:"8111 A"},{kata:["8111","STRIPE"],hasil:"8111 Stripe"},{kata:["8111","ALL BLACK"],hasil:"8111 Hitam"},{kata:["8111","HITAM PUTIH"],hasil:"8111 H/P"},{kata:["8111","H/P"],hasil:"8111 H/P"},{kata:["8111","H/H"],hasil:"8111 H/H"},{kata:["8111","HITAM","HITAM"],hasil:"8111 H/H"},{kata:["8111","HITAM"],hasil:"8111 Hitam"},{kata:["8111","DARK GREY"],hasil:"8111 Dark Grey"},{kata:["8111","ABU"],hasil:"8111 Dark Grey"},{kata:["8111","BROWN A"],hasil:"8111 Brown A"},{kata:["8111","BROWN B"],hasil:"8111 Brown B"},{kata:["8111","BROWN C"],hasil:"8111 Brown C"},{kata:["8111","COKLAT A"],hasil:"8111 Brown A"},{kata:["8111","COKLAT B"],hasil:"8111 Brown B"},{kata:["8111","COKLAT C"],hasil:"8111 Brown C"},{kata:["8111","R1"],hasil:"8111 R1"},{kata:["8111","R2"],hasil:"8111 R2"},{kata:["8111","R3"],hasil:"8111 R3"},{kata:["8111","RAINBOW","1"],hasil:"8111 R1"},{kata:["8111","RAINBOW","2"],hasil:"8111 R2"},{kata:["8111","RAINBOW","3"],hasil:"8111 R3"},{kata:["8111","RAINBOW-1"],hasil:"8111 R1"},{kata:["8111","RAINBOW-2"],hasil:"8111 R2"},{kata:["8111","RAINBOW-3"],hasil:"8111 R3"},{kata:["8111","MONACO"],hasil:"8111 Monaco Checker Heel"},
+    {kata:["8112","NAVY"],hasil:"8112 Double Navy"},{kata:["8112","HITAM"],hasil:"8112 Hitam"},
+    {kata:["8115","KUNING"],hasil:"8115 Kuning"},{kata:["8115","MERAH"],hasil:"8115 Merah"},{kata:["8115","PUTIH"],hasil:"8115 Putih"},{kata:["8115","BIRU"],hasil:"8115 Biru"},{kata:["8115","HITAM"],hasil:"8115 Hitam"},{kata:["8115","SILVER"],hasil:"8115 Silver"},
+    {kata:["8116","PDB"],hasil:"8116 PDB (Putih Double Black)"},{kata:["8116","PH"],hasil:"8116 PH (Putih Hitam)"},{kata:["8116","ALL BLACK"],hasil:"8116 Hitam Putih Double Black"},{kata:["8116","GREY","DOUBLE"],hasil:"8116 Grey Double Black"},{kata:["8116","BIRU","SILVER"],hasil:"8116 Biru Silver"},{kata:["8116","MERAH","SILVER"],hasil:"8116 Merah Silver"},{kata:["8116","KUNING","BIRU"],hasil:"8116 Kuning Biru"},{kata:["8116","MERAH","BIRU"],hasil:"8116 Merah Biru"},{kata:["8116","HITAM","SILVER"],hasil:"8116 Hitam Silver"},{kata:["8116","HITAM","PUTIH"],hasil:"8116 Hitam Putih"},
+    {kata:["8118","BIRU","SILVER"],hasil:"8118 Biru Silver"},{kata:["8118","KUNING","BIRU"],hasil:"8118 Kuning Biru"},{kata:["8118","MERAH","BIRU"],hasil:"8118 Merah Biru"},{kata:["8118","MERAH","SILVER"],hasil:"8118 Merah Silver"},
+    {kata:["8119","ALL BLACK"],hasil:"8119 Star Full Black"},{kata:["8119","FULL BLACK"],hasil:"8119 Star Full Black"},{kata:["8119","HITAM PUTIH"],hasil:"8119 Star Hitam Putih"},{kata:["8119","BLACK WHITE"],hasil:"8119 Star Hitam Putih"},{kata:["8119","PUTIH"],hasil:"8119 Star Putih"},{kata:["8119","WHITE"],hasil:"8119 Star Putih"},{kata:["8119","MERAH"],hasil:"8119 Merah"},{kata:["8119","RED"],hasil:"8119 Merah"},
+    {kata:["8136","HITAM","CREAM"],hasil:"8136 Classic Slip On Hitam Cream"},{kata:["8136","HITAM CREAM"],hasil:"8136 Classic Slip On Hitam Cream"},{kata:["8136","PUTIH"],hasil:"8136 Classic Slip On Putih"},{kata:["8136","HIJAU CREAM"],hasil:"8136 Classic Slip On Hijau Cream"},{kata:["8136","TOSCA CREAM"],hasil:"8136 Classic Slip On Tosca Cream"},{kata:["8136","HITAM"],hasil:"8136 Classic Slip On Hitam"},{kata:["8136","CLASSIC","SLIP"],hasil:"8136 Classic Slip On"},
+    {kata:["8172","HC","DOUBLE BLACK"],hasil:"8172 HC Double Black"},{kata:["8172","HP","DOUBLE BLACK"],hasil:"8172 HP Double Black"},{kata:["8172","MP","ALAS MERAH"],hasil:"8172 MP (Alas Merah)"},{kata:["8172","HH","ALL BLACK"],hasil:"8172 HH All Black"},{kata:["8172","HITAM","ALL BLACK"],hasil:"8172 HH All Black"},{kata:["8172","HIJAU","ARMY"],hasil:"8172 Hijau Army"},{kata:["8172","ASH","GREY"],hasil:"8172 Ash Grey"},{kata:["8172","ABU"],hasil:"8172 Ash Grey"},{kata:["8172","ROSE","GOLD"],hasil:"8172 P/Rose Gold"},{kata:["8172","ORANGE","HIJAU"],hasil:"8172 OHJ"},{kata:["8172","HIJAU","KUNING"],hasil:"8172 HjK - Hijau Kuning"},{kata:["8172","KUNING","HIJAU"],hasil:"8172 KHJ"},{kata:["8172","KUNING","HITAM"],hasil:"8172 KH"},{kata:["8172","NAVY","PUTIH"],hasil:"8172 NP"},{kata:["8172","PUTIH"],hasil:"8172 Putih"},{kata:["8172","HC"],hasil:"8172 HC"},{kata:["8172","HP"],hasil:"8172 HP"},{kata:["8172","PH"],hasil:"8172 PH"},{kata:["8172","MP"],hasil:"8172 MP"},{kata:["8172","PNM"],hasil:"8172 PNM"},{kata:["8172","PN/M"],hasil:"8172 PNM"},{kata:["8172","PHJ"],hasil:"8172 PHj/M"},{kata:["8172","NP"],hasil:"8172 NP"},{kata:["8172","KHJ"],hasil:"8172 KHJ"},{kata:["8172","KH"],hasil:"8172 KH"},{kata:["8172","HO"],hasil:"8172 HO"},{kata:["8172","OHJ"],hasil:"8172 OHJ"},{kata:["8172","PHM"],hasil:"8172 PHM"},{kata:["8172","HJK"],hasil:"8172 HjK - Hijau Kuning"},{kata:["8172","SERIES"],hasil:"8172 Series"},
+    {kata:["8175","ASH","GREY"],hasil:"8175 Ash Grey"},{kata:["8175","ABU"],hasil:"8175 Ash Grey"},{kata:["8175","BIRU"],hasil:"8175 Biru"},{kata:["8175","HIJAU","ARMY"],hasil:"8175 Hijau Army"},{kata:["8175","OLIVE","GREEN"],hasil:"8175 Olive Green"},{kata:["8175","KUNING"],hasil:"8175 Kuning Y2"},{kata:["8175","ORANGE","HBK"],hasil:"8175 Orange HBK"},{kata:["8175","ORANGE"],hasil:"8175 Orange"},
+    {kata:["8178","PUTIH","ORANGE"],hasil:"8178 P/O (Putih Orange)"},
+    {kata:["GALAXY","ALL BLACK"],hasil:"Galaxy All Black"},{kata:["GALAXY","ALL WHITE"],hasil:"Galaxy All White"},{kata:["GALAXY","PUTIH","HITAM"],hasil:"Galaxy Putih Hitam"},{kata:["GALAXY","HITAM","ORANGE"],hasil:"Galaxy Hitam Orange"},{kata:["GALAXY","KUNING","HITAM"],hasil:"Galaxy Kuning Hitam"},{kata:["GALAXY","HITAM","EMAS"],hasil:"Galaxy Hitam Emas"},{kata:["GALAXY","HITAM","GOLD"],hasil:"Galaxy Hitam Emas"},{kata:["GALAXY","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Biru Silver"},{kata:["GALAXY","PUTIH","KUNING","BIRU"],hasil:"Galaxy Putih Kuning Biru"},{kata:["GALAXY","PUTIH","MERAH","BIRU"],hasil:"Galaxy Putih Merah Biru"},{kata:["GALAXY","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih Merah Silver"},
+    {kata:["GLX","ALL BLACK"],hasil:"Galaxy All Black"},{kata:["GLX","ALL WHITE"],hasil:"Galaxy All White"},{kata:["GLX","PUTIH","HITAM"],hasil:"Galaxy Putih Hitam"},{kata:["GLX","HITAM","ORANGE"],hasil:"Galaxy Hitam Orange"},{kata:["GLX","KUNING","HITAM"],hasil:"Galaxy Kuning Hitam"},{kata:["GLX","HITAM","EMAS"],hasil:"Galaxy Hitam Emas"},{kata:["GLX","HITAM","GOLD"],hasil:"Galaxy Hitam Emas"},{kata:["GLX","PUTIH","BIRU","SILVER"],hasil:"Galaxy Putih Biru Silver"},{kata:["GLX","PUTIH","KUNING","BIRU"],hasil:"Galaxy Putih Kuning Biru"},{kata:["GLX","PUTIH","MERAH","BIRU"],hasil:"Galaxy Putih Merah Biru"},{kata:["GLX","PUTIH","MERAH","SILVER"],hasil:"Galaxy Putih Merah Silver"},
+    {kata:["RIVIERA","MAROON"],hasil:"Riviera Maroon"},{kata:["RVR","MAROON"],hasil:"Riviera Maroon"},{kata:["RIVIERA","GREY"],hasil:"Riviera Grey"},{kata:["RVR","GREY"],hasil:"Riviera Grey"},{kata:["RIVIERA","ABU"],hasil:"Riviera Grey"},{kata:["RVR","ABU"],hasil:"Riviera Grey"},{kata:["RIVIERA","NAVY"],hasil:"Riviera Navy"},{kata:["RVR","NAVY"],hasil:"Riviera Navy"},{kata:["RIVIERA","PUTIH"],hasil:"Riviera Putih"},{kata:["RVR","PUTIH"],hasil:"Riviera Putih"},{kata:["RIVIERA","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},{kata:["RVR","HITAM","PUTIH"],hasil:"Riviera Hitam Putih"},{kata:["RIVIERA","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},{kata:["RVR","HITAM","COKLAT"],hasil:"Riviera Hitam Coklat"},{kata:["RIVIERA","ALL BLACK"],hasil:"Riviera All Black"},{kata:["RVR","ALL BLACK"],hasil:"Riviera All Black"},{kata:["RIVIERA","SLIP","ON"],hasil:"Riviera Slip On"},{kata:["RVR","SLIP","ON"],hasil:"Riviera Slip On"},
+    {kata:["MAX","ALL BLACK"],hasil:"Kodachi Max All Black"},{kata:["MAX","ALL WHITE"],hasil:"Kodachi Max All White"},{kata:["MAX","HITAM","CREAM"],hasil:"Kodachi Max Hitam/Cream"},{kata:["MAX","HITAM","MERAH"],hasil:"Kodachi Max Hitam/Merah"},{kata:["MAX","NAVY","PUTIH"],hasil:"Kodachi Max Navy/Putih"},{kata:["MAX","MAROON"],hasil:"Kodachi Max Maroon/Cream"},{kata:["MAX","MERAH","PUTIH"],hasil:"Kodachi Max Merah/Putih"},{kata:["MAX","PMB"],hasil:"Kodachi Max PMB"},{kata:["MAX","GREY"],hasil:"Kodachi Max Grey"},{kata:["MAX","INTERNATIONAL"],hasil:"Kodachi Max International"},
+    {kata:["NEW YORKER","HIGH"],hasil:"New Yorker High Cream/Hitam"},{kata:["NEW YORKER","LOW"],hasil:"New Yorker Low Cream/Hitam"},
+    {kata:["UNIVERSITY","LOW","HITAM PUTIH"],hasil:"Kodachi University Low Hitam Putih"},{kata:["UNIVERSITY","LOW","PUTIH"],hasil:"Kodachi University Low Putih"},{kata:["UNIVERSITY","LOW","GREY"],hasil:"Kodachi University Low Grey"},{kata:["UNIVERSITY","LOW","ABU"],hasil:"Kodachi University Low Grey"},{kata:["UNIVERSITY","LOW","HIJAU"],hasil:"Kodachi University Low Hijau Army"},{kata:["UNIVERSITY","LOW","BLACK"],hasil:"Kodachi University Low Hitam Hitam"},{kata:["UNIVERSITY","LOW","HITAM"],hasil:"Kodachi University Low Hitam Hitam"},{kata:["UNIVERSITY","HIGH","BLACK"],hasil:"Kodachi University High Hitam Hitam"},{kata:["UNIVERSITY","HIGH","HITAM"],hasil:"Kodachi University High Hitam Hitam"},{kata:["UNIVERSITY","HIGH","WHITE"],hasil:"Kodachi University High Hitam Putih"},
+    {kata:["CHICAGO","HIGH"],hasil:"Chicago High Hitam Putih"},
+    {kata:["K2428","ALL WHITE"],hasil:"K2428 All White"},{kata:["K2428","ALL BLACK"],hasil:"K2428 All Black"},{kata:["K2428","BLACK WHITE"],hasil:"K2428 Hitam/Putih"},{kata:["K2428","HITAM PUTIH"],hasil:"K2428 Hitam/Putih"},{kata:["K2428","HITAM"],hasil:"K2428 Hitam/Putih"},{kata:["K2428","BIRU","COKLAT"],hasil:"K2428 Biru Coklat"},{kata:["K2428","BLUE","BROWN"],hasil:"K2428 Biru Coklat"},{kata:["K2428","GREEN","GREY"],hasil:"K2428 Hijau Abu"},{kata:["K2428","HIJAU","ABU"],hasil:"K2428 Hijau Abu"},
+    {kata:["AR PLUS","PUTIH","BIRU"],hasil:"AR Plus Putih Biru"},{kata:["AR PLUS","PUTIH","MERAH"],hasil:"AR Plus Putih Merah"},{kata:["AR PLUS","PUTIH","HITAM"],hasil:"AR Plus Putih Hitam"},{kata:["AR PLUS","MONACO","NAVY"],hasil:"AR Plus Speed Monaco Navy"},{kata:["AR PLUS","FRANCE","NAVY"],hasil:"AR Plus Speed France Navy"},{kata:["AR PLUS","PROVENCE","BBM"],hasil:"AR Plus Provence BBM"},{kata:["AR PLUS","PROVENCE","NAVY"],hasil:"AR Plus Provence Navy"},{kata:["AR PLUS","PROVENCE","HHH"],hasil:"AR Plus Provence Hitam All Black"},{kata:["AR PLUS","PROVENCE","ALL BLACK"],hasil:"AR Plus Provence Hitam All Black"},
+    {kata:["ASTORIA","BBM"],hasil:"Astoria P/BBM"},{kata:["ASTORIA","HP"],hasil:"Astoria HP"},{kata:["ASTORIA","HITAM PUTIH"],hasil:"Astoria HP"},
+    {kata:["MATRIX","HITAM"],hasil:"Kodachi Matrix Hitam"},{kata:["MATRIX","PUTIH"],hasil:"Kodachi Matrix Putih"},{kata:["MATRIX","CASUAL"],hasil:"Kodachi Matrix Putih"},
+    {kata:["P'76","LOW","JR","BLACK","NATURAL"],hasil:"Ventela Public Low Junior BNat"},{kata:["P76","LOW","JR","BLACK","NATURAL"],hasil:"Ventela Public Low Junior BNat"},{kata:["PUBLIC","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},{kata:["P'76","LOW","DARK","YELLOW"],hasil:"Ventela Public Low Dark Yellow"},{kata:["PUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},{kata:["P'76","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},{kata:["P76","LOW","BLACK","NATURAL"],hasil:"Ventela Public Low B/Nat"},{kata:["PUBLIC","LOW","CREAM"],hasil:"Ventela Public Low Cream"},{kata:["P'76","LOW","CREAM"],hasil:"Ventela Public Low Cream"},{kata:["P76","LOW","CREAM"],hasil:"Ventela Public Low Cream"},{kata:["PUBLIC","LOW","GREY"],hasil:"Ventela Public Low Grey"},{kata:["P'76","LOW","GREY"],hasil:"Ventela Public Low Grey"},{kata:["P76","LOW","GREY"],hasil:"Ventela Public Low Grey"},{kata:["PUBLIC","LOW","ALL BLACK"],hasil:"Ventela Public Low All Black"},{kata:["PUBLIC","LOW","WHITE"],hasil:"Ventela Public Low White"},{kata:["PUBLIC","LOW","NAVY"],hasil:"Ventela Public Low Navy"},{kata:["PUBLIC","HIGH","CREAM"],hasil:"Ventela Public High Cream"},{kata:["P'76","HIGH","CREAM"],hasil:"Ventela Public High Cream"},{kata:["P76","HIGH","CREAM"],hasil:"Ventela Public High Cream"},{kata:["PUBLIC","HIGH","WHITE"],hasil:"Ventela Public High White"},{kata:["P'76","HIGH","WHITE"],hasil:"Ventela Public High White"},{kata:["P76","HIGH","WHITE"],hasil:"Ventela Public High White"},{kata:["PUBLIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},{kata:["P'76","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},{kata:["P76","HIGH","BLACK","NATURAL"],hasil:"Ventela Public High B/Nat"},{kata:["PUBLIC","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},{kata:["P'76","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},{kata:["P76","HIGH","MAROON"],hasil:"Ventela Public High Maroon"},{kata:["PUBLIC","HIGH","NAVY"],hasil:"Ventela Public High Navy"},{kata:["P'76","HIGH","NAVY"],hasil:"Ventela Public High Navy"},{kata:["P76","HIGH","NAVY"],hasil:"Ventela Public High Navy"},{kata:["PUBLIC","HIGH","DARK","YELLOW"],hasil:"Ventela Public High Dark Yellow"},{kata:["NEW","PUBLIC","LOW","BLACK","NATURAL"],hasil:"New Public Low B/Nat"},
+    {kata:["BASIC","HIGH","ALL BLACK"],hasil:"Ventela Basic High All Black"},{kata:["BASIC","HIGH","WHITE"],hasil:"Ventela Basic High White"},{kata:["BASIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Basic High B/Nat"},{kata:["BASIC","LOW","ALL BLACK"],hasil:"Ventela Basic Low All Black"},{kata:["BASIC","LOW","BLACK","NATURAL"],hasil:"Ventela Basic Low BNat"},{kata:["BASIC","LOW","ALL WHITE"],hasil:"Ventela Basic Low All White"},
+    {kata:["ETHNIC","HIGH","ALL BLACK"],hasil:"Ventela Ethnic High All Black"},{kata:["ETHNIC","HIGH","WHITE"],hasil:"Ventela Ethnic High White"},{kata:["ETHNIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Ethnic High BNat"},{kata:["ETHNIC","LOW","ALL BLACK"],hasil:"Ventela Ethnic Low All Black"},{kata:["ETHNIC","LOW","WHITE"],hasil:"Ventela Ethnic Low All White"},{kata:["ETHNIC","LOW","BLACK","NATURAL"],hasil:"Ventela Ethnic Low BNat"},
+    {kata:["CLASS","LOW","ALL BLACK"],hasil:"Ventela Class Low All Black"},{kata:["CLASS","LOW","BLACK","NATURAL"],hasil:"Ventela Class Low BNat"},{kata:["CLASS","HIGH","ALL BLACK"],hasil:"Ventela Class High All Black"},{kata:["CLASS","HIGH","BLACK","NATURAL"],hasil:"Ventela Class High BNat"},
+    {kata:["70'S","HIGH","CREAM"],hasil:"Ventela 70's High Cream"},{kata:["70","HIGH","CREAM"],hasil:"Ventela 70's High Cream"},{kata:["70'S","HIGH","BLACK","NATURAL"],hasil:"Ventela 70's High B/Nat"},{kata:["70","HIGH","BLACK","NATURAL"],hasil:"Ventela 70's High B/Nat"},{kata:["70'S","HIGH","BLACK","GUM"],hasil:"Ventela 70's High Black Gum"},{kata:["70'S","HIGH","NAVY"],hasil:"Ventela 70's High Navy"},{kata:["70'S","HIGH","GREY"],hasil:"Ventela 70's High Grey"},{kata:["70'S","HIGH","PUTIH"],hasil:"Ventela 70's High Putih"},{kata:["70'S","LOW","BLACK","NATURAL"],hasil:"Ventela 70's Low B/Nat"},{kata:["70","LOW","BLACK","NATURAL"],hasil:"Ventela 70's Low B/Nat"},{kata:["70'S","LOW","CREAM"],hasil:"Ventela 70's Low Cream"},{kata:["70'S","LOW","GREEN"],hasil:"Ventela 70's Low Green"},{kata:["70'S","LOW","NAVY"],hasil:"Ventela 70's Low Navy"},
+    {kata:["ICON","WHITE"],hasil:"Ventela Icon White"},{kata:["ICON","ALL WHITE"],hasil:"Ventela Icon White"},{kata:["ICON","BLACK"],hasil:"Ventela Icon Black"},{kata:["ALPHA","BLACK","NATURAL"],hasil:"Ventela Alpha B/Nat"},{kata:["ALPHA","ALL BLACK"],hasil:"Ventela Alpha All Black"},{kata:["ALPHA","ALL WHITE"],hasil:"Ventela Alpha All White"},
+    {kata:["REBORN","REFLECTIVE","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},{kata:["REBORN","BLACK","NATURAL"],hasil:"Ventela Reborn Reflective B/Nat"},{kata:["REBORN","CREAM"],hasil:"Ventela Reborn Reflective Cream"},{kata:["REBORN","NAVY"],hasil:"Ventela Reborn Reflective Navy"},
+    {kata:["REPUBLIC","HIGH","BLACK","NATURAL"],hasil:"Ventela Republic High B/Nat"},{kata:["REPUBLIC","HIGH","GREY"],hasil:"Ventela Republic High Grey"},{kata:["REPUBLIC","LOW","BLACK","NATURAL"],hasil:"Ventela Republic Low B/Nat"},{kata:["REPUBLIC","LOW","CREAM"],hasil:"Ventela Republic Low Cream"},{kata:["REPUBLIC","LOW","GUM","HITAM"],hasil:"Ventela Republic Low Gum Hitam"},{kata:["REPUBLIC","LOW","GREY"],hasil:"Ventela Republic Low Grey"},{kata:["REPUBLIC","LOW","NAVY"],hasil:"Ventela Republic Low Navy"},
+    {kata:["FAT","BOY","BLACK","NATURAL"],hasil:"Ventela Fatboy BNat"},{kata:["FATBOY","BLACK","NATURAL"],hasil:"Ventela Fatboy BNat"},{kata:["FAT","BOY","BLACK","GUM"],hasil:"Ventela Fatboy Black Gum"},{kata:["FATBOY","BLACK","GUM"],hasil:"Ventela Fatboy Black Gum"},
+    {kata:["OLYMPIC","WHITE","BROWN"],hasil:"Ventela Olympic White Brown"},{kata:["OLYMPIC","BLACK","BROWN"],hasil:"Ventela Olympic Black Brown"},
+    {kata:["V-23","BROWN","GUM"],hasil:"Ventela V23 Brown Gum"},{kata:["V23","BROWN","GUM"],hasil:"Ventela V23 Brown Gum"},{kata:["V-23","GREEN","GUM"],hasil:"Ventela V23 Green Gum"},{kata:["V23","GREEN","GUM"],hasil:"Ventela V23 Green Gum"},{kata:["V-23","LIGHT","PINK"],hasil:"Ventela V23 Light Pink"},{kata:["V23","LIGHT","PINK"],hasil:"Ventela V23 Light Pink"},{kata:["V-23","BLACK","BROWN"],hasil:"Ventela V23 Black Brown"},{kata:["V23","BLACK","BROWN"],hasil:"Ventela V23 Black Brown"},{kata:["V-23","GREY","BROWN"],hasil:"Ventela V23 Grey Brown"},{kata:["V23","GREY","BROWN"],hasil:"Ventela V23 Grey Brown"},
+    {kata:["V-46","ALL BLACK"],hasil:"Ventela V46 All Black"},{kata:["V46","ALL BLACK"],hasil:"Ventela V46 All Black"},{kata:["V-46","GREY"],hasil:"Ventela V46 Grey"},{kata:["V46","GREY"],hasil:"Ventela V46 Grey"},
+    {kata:["POKEMON","CREAM"],hasil:"Ventela Pokemon Cream"},{kata:["POKEMON","BLACK","NATURAL"],hasil:"Ventela Pokemon B/Nat"},
+    {kata:["SANG","SEKERTA","HIGH","LOHITA"],hasil:"Ventela Sang Sekerta High Lohita"},{kata:["LEAVING","A","LEGACY","BLACK","NATURAL"],hasil:"Ventela Leaving A Legacy Low BW"},
+    {kata:["EVERGREEN","HIGH","WHITE"],hasil:"Ventela Evergreen High White"},{kata:["EVERGREEN","HIGH","BLACK"],hasil:"Ventela Evergreen High Black"},{kata:["EVERGREEN","LOW","BLACK"],hasil:"Ventela Evergreen Low Black"},
+    {kata:["CHAMPION","BLACK","NATURAL"],hasil:"Ventela Champion B/Nat"},
+    {kata:["PATROBAS","IVAN"],hasil:"Patrobas New Ivan Low B/W"},{kata:["PATROBAS","EQUIP","LOW","BLACK WHITE"],hasil:"Patrobas Equip Low BW"},{kata:["PATROBAS","EQUIP","CHARCOAL"],hasil:"Patrobas Equip Low Charcoal"},{kata:["PATROBAS","EQUIP","GREY"],hasil:"Patrobas Equip Low Charcoal"},{kata:["PATROBAS","EQUIP"],hasil:"Patrobas Equip Low BW"},{kata:["PATROBAS","SLIP"],hasil:"Patrobas Cloud Slip On B/W"},{kata:["PATROBAS","CLOUD","WHITE","RED"],hasil:"Patrobas Cloud White Red"},
+    {kata:["DRAGONFLY","ALPHA","BLACK","GREY"],hasil:"Dragonfly Alpha Black Grey"},{kata:["DRAGONFLY","ALPHA","WHITE","BLUE"],hasil:"Dragonfly Alpha White Blue"},{kata:["DRAGONFLY","ALPHA","WHITE","NAVY"],hasil:"Dragonfly Alpha White Navy"},{kata:["DRAGONFLY","FALCON","ALL BLACK"],hasil:"Dragonfly Falcon All Black"},{kata:["DRAGONFLY","FALCON","BLACK WHITE"],hasil:"Dragonfly Falcon Black White"},{kata:["DRAGONFLY","FALCON","WHITE"],hasil:"Dragonfly Falcon Putih"},{kata:["DRAGONFLY","FALCON","BLACK"],hasil:"Dragonfly Falcon Hitam"},{kata:["DRAGONFLY","FALCON","BIRU"],hasil:"Dragonfly Falcon Biru"},{kata:["DRAGONFLY","FALCON","KUNING"],hasil:"Dragonfly Falcon Kuning"},{kata:["DRAGONFLY","FALCON","MERAH"],hasil:"Dragonfly Falcon Merah"},{kata:["DRAGONFLY","FALCON","HIJAU"],hasil:"Dragonfly Falcon Hijau"},{kata:["DRAGONFLY","NEW AMAZON","BLACK"],hasil:"Dragonfly New Amazon Black"},{kata:["DRAGONFLY"],hasil:"DRAGONFLY"},
+    {kata:["RUNNER","401"],hasil:"Runner 401 Low Cut"},{kata:["RUNNER","431","BLACK WHITE"],hasil:"Runner 431 LC Black White"},{kata:["RUNNER","431","FULL BLACK"],hasil:"Runner 431 LC Full Black"},{kata:["RUNNER","801","BIRU"],hasil:"Runner 801 Low Biru"},{kata:["RUNNER","801","LOW"],hasil:"Runner 801 Low"},{kata:["RUNNER","802","HC"],hasil:"Runner 802 HC"},{kata:["RUNNER","901","HITAM PUTIH"],hasil:"Runner 901 Low Hitam Putih"},
+    {kata:["FLASH","HITAM"],hasil:"MB Bagus Flash Hitam"},{kata:["FLASH","MERAH"],hasil:"MB Bagus Flash Merah"},{kata:["FLASH","YELLOW"],hasil:"MB Bagus Flash Yellow"},{kata:["FLASH","KUNING"],hasil:"MB Bagus Flash Yellow"},
+    {kata:["DALLAS","CAMPUSS","HITAM PUTIH"],hasil:"Dallas Campuss Low Cut Hitam Putih"},
+    {kata:["BOX","TAMBAHAN"],hasil:"Box Tambahan Packing"},{kata:["TALI","SEPATU","KLASIK"],hasil:"Tali Sepatu Klasik"},{kata:["KAOS KAKI","OLD SKOOL"],hasil:"Kaos Kaki Old Skool Putih"},{kata:["KAOS KAKI","OLD SCHOOL"],hasil:"Kaos Kaki Old School"},{kata:["KAOS KAKI","CLASSIC"],hasil:"Kaos Kaki Classic"},{kata:["KAOS KAKI","MOTIF"],hasil:"Kaos Kaki Motif"},{kata:["KAOS KAKI","PENDEK"],hasil:"Kaos Kaki Pendek Strip"},{kata:["KAOS KAKI","PANJANG"],hasil:"Kaos Kaki Old School Panjang 3/4"},{kata:["TAS","SELEMPANG"],hasil:"Tas Selempang Slingbag Casual"}
   ];
 }
+
+// custom diutamakan (di depan)
+function getMapping(){return customMappings.concat(getBuiltinMapping());}
 
 // ═══════════════════════════════════════════════════
 // TEXT PROCESSING
 // ═══════════════════════════════════════════════════
-var KATA_UMUM=["HITAM","PUTIH","MERAH","BIRU","HIJAU","KUNING","ORANGE","NAVY",
-  "GREY","ABU","MAROON","CREAM","BROWN","COKLAT","WHITE","BLACK","RED","BLUE",
-  "GREEN","YELLOW","HIGH","LOW","ALL","NEW","HC","LC","BW","HP","PH","GUM","NATURAL","DARK","LIGHT"];
-
+var KATA_UMUM=["HITAM","PUTIH","MERAH","BIRU","HIJAU","KUNING","ORANGE","NAVY","GREY","ABU","MAROON","CREAM","BROWN","COKLAT","WHITE","BLACK","RED","BLUE","GREEN","YELLOW","HIGH","LOW","ALL","NEW","HC","LC","BW","HP","PH","GUM","NATURAL","DARK","LIGHT"];
 function bersihkanTeks(teks){
   var t=teks.replace(/\n/g,' ').toUpperCase();
-  var noise=[/REG\.?\s*NO\.?\s*[\w\-\/]+/g,/NO\.?\s*\d[\w\-]*/g,/LOT\.?\s*[\w\-]+/g,
-    /SNI\.?\s*[\w\-:]+/g,/\b\d{8,}\b/g,/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g,
-    /MFD\.?:?\s*[\w\/\-]+/g,/EXP\.?:?\s*[\w\/\-]+/g,/MADE IN \w+/g,/www\.\S+/gi,
-    /ARTICLE\.?\s*[:\-]?\s*[\w\-\/]+/gi,/SIZE\s*[:\-]?\s*[\w\-\/]+/gi,
-    /COLOR\s*[:\-]?\s*[\w\-\/]+/gi,/\bSHOES\b/gi,/\s*&\s*/g];
+  var noise=[/REG\.?\s*NO\.?\s*[\w\-\/]+/g,/NO\.?\s*\d[\w\-]*/g,/LOT\.?\s*[\w\-]+/g,/SNI\.?\s*[\w\-:]+/g,/\b\d{8,}\b/g,/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g,/MFD\.?:?\s*[\w\/\-]+/g,/EXP\.?:?\s*[\w\/\-]+/g,/MADE IN \w+/g,/www\.\S+/gi,/ARTICLE\.?\s*[:\-]?\s*[\w\-\/]+/gi,/SIZE\s*[:\-]?\s*[\w\-\/]+/gi,/COLOR\s*[:\-]?\s*[\w\-\/]+/gi,/\bSHOES\b/gi,/\s*&\s*/g];
   noise.forEach(function(p){t=t.replace(p,' ');});
   return t.replace(/\s{2,}/g,' ').trim();
 }
 function extractSize(teks){var m=teks.match(/\b(3[0-9]|4[0-9]|50)\b/);return m?m[0]:'-';}
 function hitungSkorFuzzy(teksInput,kataMapping){
   var cocok=0,cocokUnik=0,total=kataMapping.length;
-  for(var j=0;j<kataMapping.length;j++){
-    var kata=kataMapping[j];
-    if(teksInput.indexOf(kata)!==-1){cocok++;if(KATA_UMUM.indexOf(kata)===-1)cocokUnik++;}
-  }
+  for(var j=0;j<kataMapping.length;j++){var kata=kataMapping[j];if(teksInput.indexOf(kata)!==-1){cocok++;if(KATA_UMUM.indexOf(kata)===-1)cocokUnik++;}}
   if(cocok===0)return 0;
   var skor=cocok/total;
   if(cocok===total)skor=1.0+(total*0.01);
@@ -928,23 +669,17 @@ function hitungSkorFuzzy(teksInput,kataMapping){
 }
 function fuzzyMatch(teksBersih){
   var mapping=getMapping(),modelTerbaik=null,skorTerbaik=0;
-  for(var i=0;i<mapping.length;i++){
-    var skor=hitungSkorFuzzy(teksBersih,mapping[i].kata);
-    if(skor>skorTerbaik){skorTerbaik=skor;modelTerbaik=mapping[i].hasil;}
-  }
+  for(var i=0;i<mapping.length;i++){var skor=hitungSkorFuzzy(teksBersih,mapping[i].kata);if(skor>skorTerbaik){skorTerbaik=skor;modelTerbaik=mapping[i].hasil;}}
   return{model:modelTerbaik||"Tidak dikenali",skor:Math.min(skorTerbaik,1.0)};
 }
 function cekKoreksiDB(rawText,teksBersih){
   var rawUpper=rawText.toUpperCase().replace(/\s+/g,' ').trim();
   for(var i=koreksiDB.length-1;i>=0;i--){
-    var k=koreksiDB[i];
-    var storedRaw=String(k.raw||'').toUpperCase().replace(/\s+/g,' ').trim();
+    var k=koreksiDB[i];var storedRaw=String(k.raw||'').toUpperCase().replace(/\s+/g,' ').trim();
     if(!k.benar||storedRaw.length<10)continue;
-    var fp=storedRaw.substring(0,80);
-    var fpKata=fp.split(/\s+/).filter(function(w){return w.length>=3;});
+    var fp=storedRaw.substring(0,80);var fpKata=fp.split(/\s+/).filter(function(w){return w.length>=3;});
     if(fpKata.length<2)continue;
-    var cocok=0;
-    fpKata.forEach(function(kw){if(rawUpper.indexOf(kw)!==-1)cocok++;});
+    var cocok=0;fpKata.forEach(function(kw){if(rawUpper.indexOf(kw)!==-1)cocok++;});
     if(cocok/fpKata.length>=0.85)return k.benar;
   }
   return null;
@@ -954,15 +689,10 @@ function cekKoreksiDB(rawText,teksBersih){
 // GEMINI / VISION OCR
 // ═══════════════════════════════════════════════════
 async function prosesGambar(base64Image){
-  var visionUrl='https://vision.googleapis.com/v1/images:annotate?key='+VISION_KEY;
-  var vResp=await fetch(visionUrl,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({requests:[{image:{content:base64Image},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]})
-  });
+  var vResp=await fetch('https://vision.googleapis.com/v1/images:annotate?key='+VISION_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requests:[{image:{content:base64Image},features:[{type:'DOCUMENT_TEXT_DETECTION',maxResults:1}]}]})});
   if(!vResp.ok)throw new Error('Vision API HTTP '+vResp.status);
   var vJson=await vResp.json();
-  if(!vJson.responses||!vJson.responses[0]||!vJson.responses[0].fullTextAnnotation)
-    throw new Error('Teks tidak terdeteksi');
+  if(!vJson.responses||!vJson.responses[0]||!vJson.responses[0].fullTextAnnotation)throw new Error('Teks tidak terdeteksi');
   return prosesTeks(vJson.responses[0].fullTextAnnotation.text);
 }
 function prosesTeks(rawText){
@@ -976,24 +706,13 @@ function prosesTeks(rawText){
 async function tanyaGemini(rawText,teksBersih,fuzzyCand,fuzzySkor){
   var mapping=getMapping(),daftar=[],seen={};
   mapping.forEach(function(m){if(!seen[m.hasil]){daftar.push(m.hasil);seen[m.hasil]=true;}});
-  // Tambah nama dari stokDB
   stokDB.slice(0,50).forEach(function(s){if(!seen[s.name]){daftar.push(s.name);seen[s.name]=true;}});
-  var koreksiStr='';
-  koreksiDB.slice(-15).forEach(function(k){if(k.salah&&k.benar)koreksiStr+='JIKA mirip "'+k.salah+'" GUNAKAN: "'+k.benar+'"\n';});
-  var prompt="Kamu sistem pengenal nama produk sepatu dari teks OCR.\n\n"+
-    "DAFTAR PRODUK VALID (pilih PERSIS dari sini):\n"+daftar.join('\n')+"\n\n"+
-    (koreksiStr?"KOREKSI OPERATOR:\n"+koreksiStr+"\n":"")+
-    "TEKS OCR:\n\""+rawText.replace(/\n/g,' ').substring(0,400)+"\"\n\n"+
-    "TEKS BERSIH:\n\""+teksBersih.substring(0,250)+"\"\n\n"+
-    (fuzzySkor>=0.25?"KANDIDAT FUZZY (skor "+Math.round(fuzzySkor*100)+"%):\n"+fuzzyCand+"\n\n":"")+
-    "INSTRUKSI:\n- Pilih nama PALING COCOK dari daftar\n- Tulis TIDAK_DIKENALI hanya jika benar-benar tidak ada\n- Balas HANYA nama produk\n\nJAWABAN:";
-  var url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY;
-  var resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.02,maxOutputTokens:80}})});
+  var koreksiStr='';koreksiDB.slice(-15).forEach(function(k){if(k.salah&&k.benar)koreksiStr+='JIKA mirip "'+k.salah+'" GUNAKAN: "'+k.benar+'"\n';});
+  var prompt="Kamu sistem pengenal nama produk sepatu dari teks OCR.\n\nDAFTAR PRODUK VALID:\n"+daftar.join('\n')+"\n\n"+(koreksiStr?"KOREKSI OPERATOR:\n"+koreksiStr+"\n":"")+"TEKS OCR:\n\""+rawText.replace(/\n/g,' ').substring(0,400)+"\"\n\nTEKS BERSIH:\n\""+teksBersih.substring(0,250)+"\"\n\n"+(fuzzySkor>=0.25?"KANDIDAT FUZZY (skor "+Math.round(fuzzySkor*100)+"%):\n"+fuzzyCand+"\n\n":"")+"INSTRUKSI:\n- Pilih nama PALING COCOK dari daftar\n- Tulis TIDAK_DIKENALI hanya jika benar-benar tidak ada\n- Balas HANYA nama produk\n\nJAWABAN:";
+  var resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.02,maxOutputTokens:80}})});
   if(!resp.ok)return null;
   var json=await resp.json();
-  if(json.candidates&&json.candidates[0]&&json.candidates[0].content)
-    return json.candidates[0].content.parts[0].text.trim().replace(/^["']|["']$/g,'').replace(/\.$/,'').trim();
+  if(json.candidates&&json.candidates[0]&&json.candidates[0].content)return json.candidates[0].content.parts[0].text.trim().replace(/^["']|["']$/g,'').replace(/\.$/,'').trim();
   return null;
 }
 async function prosesFotoKirim(base64Image){
@@ -1001,12 +720,9 @@ async function prosesFotoKirim(base64Image){
     var hasil=await prosesGambar(base64Image);
     if(hasil.tipe==='pending'){
       var aiJawaban=await tanyaGemini(hasil.rawText,hasil.teksBersih,hasil.model,hasil.fuzzySkor);
-      if(aiJawaban&&aiJawaban!=='TIDAK_DIKENALI')
-        hasil={model:aiJawaban,size:hasil.size,tipe:'ai',isAI:true};
-      else if(hasil.fuzzySkor>=0.50&&hasil.model!=='Tidak dikenali')
-        hasil={model:hasil.model,size:hasil.size,tipe:'warn',isAI:false};
-      else
-        hasil={model:'? CEK MANUAL',size:hasil.size,tipe:'err',isAI:false};
+      if(aiJawaban&&aiJawaban!=='TIDAK_DIKENALI')hasil={model:aiJawaban,size:hasil.size,tipe:'ai',isAI:true};
+      else if(hasil.fuzzySkor>=0.50&&hasil.model!=='Tidak dikenali')hasil={model:hasil.model,size:hasil.size,tipe:'warn',isAI:false};
+      else hasil={model:'? CEK MANUAL',size:hasil.size,tipe:'err',isAI:false};
     }
     return hasil;
   }catch(e){return{model:'Error: '+e.message.substring(0,40),size:'-',tipe:'err',isAI:false};}
@@ -1014,26 +730,28 @@ async function prosesFotoKirim(base64Image){
 function resizeCanvas(srcCanvas,maxW,maxH){
   var w=srcCanvas.width,h=srcCanvas.height,scale=Math.min(maxW/w,maxH/h,1);
   if(scale>=1)return srcCanvas;
-  var dst=document.createElement('canvas');
-  dst.width=Math.round(w*scale);dst.height=Math.round(h*scale);
-  dst.getContext('2d').drawImage(srcCanvas,0,0,dst.width,dst.height);
-  return dst;
+  var dst=document.createElement('canvas');dst.width=Math.round(w*scale);dst.height=Math.round(h*scale);
+  dst.getContext('2d').drawImage(srcCanvas,0,0,dst.width,dst.height);return dst;
 }
 
 // ═══════════════════════════════════════════════════
-// TAB SCAN
+// TAB NAVIGATION
 // ═══════════════════════════════════════════════════
 function switchTab(tab){
-  ['scan','stok'].forEach(function(t){
+  ['scan','stok','mapping'].forEach(function(t){
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
     document.getElementById('tabbtn-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='scan'&&stok2Running)stopScan2();
   if(tab==='stok'&&scanning)stopScan();
+  if(tab==='mapping'){updateMapStats();renderMapList();}
 }
+
+// ═══════════════════════════════════════════════════
+// SCAN TAB
+// ═══════════════════════════════════════════════════
 function setMode(m){
-  if(scanning)stopScan();
-  mode=m;
+  if(scanning)stopScan();mode=m;
   document.getElementById('btn-mode-foto').classList.toggle('active',m==='foto');
   document.getElementById('btn-mode-barcode').classList.toggle('active',m==='barcode');
   setStatus('Mode '+(m==='foto'?'Foto (OCR)':'Barcode')+' — tekan Mulai.');
@@ -1056,10 +774,8 @@ async function mulaiScan(){
   document.getElementById('cam-label').textContent='LIVE';
   if(mode==='foto'){
     document.getElementById('btn-cap').style.display='flex';
-    await startCamera();setStatus('Kamera aktif — arahkan ke label lalu tekan Foto.','loading');
-  }else{
-    await startBarcodeScanner();setStatus('Scanner aktif — arahkan barcode ke frame.','loading');
-  }
+    await startCamera();setStatus('Arahkan ke label lalu tekan Foto.','loading');
+  }else{await startBarcodeScanner();setStatus('Arahkan barcode ke frame.','loading');}
 }
 function stopScan(){
   scanning=false;sedangKirim=false;
@@ -1077,10 +793,8 @@ function stopScan(){
   setStatus('Dihentikan.');
 }
 async function startCamera(){
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
-    document.getElementById('video').srcObject=stream;
-  }catch(e){setStatus('Kamera tidak bisa diakses: '+e.message,'err');stopScan();}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});document.getElementById('video').srcObject=stream;}
+  catch(e){setStatus('Kamera tidak bisa diakses: '+e.message,'err');stopScan();}
 }
 async function ambilFoto(){
   if(!stream||sedangKirim)return;
@@ -1088,8 +802,7 @@ async function ambilFoto(){
   var video=document.getElementById('video'),canvas=document.getElementById('canvas');
   canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
   canvas.getContext('2d').drawImage(video,0,0);
-  var resized=resizeCanvas(canvas,FOTO_MAX_W,FOTO_MAX_H);
-  var b64=resized.toDataURL('image/jpeg',FOTO_QUALITY).split(',')[1];
+  var b64=resizeCanvas(canvas,FOTO_MAX_W,FOTO_MAX_H).toDataURL('image/jpeg',FOTO_QUALITY).split(',')[1];
   document.getElementById('cam-processing-scan').classList.add('show');
   document.getElementById('btn-cap').disabled=true;
   document.getElementById('cam-label').textContent='PROSES...';
@@ -1098,36 +811,29 @@ async function ambilFoto(){
   document.getElementById('cam-processing-scan').classList.remove('show');
   document.getElementById('btn-cap').disabled=false;
   document.getElementById('cam-label').textContent='LIVE';
-  tampilHasilScan(hasil,'foto');
-  sedangKirim=false;
+  tampilHasilScan(hasil,'foto');sedangKirim=false;
 }
 async function startBarcodeScanner(){
   codeReader=new ZXing.BrowserMultiFormatReader();
   var hints=new Map();
   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  codeReader.hints=hints;
+  hints.set(ZXing.DecodeHintType.TRY_HARDER,true);codeReader.hints=hints;
   try{
     await codeReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video',function(result,err){
       if(!result||!scanning||sedangKirim)return;
       var val=result.getText().trim(),now=Date.now(),valUpper=val.toUpperCase();
       if(valUpper===lastScan&&now-lastScanTime<3500)return;
-      lastScan=valUpper;lastScanTime=now;
-      bunyi('read');prosesBarcode(val);
+      lastScan=valUpper;lastScanTime=now;bunyi('read');prosesBarcode(val);
     });
   }catch(e){setStatus('Scanner error: '+e.message,'err');stopScan();}
 }
 function prosesBarcode(barcode){
   sedangKirim=true;setStatus('Memproses barcode...','loading');tutupKoreksi();
   var barcodeMap=getBarcodeMapVentela(),barcodeUpper=barcode.toUpperCase().trim();
-  if(barcodeMap[barcodeUpper]){
-    tampilHasilScan({model:barcodeMap[barcodeUpper],size:extractSize(barcode),tipe:'ok',isAI:false},'barcode');
-    sedangKirim=false;return;
-  }
+  if(barcodeMap[barcodeUpper]){tampilHasilScan({model:barcodeMap[barcodeUpper],size:extractSize(barcode),tipe:'ok',isAI:false},'barcode');sedangKirim=false;return;}
   var teksBersih=bersihkanTeks(barcode),hasilF=fuzzyMatch(teksBersih);
   var model=hasilF.skor>=0.5?hasilF.model:'? BARCODE: '+barcode.substring(0,30);
-  var tipe=hasilF.skor>=0.5?'ok':'warn';
-  tampilHasilScan({model:model,size:extractSize(barcode),tipe:tipe,isAI:false},'barcode');
+  tampilHasilScan({model:model,size:extractSize(barcode),tipe:hasilF.skor>=0.5?'ok':'warn',isAI:false},'barcode');
   sedangKirim=false;
 }
 function tampilHasilScan(hasil,sumber){
@@ -1140,23 +846,16 @@ function tampilHasilScan(hasil,sumber){
   if(isAI){cntAI++;bunyi('ai');}else if(tipe==='ok'){cntOk++;bunyi('ok');}else{cntMiss++;bunyi('miss');}
   updateStats();tambahHistory(model,size,isAI?'ai':tipe,isAI,sumber);
 }
-function tampilKoreksi(m){
-  document.getElementById('hasil-terdeteksi').textContent=m;
-  document.getElementById('inp-koreksi').value='';
-  document.getElementById('koreksi-wrap').classList.add('visible');
-}
+function tampilKoreksi(m){document.getElementById('hasil-terdeteksi').textContent=m;document.getElementById('inp-koreksi').value='';document.getElementById('koreksi-wrap').classList.add('visible');}
 function tutupKoreksi(){document.getElementById('koreksi-wrap').classList.remove('visible');}
 function kirimKoreksi(){
   var benar=document.getElementById('inp-koreksi').value.trim();
   if(!benar){showToast('Isi nama produk yang benar dulu.');return;}
   koreksiDB.push({raw:hasilTerakhirModel,salah:hasilTerakhirModel,benar:benar});
-  tutupKoreksi();bunyi('ok');
-  setStatus('✅ Koreksi tersimpan: '+benar,'ok');showToast('Koreksi disimpan: '+benar);
+  tutupKoreksi();bunyi('ok');setStatus('✅ Koreksi tersimpan: '+benar,'ok');showToast('Koreksi disimpan: '+benar);
 }
 function updateStats(){
-  document.getElementById('cnt-ok').textContent=cntOk;
-  document.getElementById('cnt-ai').textContent=cntAI;
-  document.getElementById('cnt-miss').textContent=cntMiss;
+  document.getElementById('cnt-ok').textContent=cntOk;document.getElementById('cnt-ai').textContent=cntAI;document.getElementById('cnt-miss').textContent=cntMiss;
   document.getElementById('total-count').textContent=cntOk+cntAI+cntMiss;
 }
 var histItems=[];
@@ -1189,16 +888,12 @@ function hideModal(){document.getElementById('modal-reset').classList.remove('op
 function doReset(){clearHistory();hideModal();}
 
 // ═══════════════════════════════════════════════════
-// TAB CEK STOK
+// STOK TAB
 // ═══════════════════════════════════════════════════
 function onSizeInput(){
   var v=parseInt(document.getElementById('inp-size').value);
   document.querySelectorAll('.size-chip').forEach(function(c){c.classList.remove('on');});
-  if(v>=30&&v<=50){
-    sizeTarget=v;
-    document.querySelectorAll('.size-chip').forEach(function(c){if(parseInt(c.textContent)===v)c.classList.add('on');});
-    if(seriDetected&&!sedangCariStok)cariStok(seriDetected,v);
-  }
+  if(v>=30&&v<=50){sizeTarget=v;document.querySelectorAll('.size-chip').forEach(function(c){if(parseInt(c.textContent)===v)c.classList.add('on');});if(seriDetected&&!sedangCariStok)cariStok(seriDetected,v);}
 }
 function setSize(n){
   document.getElementById('inp-size').value=n;sizeTarget=n;
@@ -1206,42 +901,30 @@ function setSize(n){
   if(seriDetected&&!sedangCariStok)cariStok(seriDetected,n);
 }
 function setMode2(m){
-  if(stok2Running)stopScan2();
-  mode2=m;
+  if(stok2Running)stopScan2();mode2=m;
   document.getElementById('btn2-mode-foto').className='mode2-btn'+(m==='foto'?' active-foto':'');
   document.getElementById('btn2-mode-barcode').className='mode2-btn'+(m==='barcode'?' active-barcode':'');
 }
 async function mulaiScan2(){
   if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
   stok2Running=true;
-  document.getElementById('idle2').style.display='none';
-  document.getElementById('btn2-start').style.display='none';
-  document.getElementById('btn2-stop').style.display='flex';
-  document.getElementById('scan-line2').style.display='block';
-  document.getElementById('cam-dot2').classList.add('live');
-  document.getElementById('cam-label2').textContent='LIVE';
+  document.getElementById('idle2').style.display='none';document.getElementById('btn2-start').style.display='none';document.getElementById('btn2-stop').style.display='flex';document.getElementById('scan-line2').style.display='block';document.getElementById('cam-dot2').classList.add('live');document.getElementById('cam-label2').textContent='LIVE';
   if(mode2==='foto'){
     document.getElementById('btn2-foto').style.display='flex';
-    try{
-      stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});
-      document.getElementById('video2').srcObject=stream2;
-    }catch(e){showToast('Kamera tidak bisa diakses');stopScan2();}
+    try{stream2=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});document.getElementById('video2').srcObject=stream2;}
+    catch(e){showToast('Kamera tidak bisa diakses');stopScan2();}
   }else{
     document.getElementById('btn2-foto').style.display='none';
     codeReader2=new ZXing.BrowserMultiFormatReader();
-    var hints=new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-    codeReader2.hints=hints;
+    var hints=new Map();hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8]);hints.set(ZXing.DecodeHintType.TRY_HARDER,true);codeReader2.hints=hints;
     try{
       await codeReader2.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:640}}},'video2',function(result,err){
         if(!result||!stok2Running||sedangCariStok)return;
         var val=result.getText().trim(),now=Date.now(),valUpper=val.toUpperCase();
         if(valUpper===lastScan2&&now-lastScanTime2<4000)return;
-        lastScan2=valUpper;lastScanTime2=now;
-        bunyi('read');
+        lastScan2=valUpper;lastScanTime2=now;bunyi('read');
         var barcodeMap=getBarcodeMapVentela(),model;
-        if(barcodeMap[valUpper]){model=barcodeMap[valUpper];}
+        if(barcodeMap[valUpper])model=barcodeMap[valUpper];
         else{var hasilF=fuzzyMatch(bersihkanTeks(val));model=hasilF.skor>=0.5?hasilF.model:val;}
         prosesModel2(model);
       });
@@ -1252,366 +935,152 @@ function stopScan2(){
   stok2Running=false;
   if(stream2){stream2.getTracks().forEach(function(t){t.stop();});stream2=null;}
   if(codeReader2){try{codeReader2.reset();}catch(e){}codeReader2=null;}
-  document.getElementById('video2').srcObject=null;
-  document.getElementById('scan-line2').style.display='none';
-  document.getElementById('btn2-start').style.display='flex';
-  document.getElementById('btn2-stop').style.display='none';
-  document.getElementById('btn2-foto').style.display='none';
-  document.getElementById('idle2').style.display='flex';
-  document.getElementById('cam-dot2').classList.remove('live');
-  document.getElementById('cam-label2').textContent='Kamera tidak aktif';
+  document.getElementById('video2').srcObject=null;document.getElementById('scan-line2').style.display='none';document.getElementById('btn2-start').style.display='flex';document.getElementById('btn2-stop').style.display='none';document.getElementById('btn2-foto').style.display='none';document.getElementById('idle2').style.display='flex';document.getElementById('cam-dot2').classList.remove('live');document.getElementById('cam-label2').textContent='Kamera tidak aktif';
 }
 async function ambilFoto2(){
-  if(sedangCariStok)return;
-  bunyi('read');
+  if(sedangCariStok)return;bunyi('read');
   var video=document.getElementById('video2'),canvas=document.getElementById('canvas2');
-  canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;
-  canvas.getContext('2d').drawImage(video,0,0);
-  var resized=resizeCanvas(canvas,FOTO_MAX_W,FOTO_MAX_H);
-  var b64=resized.toDataURL('image/jpeg',FOTO_QUALITY).split(',')[1];
-  var proc=document.getElementById('cam-processing');
-  proc.classList.add('show');
-  document.getElementById('cam-label2').textContent='PROSES...';
+  canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;canvas.getContext('2d').drawImage(video,0,0);
+  var b64=resizeCanvas(canvas,FOTO_MAX_W,FOTO_MAX_H).toDataURL('image/jpeg',FOTO_QUALITY).split(',')[1];
+  var proc=document.getElementById('cam-processing');proc.classList.add('show');document.getElementById('cam-label2').textContent='PROSES...';
   try{
-    var hasil=await prosesFotoKirim(b64);
-    proc.classList.remove('show');
-    document.getElementById('cam-label2').textContent='LIVE';
-    if(hasil.tipe==='err'){bunyi('miss');showToastBig('📷','Label Tidak Terbaca',hasil.model,'warn');}
-    else prosesModel2(hasil.model);
-  }catch(e){
-    proc.classList.remove('show');
-    document.getElementById('cam-label2').textContent='LIVE';
-    bunyi('miss');showToastBig('📵','Gagal Proses',e.message,'');
-  }
+    var hasil=await prosesFotoKirim(b64);proc.classList.remove('show');document.getElementById('cam-label2').textContent='LIVE';
+    if(hasil.tipe==='err'){bunyi('miss');showToast('Label tidak terbaca','err');}else prosesModel2(hasil.model);
+  }catch(e){proc.classList.remove('show');document.getElementById('cam-label2').textContent='LIVE';bunyi('miss');showToast('Gagal: '+e.message,'err');}
 }
 function prosesModel2(model){
-  seriDetected=model;
-  document.getElementById('detected-bar').classList.add('show');
-  document.getElementById('det-val').textContent=model;
+  seriDetected=model;document.getElementById('detected-bar').classList.add('show');document.getElementById('det-val').textContent=model;
   if(!sizeTarget){showToast('Isi ukuran yang dicari dulu!');document.getElementById('inp-size').focus();return;}
   cariStok(model,sizeTarget);
 }
-function toggleManual(){
-  var w=document.getElementById('manual-wrap');
-  w.classList.toggle('show');
-  if(w.classList.contains('show'))document.getElementById('inp-manual').focus();
-}
-function submitManual(){
-  var v=document.getElementById('inp-manual').value.trim();
-  if(!v){showToast('Ketik kode seri dulu');return;}
-  document.getElementById('manual-wrap').classList.remove('show');
-  document.getElementById('inp-manual').value='';
-  prosesModel2(v.toUpperCase());
-}
+function toggleManual(){var w=document.getElementById('manual-wrap');w.classList.toggle('show');if(w.classList.contains('show'))document.getElementById('inp-manual').focus();}
+function submitManual(){var v=document.getElementById('inp-manual').value.trim();if(!v){showToast('Ketik kode seri dulu');return;}document.getElementById('manual-wrap').classList.remove('show');document.getElementById('inp-manual').value='';prosesModel2(v.toUpperCase());}
 
-// ═══════════════════════════════════════════════════
-// CARI STOK — 3 Level Referensi
-// L1: Exact match (produk yg discant)
-// L2: Keluarga (prefix angka / Sparta / Ventela / kata pertama)
-// L3: Warna serupa dari seluruh stok
-// ═══════════════════════════════════════════════════
-
-// Daftar warna yang dikenali (urutan panjang dulu supaya match lebih spesifik)
-var WARNA_LIST=[
-  'ALL BLACK','ALL WHITE','HITAM PUTIH','BLACK WHITE','DARK GREY','ASH GREY','OLIVE GREEN',
-  'LIGHT PINK','BLACK NATURAL','BLACK GUM','BROWN GUM','GREEN GUM','BROWN GREE','GREY BROWN',
-  'BLACK BROWN','WHITE BROWN','DARK YELLOW',
-  'HITAM','PUTIH','MERAH','BIRU','HIJAU','KUNING','ORANGE','NAVY','GREY','ABU',
-  'MAROON','CREAM','BROWN','COKLAT','WHITE','BLACK','RED','BLUE','GREEN','YELLOW',
-  'SILVER','EMAS','GOLD','PINK','TOSCA','ARMY','NATURAL','GUM','B/NAT','BNAT'
-];
-
-// Ekstrak prefix keluarga dari nama produk
-function getPrefix(namaUpper){
-  // Prefix angka: 8172, 8111, dll
-  var mNum=namaUpper.match(/^(\d{3,5})/);
-  if(mNum)return{type:'angka',key:mNum[1]};
-  // Brand khusus
-  var brands=['VENTELA','SPARTA','KODACHI','WARRIOR','DRAGONFLY','PATROBAS','RUNNER',
-               'GALAXY','RIVIERA','DALLAS','ARTHUR','ATHENA','VENUS','CLASSIC','AR PLUS',
-               'MB BAGUS','NEW YORKER'];
-  for(var i=0;i<brands.length;i++){
-    if(namaUpper.indexOf(brands[i])===0||namaUpper.indexOf(brands[i])!==-1)
-      return{type:'brand',key:brands[i]};
-  }
-  // Kata pertama sebagai prefix
-  var kata=namaUpper.split(/\s+/)[0];
-  return{type:'kata',key:kata};
-}
-
-// Ekstrak warna dari nama produk
-function getWarna(namaUpper){
-  var found=[];
-  for(var i=0;i<WARNA_LIST.length;i++){
-    if(namaUpper.indexOf(WARNA_LIST[i])!==-1)found.push(WARNA_LIST[i]);
-  }
-  return found;
-}
-
-// Ambil data satu produk dari stokDB untuk range size
-function getSizeData(row,minSize,maxSize){
-  var sizes={};
-  for(var sz=minSize;sz<=maxSize;sz++)sizes[sz]=(row.sizes&&row.sizes[sz])||0;
-  return sizes;
-}
-
+var WARNA_LIST=['ALL BLACK','ALL WHITE','HITAM PUTIH','BLACK WHITE','DARK GREY','ASH GREY','OLIVE GREEN','LIGHT PINK','BLACK NATURAL','BLACK GUM','BROWN GUM','GREEN GUM','GREY BROWN','BLACK BROWN','WHITE BROWN','DARK YELLOW','HITAM','PUTIH','MERAH','BIRU','HIJAU','KUNING','ORANGE','NAVY','GREY','ABU','MAROON','CREAM','BROWN','COKLAT','WHITE','BLACK','RED','BLUE','GREEN','YELLOW','SILVER','EMAS','GOLD','PINK','TOSCA','ARMY','NATURAL','GUM','B/NAT','BNAT'];
+function getPrefix(n){var m=n.match(/^(\d{3,5})/);if(m)return{type:'angka',key:m[1]};var brands=['VENTELA','SPARTA','KODACHI','WARRIOR','DRAGONFLY','PATROBAS','RUNNER','GALAXY','RIVIERA','DALLAS','ARTHUR','ATHENA','VENUS','CLASSIC','AR PLUS','MB BAGUS','NEW YORKER'];for(var i=0;i<brands.length;i++){if(n.indexOf(brands[i])!==-1)return{type:'brand',key:brands[i]};}return{type:'kata',key:n.split(/\s+/)[0]};}
+function getWarna(n){var f=[];for(var i=0;i<WARNA_LIST.length;i++){if(n.indexOf(WARNA_LIST[i])!==-1)f.push(WARNA_LIST[i]);}return f;}
+function getSizeData(row,minS,maxS){var s={};for(var sz=minS;sz<=maxS;sz++)s[sz]=(row.sizes&&row.sizes[sz])||0;return s;}
 function cariStok(seriInput,sizeTgt){
-  if(sedangCariStok)return;
-  sedangCariStok=true;
-  var hb=document.getElementById('hero-box');
-  hb.className='hero-box show loading';
-  document.getElementById('hero-status').className='hero-status loading';
-  document.getElementById('hero-status').textContent='Mengecek stok...';
-  document.getElementById('hero-sub').textContent=seriInput+' - Size '+sizeTgt;
-  document.getElementById('stok-tbl-wrap').classList.remove('show');
-  document.getElementById('price-card').classList.remove('show');
-  document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
+  if(sedangCariStok)return;sedangCariStok=true;
+  var hb=document.getElementById('hero-box');hb.className='hero-box show loading';document.getElementById('hero-status').className='hero-status loading';document.getElementById('hero-status').textContent='Mengecek stok...';document.getElementById('hero-sub').textContent=seriInput+' - Size '+sizeTgt;document.getElementById('stok-tbl-wrap').classList.remove('show');document.getElementById('price-card').classList.remove('show');document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty loading-dots">Mengambil data</div>';
   try{
-    var sizeTgtInt=parseInt(sizeTgt);
-    var minSize=sizeTgtInt-2,maxSize=sizeTgtInt+2;
-    var displaySizes=[];for(var s=minSize;s<=maxSize;s++)displaySizes.push(s);
-
-    var result=buildStokLevels(seriInput,sizeTgtInt,minSize,maxSize,displaySizes);
+    var si=parseInt(sizeTgt),minS=si-2,maxS=si+2,dispS=[];for(var s=minS;s<=maxS;s++)dispS.push(s);
+    var result=buildStokLevels(seriInput,si,minS,maxS,dispS);
     var hargaInfo=queryHarga(seriInput,sizeTgt);
-    renderStokResult(result,sizeTgtInt,seriInput,hargaInfo);
-  }catch(e){
-    hb.className='hero-box show habis';
-    document.getElementById('hero-status').className='hero-status habis';
-    document.getElementById('hero-status').textContent='Error';
-    document.getElementById('hero-sub').textContent=e.message;
-  }
+    renderStokResult(result,si,seriInput,hargaInfo);
+  }catch(e){hb.className='hero-box show habis';document.getElementById('hero-status').className='hero-status habis';document.getElementById('hero-status').textContent='Error';document.getElementById('hero-sub').textContent=e.message;}
   sedangCariStok=false;
 }
-
-function buildStokLevels(seriInput,sizeTgt,minSize,maxSize,displaySizes){
-  var seriUpper=String(seriInput).toUpperCase().trim();
-  var keywords=seriUpper.split(/[\s\/\-]+/).filter(function(k){return k.length>=2;});
-  var prefix=getPrefix(seriUpper);
-  var warnaInput=getWarna(seriUpper);
-
-  // Set untuk track produk yang sudah masuk level sebelumnya
-  var seenKeys={};
-
-  // ── LEVEL 1: Exact match (nama persis / sangat mirip)
-  var l1=[];
-  stokDB.forEach(function(row){
-    var namaUpper=row.name.toUpperCase().trim();
-    var score=0;
-    if(namaUpper===seriUpper)score=100;
-    else if(namaUpper.indexOf(seriUpper)!==-1)score=90;
-    else if(seriUpper.length>=5&&seriUpper.indexOf(namaUpper)!==-1)score=80;
-    else if(keywords.length>=2){
-      var allMatch=keywords.every(function(kw){return namaUpper.indexOf(kw)!==-1;});
-      if(allMatch)score=70;
-    }
-    if(score===0)return;
-    var key=namaUpper;
-    if(seenKeys[key])return;
-    seenKeys[key]=true;
-    l1.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:score,level:1});
-  });
-  l1.sort(function(a,b){return b._score-a._score;});
-
-  // ── LEVEL 2: Keluarga (prefix sama, tapi bukan exact)
-  var l2=[];
-  stokDB.forEach(function(row){
-    var namaUpper=row.name.toUpperCase().trim();
-    var key=namaUpper;
-    if(seenKeys[key])return;
-    var rowPrefix=getPrefix(namaUpper);
-    var isKeluarga=false;
-    if(prefix.key&&rowPrefix.key){
-      if(prefix.type==='angka'&&rowPrefix.type==='angka'&&rowPrefix.key===prefix.key)isKeluarga=true;
-      else if(prefix.type==='brand'&&namaUpper.indexOf(prefix.key)!==-1)isKeluarga=true;
-      else if(prefix.type==='kata'&&rowPrefix.key===prefix.key)isKeluarga=true;
-    }
-    if(!isKeluarga)return;
-    seenKeys[key]=true;
-    l2.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:50,level:2});
-  });
-  // Sort: yang ada stok size target dulu
-  l2.sort(function(a,b){
-    var qa=(a.sizes[sizeTgt]||0),qb=(b.sizes[sizeTgt]||0);
-    if(qb!==qa)return qb-qa;
-    return a.seri.localeCompare(b.seri);
-  });
-
-  // ── LEVEL 3: Warna serupa dari seluruh stok
-  var l3=[];
-  if(warnaInput.length>0){
-    stokDB.forEach(function(row){
-      var namaUpper=row.name.toUpperCase().trim();
-      var key=namaUpper;
-      if(seenKeys[key])return;
-      var warnaRow=getWarna(namaUpper);
-      // Cek ada warna yang sama
-      var warnaMatch=warnaInput.some(function(w){return warnaRow.indexOf(w)!==-1;});
-      if(!warnaMatch)return;
-      // Hanya tampilkan yang ada stok di size target atau ±1
-      var hasStok=false;
-      for(var sz=sizeTgt-1;sz<=sizeTgt+1;sz++){if((row.sizes&&row.sizes[sz])||0)hasStok=true;}
-      if(!hasStok)return;
-      seenKeys[key]=true;
-      l3.push({seri:row.name,sizes:getSizeData(row,minSize,maxSize),_score:20,level:3});
-    });
-    l3.sort(function(a,b){
-      var qa=(a.sizes[sizeTgt]||0),qb=(b.sizes[sizeTgt]||0);
-      return qb-qa;
-    });
-  }
-
-  return{l1:l1,l2:l2,l3:l3,sizes:displaySizes,warnaInput:warnaInput,prefix:prefix};
+function buildStokLevels(seriInput,sizeTgt,minS,maxS,dispS){
+  var su=String(seriInput).toUpperCase().trim();var kw=su.split(/[\s\/\-]+/).filter(function(k){return k.length>=2;});var prefix=getPrefix(su);var warnaInput=getWarna(su);var seen={};
+  var l1=[];stokDB.forEach(function(row){var nu=row.name.toUpperCase().trim(),score=0;if(nu===su)score=100;else if(nu.indexOf(su)!==-1)score=90;else if(su.length>=5&&su.indexOf(nu)!==-1)score=80;else if(kw.length>=2){var am=kw.every(function(k){return nu.indexOf(k)!==-1;});if(am)score=70;}if(score===0)return;var key=nu;if(seen[key])return;seen[key]=true;l1.push({seri:row.name,sizes:getSizeData(row,minS,maxS),_score:score,level:1});});l1.sort(function(a,b){return b._score-a._score;});
+  var l2=[];stokDB.forEach(function(row){var nu=row.name.toUpperCase().trim(),key=nu;if(seen[key])return;var rp=getPrefix(nu),ik=false;if(prefix.key&&rp.key){if(prefix.type==='angka'&&rp.type==='angka'&&rp.key===prefix.key)ik=true;else if(prefix.type==='brand'&&nu.indexOf(prefix.key)!==-1)ik=true;else if(prefix.type==='kata'&&rp.key===prefix.key)ik=true;}if(!ik)return;seen[key]=true;l2.push({seri:row.name,sizes:getSizeData(row,minS,maxS),_score:50,level:2});});l2.sort(function(a,b){var qa=(a.sizes[sizeTgt]||0),qb=(b.sizes[sizeTgt]||0);if(qb!==qa)return qb-qa;return a.seri.localeCompare(b.seri);});
+  var l3=[];if(warnaInput.length>0){stokDB.forEach(function(row){var nu=row.name.toUpperCase().trim(),key=nu;if(seen[key])return;var wr=getWarna(nu);var wm=warnaInput.some(function(w){return wr.indexOf(w)!==-1;});if(!wm)return;var hs=false;for(var sz=sizeTgt-1;sz<=sizeTgt+1;sz++){if((row.sizes&&row.sizes[sz])||0)hs=true;}if(!hs)return;seen[key]=true;l3.push({seri:row.name,sizes:getSizeData(row,minS,maxS),_score:20,level:3});});l3.sort(function(a,b){return((b.sizes[sizeTgt]||0)-(a.sizes[sizeTgt]||0));});}
+  return{l1:l1,l2:l2,l3:l3,sizes:dispS,warnaInput:warnaInput,prefix:prefix};
 }
-
 function queryHarga(seriInput,sizeTarget){
-  var seriUpper=String(seriInput).toUpperCase().trim();
-  for(var i=0;i<hargaDB.length;i++){
-    var h=hargaDB[i];if(!h.varian)continue;
-    if(h.varian.toUpperCase().trim()===seriUpper)return buildHargaResult(h,sizeTarget);
-  }
-  for(var i=0;i<hargaDB.length;i++){
-    var h=hargaDB[i];if(!h.varian)continue;
-    var hU=h.varian.toUpperCase().trim();
-    if(hU.indexOf(seriUpper)!==-1||seriUpper.indexOf(hU)!==-1)return buildHargaResult(h,sizeTarget);
-  }
+  var su=String(seriInput).toUpperCase().trim();
+  for(var i=0;i<hargaDB.length;i++){var h=hargaDB[i];if(!h.varian)continue;if(h.varian.toUpperCase().trim()===su)return buildHargaResult(h,sizeTarget);}
+  for(var i=0;i<hargaDB.length;i++){var h=hargaDB[i];if(!h.varian)continue;var hU=h.varian.toUpperCase().trim();if(hU.indexOf(su)!==-1||su.indexOf(hU)!==-1)return buildHargaResult(h,sizeTarget);}
   return null;
 }
 function buildHargaResult(h,sizeTarget){
-  var hb=h.hargaBaru||0,hr=h.hargaRetail||0;
-  var sz=parseInt(sizeTarget),plus=false;
+  var hb=h.hargaBaru||0,hr=h.hargaRetail||0,sz=parseInt(sizeTarget),plus=false;
   if(sz===44||sz===45){hb+=5000;plus=true;}
-  var diskonR=Math.max(0,hr-hb),diskonP=hr>0?Math.round(diskonR/hr*100):0;
-  return{hargaBaru:hb,hargaRetail:hr,diskonRupiah:diskonR,diskonPersen:diskonP,size44plus:plus};
+  var dr=Math.max(0,hr-hb),dp=hr>0?Math.round(dr/hr*100):0;
+  return{hargaBaru:hb,hargaRetail:hr,diskonRupiah:dr,diskonPersen:dp,size44plus:plus};
 }
-
 function renderStokResult(data,sizeTgt,seriInput,hargaInfo){
-  var hb=document.getElementById('hero-box');
-  var l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
-
-  if(!l1.length&&!l2.length&&!l3.length){
-    hb.className='hero-box show habis';
-    document.getElementById('hero-status').className='hero-status habis';
-    document.getElementById('hero-status').textContent='❌ Tidak Ditemukan';
-    document.getElementById('hero-sub').textContent='"'+seriInput+'" tidak ada di database stok';
-    bunyi('miss');
-    document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>';
-    document.getElementById('price-card').classList.remove('show');return;
-  }
-
-  // Status hero: berdasarkan L1 exact
-  var exactRow=l1[0]||null;
-  var exactQty=exactRow?((exactRow.sizes&&exactRow.sizes[sizeTgt])||0):0;
-  var l1Ready=l1.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
+  var hb=document.getElementById('hero-box'),l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
+  if(!l1.length&&!l2.length&&!l3.length){hb.className='hero-box show habis';document.getElementById('hero-status').className='hero-status habis';document.getElementById('hero-status').textContent='❌ Tidak Ditemukan';document.getElementById('hero-sub').textContent='"'+seriInput+'" tidak ada di database';bunyi('miss');document.getElementById('stok-tbl-body').innerHTML='<div class="stok-empty">Tidak ada stok ditemukan</div>';document.getElementById('price-card').classList.remove('show');return;}
+  var exactRow=l1[0]||null,exactQty=exactRow?((exactRow.sizes&&exactRow.sizes[sizeTgt])||0):0;
   var l2Ready=l2.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
   var l3Ready=l3.filter(function(r){return((r.sizes&&r.sizes[sizeTgt])||0)>0;});
-
-  if(exactQty>0){
-    hb.className='hero-box show ready';
-    document.getElementById('hero-status').className='hero-status ready';
-    document.getElementById('hero-status').textContent='✅ READY - Size '+sizeTgt;
-    document.getElementById('hero-sub').textContent='Stok: '+exactQty+' pasang';
-    bunyi('ok');
-  }else{
-    hb.className='hero-box show habis';
-    document.getElementById('hero-status').className='hero-status habis';
-    document.getElementById('hero-status').textContent='❌ HABIS - Size '+sizeTgt;
-    var altMsg=[];
-    if(l2Ready.length)altMsg.push(l2Ready.length+' keluarga ready');
-    if(l3Ready.length)altMsg.push(l3Ready.length+' warna serupa ready');
-    document.getElementById('hero-sub').textContent=altMsg.length?altMsg.join(' · ') + ' ↓':'Cek alternatif di bawah ↓';
-    bunyi('miss');
-  }
-
-  if(hargaInfo&&hargaInfo.hargaBaru){
-    document.getElementById('price-baru').textContent='Rp '+fmtNum(hargaInfo.hargaBaru);
-    document.getElementById('price-retail').textContent=hargaInfo.hargaRetail>hargaInfo.hargaBaru?'Rp '+fmtNum(hargaInfo.hargaRetail):'';
-    document.getElementById('price-diskon').textContent=hargaInfo.diskonPersen>0?'-'+hargaInfo.diskonPersen+'%':'';
-    var note='';
-    if(hargaInfo.size44plus)note+='Size 44/45: +Rp 5.000 &nbsp;·&nbsp; ';
-    if(hargaInfo.diskonRupiah>0)note+='Hemat Rp '+fmtNum(hargaInfo.diskonRupiah);
-    document.getElementById('price-note').innerHTML=note;
-    document.getElementById('price-card').classList.add('show');
-  }else{
-    document.getElementById('price-card').classList.remove('show');
-  }
-
+  if(exactQty>0){hb.className='hero-box show ready';document.getElementById('hero-status').className='hero-status ready';document.getElementById('hero-status').textContent='✅ READY - Size '+sizeTgt;document.getElementById('hero-sub').textContent='Stok: '+exactQty+' pasang';bunyi('ok');}
+  else{hb.className='hero-box show habis';document.getElementById('hero-status').className='hero-status habis';document.getElementById('hero-status').textContent='❌ HABIS - Size '+sizeTgt;var altMsg=[];if(l2Ready.length)altMsg.push(l2Ready.length+' keluarga ready');if(l3Ready.length)altMsg.push(l3Ready.length+' warna serupa ready');document.getElementById('hero-sub').textContent=altMsg.length?altMsg.join(' · ')+' ↓':'Cek alternatif di bawah ↓';bunyi('miss');}
+  if(hargaInfo&&hargaInfo.hargaBaru){document.getElementById('price-baru').textContent='Rp '+fmtNum(hargaInfo.hargaBaru);document.getElementById('price-retail').textContent=hargaInfo.hargaRetail>hargaInfo.hargaBaru?'Rp '+fmtNum(hargaInfo.hargaRetail):'';document.getElementById('price-diskon').textContent=hargaInfo.diskonPersen>0?'-'+hargaInfo.diskonPersen+'%':'';var note='';if(hargaInfo.size44plus)note+='Size 44/45: +Rp 5.000 &nbsp;·&nbsp; ';if(hargaInfo.diskonRupiah>0)note+='Hemat Rp '+fmtNum(hargaInfo.diskonRupiah);document.getElementById('price-note').innerHTML=note;document.getElementById('price-card').classList.add('show');}
+  else{document.getElementById('price-card').classList.remove('show');}
   renderStokTable(data,sizeTgt,seriInput);
 }
-
 function renderStokTable(data,sizeTgt,seriInput){
-  var tbody=document.getElementById('stok-tbl-body');
-  document.getElementById('stok-tbl-wrap').classList.add('show');
-  var sizes=data.sizes||[];
-  var l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
-
-  function makeHeader(label,color,emoji){
-    return '<tr><td colspan="'+(sizes.length+1)+'" style="padding:5px 10px 3px;font-family:var(--mono);'
-      +'font-size:9px;letter-spacing:2px;text-transform:uppercase;color:'+color
-      +';background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">'
-      +emoji+' '+label+'</td></tr>';
-  }
-
-  function makeRows(rows,badgeLabel,badgeColor,badgeBg){
-    var h='';
-    rows.forEach(function(row){
-      var hasTgt=((row.sizes&&row.sizes[sizeTgt])||0)>0;
-      var rowStyle='';
-      if(row.level===1&&hasTgt)rowStyle=' class="hl"';
-      else if(row.level===1&&!hasTgt)rowStyle=' style="background:rgba(244,63,94,.06)"';
-      else if(row.level===2&&hasTgt)rowStyle=' style="background:rgba(251,191,36,.05)"';
-      else if(row.level===3&&hasTgt)rowStyle=' style="background:rgba(34,211,160,.04)"';
-      h+='<tr'+rowStyle+'>';
-      var badge=' <span style="font-size:9px;background:'+badgeBg+';color:'+badgeColor
-        +';border-radius:4px;padding:1px 5px">'+badgeLabel+'</span>';
-      h+='<td class="td-nm">'+esc(row.seri)+badge+'</td>';
-      sizes.forEach(function(sz){
-        var qty=(row.sizes&&row.sizes[sz])||0;
-        var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');
-        h+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';
-      });
-      h+='</tr>';
-    });
-    return h;
-  }
-
-  var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';
-  sizes.forEach(function(sz){html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' ✦':'')+'</th>';});
-  html+='</tr></thead><tbody>';
-
-  // L1
-  if(l1.length){
-    html+=makeHeader('Produk Discant','var(--acc2)','🎯');
-    html+=makeRows(l1,'scan','var(--acc2)','rgba(124,106,247,.2)');
-  }
-
-  // L2
-  if(l2.length){
-    html+=makeHeader('Keluarga '+data.prefix.key,'var(--amber)','📦');
-    html+=makeRows(l2,'keluarga','var(--amber)','rgba(251,191,36,.2)');
-  }
-
-  // L3
-  if(l3.length){
-    var warnaLabel=data.warnaInput.slice(0,2).join(', ');
-    html+=makeHeader('Warna Serupa ('+warnaLabel+')','var(--green)','🎨');
-    html+=makeRows(l3,'warna','var(--green)','rgba(34,211,160,.2)');
-  }
-
-  if(!l1.length&&!l2.length&&!l3.length){
-    html+='<tr><td colspan="'+(sizes.length+1)+'" class="stok-empty">Tidak ada stok</td></tr>';
-  }
-
-  html+='</tbody></table>';
-  html+='<div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">'
-    +'<span style="color:var(--green)">✦ = size target</span>'
-    +'<span style="color:var(--acc2)">scan = produk discant</span>'
-    +'<span style="color:var(--amber)">keluarga = seri sama</span>'
-    +'<span style="color:var(--green)">warna = warna serupa</span>'
-    +'<span>angka = pasang · - = habis</span></div>';
-
-  document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;
-  document.getElementById('stok-tbl-sub').textContent='±2 size · 3 level ref';
+  var tbody=document.getElementById('stok-tbl-body');document.getElementById('stok-tbl-wrap').classList.add('show');var sizes=data.sizes||[],l1=data.l1||[],l2=data.l2||[],l3=data.l3||[];
+  function mH(label,color,emoji){return '<tr><td colspan="'+(sizes.length+1)+'" style="padding:5px 10px 3px;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:'+color+';background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.05)">'+emoji+' '+label+'</td></tr>';}
+  function mR(rows,badge,bc,bg){var h='';rows.forEach(function(row){var hasTgt=((row.sizes&&row.sizes[sizeTgt])||0)>0,rs='';if(row.level===1&&hasTgt)rs=' class="hl"';else if(row.level===1&&!hasTgt)rs=' style="background:rgba(244,63,94,.06)"';else if(row.level===2&&hasTgt)rs=' style="background:rgba(251,191,36,.05)"';else if(row.level===3&&hasTgt)rs=' style="background:rgba(34,211,160,.04)"';h+='<tr'+rs+'><td class="td-nm">'+esc(row.seri)+' <span style="font-size:9px;background:'+bg+';color:'+bc+';border-radius:4px;padding:1px 5px">'+badge+'</span></td>';sizes.forEach(function(sz){var qty=(row.sizes&&row.sizes[sz])||0;var cls='td-sz'+(sz===sizeTgt?' tgt':(Math.abs(sz-sizeTgt)<=1?' near':''))+(qty===0?' zero':'');h+='<td class="'+cls+'">'+(qty>0?qty:'-')+'</td>';});h+='</tr>';});return h;}
+  var html='<table class="stok-tbl"><thead><tr><th>Produk</th>';sizes.forEach(function(sz){html+='<th class="tc'+(sz===sizeTgt?' tgt':'')+'">'+sz+(sz===sizeTgt?' ✦':'')+'</th>';});html+='</tr></thead><tbody>';
+  if(l1.length){html+=mH('Produk Discant','var(--acc2)','🎯');html+=mR(l1,'scan','var(--acc2)','rgba(124,106,247,.2)');}
+  if(l2.length){html+=mH('Keluarga '+data.prefix.key,'var(--amber)','📦');html+=mR(l2,'keluarga','var(--amber)','rgba(251,191,36,.2)');}
+  if(l3.length){html+=mH('Warna Serupa ('+data.warnaInput.slice(0,2).join(', ')+')','var(--green)','🎨');html+=mR(l3,'warna','var(--green)','rgba(34,211,160,.2)');}
+  if(!l1.length&&!l2.length&&!l3.length)html+='<tr><td colspan="'+(sizes.length+1)+'" class="stok-empty">Tidak ada stok</td></tr>';
+  html+='</tbody></table><div style="padding:7px 12px 9px;font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span style="color:var(--green)">✦=target</span><span style="color:var(--acc2)">scan=discant</span><span style="color:var(--amber)">keluarga=seri sama</span><span style="color:var(--green)">warna=serupa</span></div>';
+  document.getElementById('stok-tbl-title').textContent='Stok '+seriDetected;document.getElementById('stok-tbl-sub').textContent='±2 size · 3 level';
   tbody.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════
+// MAPPING TAB
+// ═══════════════════════════════════════════════════
+function showMapTab(tab){
+  document.getElementById('mappanel-tambah').style.display=tab==='tambah'?'block':'none';
+  document.getElementById('mappanel-daftar').style.display=tab==='daftar'?'block':'none';
+  document.getElementById('maptab-tambah').className='map-tab-btn'+(tab==='tambah'?' active':'');
+  document.getElementById('maptab-daftar').className='map-tab-btn'+(tab==='daftar'?' active':'');
+  if(tab==='daftar')renderMapList();
+}
+function tambahMapTag(){
+  var inp=document.getElementById('map-inp-kata'),val=inp.value.trim().toUpperCase();
+  if(!val)return;if(mapTags.indexOf(val)===-1)mapTags.push(val);inp.value='';renderMapTags();inp.focus();
+}
+function addMapPreset(val){val=val.toUpperCase();if(mapTags.indexOf(val)===-1)mapTags.push(val);renderMapTags();}
+function hapusMapTag(i){mapTags.splice(i,1);renderMapTags();}
+function renderMapTags(){
+  var area=document.getElementById('map-tag-area');
+  if(!mapTags.length){area.innerHTML='<span class="tag-placeholder">Belum ada kata kunci...</span>';return;}
+  area.innerHTML=mapTags.map(function(t,i){return '<span class="tag-item">'+esc(t)+'<button class="tag-del" onclick="hapusMapTag('+i+')">×</button></span>';}).join('');
+}
+function simpanCustomMapping(){
+  var hasil=document.getElementById('map-inp-hasil').value.trim();
+  if(!hasil){showToast('Isi nama hasil produk dulu!','err');return;}
+  if(!mapTags.length){showToast('Tambah minimal 1 kata kunci!','err');return;}
+  var existing=customMappings.findIndex(function(m){return m.hasil.toUpperCase()===hasil.toUpperCase();});
+  if(existing>=0){if(!confirm('Mapping "'+hasil+'" sudah ada. Timpa?'))return;customMappings.splice(existing,1);}
+  customMappings.unshift({kata:mapTags.slice(),hasil:hasil});
+  try{localStorage.setItem('custom_mapping_v1',JSON.stringify(customMappings));}catch(e){}
+  showToast('✅ Mapping "'+hasil+'" disimpan!');
+  document.getElementById('map-inp-hasil').value='';document.getElementById('map-inp-kata').value='';
+  mapTags=[];renderMapTags();updateMapStats();
+}
+function hapusCustomMapping(i){
+  var nama=customMappings[i].hasil;if(!confirm('Hapus mapping "'+nama+'"?'))return;
+  customMappings.splice(i,1);
+  try{localStorage.setItem('custom_mapping_v1',JSON.stringify(customMappings));}catch(e){}
+  showToast('Mapping "'+nama+'" dihapus.');updateMapStats();renderMapList();
+}
+function updateMapStats(){
+  var b=getBuiltinMapping().length;
+  document.getElementById('mstat-builtin').textContent=b;
+  document.getElementById('mstat-custom').textContent=customMappings.length;
+  document.getElementById('mstat-total').textContent=b+customMappings.length;
+}
+function filterMapType(type){
+  mapFilterType=type;
+  ['semua','custom','builtin'].forEach(function(t){
+    var el=document.getElementById('mf-'+t);
+    el.classList.toggle('active',t===type);
+  });
+  renderMapList();
+}
+function renderMapList(){
+  var q=(document.getElementById('map-search')?document.getElementById('map-search').value||'':'').toUpperCase();
+  var list=document.getElementById('map-list');
+  var builtin=getBuiltinMapping(),allItems=[];
+  if(mapFilterType!=='builtin')customMappings.forEach(function(m,i){allItems.push({m:m,type:'custom',idx:i});});
+  if(mapFilterType!=='custom')builtin.forEach(function(m){allItems.push({m:m,type:'builtin',idx:-1});});
+  if(q)allItems=allItems.filter(function(item){return item.m.hasil.toUpperCase().indexOf(q)!==-1||item.m.kata.join(' ').indexOf(q)!==-1;});
+  if(!allItems.length){list.innerHTML='<div class="hist-empty">Tidak ada mapping ditemukan.</div>';return;}
+  list.innerHTML=allItems.map(function(item){
+    var delBtn=item.type==='custom'?'<button class="btn-del-map" onclick="hapusCustomMapping('+item.idx+')" title="Hapus">🗑</button>':'';
+    return '<div class="map-item '+item.type+'"><div class="map-item-info"><div class="map-item-hasil">'+esc(item.m.hasil)+'</div><div class="map-item-kata">'+item.m.kata.map(function(k){return'"'+k+'"';}).join(' + ')+'</div></div><span class="map-badge '+item.type+'">'+(item.type==='custom'?'custom':'bawaan')+'</span>'+delBtn+'</div>';
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1621,18 +1090,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function fmtNum(n){return Number(n).toLocaleString('id-ID');}
 var toastTimer;
 function showToast(msg,type){
-  var el=document.getElementById('toast');
-  el.textContent=msg;el.className='show'+(type?' '+type:'');
+  var el=document.getElementById('toast');el.textContent=msg;el.className='show'+(type?' '+type:'');
   clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.className='';},4000);
-}
-var toastBigTimer;
-function showToastBig(icon,title,msg,type){
-  var el=document.getElementById('toast-big');
-  document.getElementById('tbb-icon').textContent=icon;
-  document.getElementById('tbb-title').textContent=title;
-  document.getElementById('tbb-msg').textContent=msg;
-  el.className='show'+(type?' '+type:'');
-  clearTimeout(toastBigTimer);toastBigTimer=setTimeout(function(){el.className='';},3500);
 }
 </script>
 </body>
