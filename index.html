@@ -614,7 +614,8 @@ async function loadAllData(){
     setDbStatus('ok','Data tersinkron');
     document.getElementById('db-stok-count').textContent=stokDB.length;
     document.getElementById('db-harga-count').textContent=hargaDB.length;
-    showToast('✅ Data dimuat: '+stokDB.length+' stok, '+hargaDB.length+' harga');
+    showToast('✅ '+stokDB.length+' stok · '+hargaDB.length+' harga');
+    document.getElementById('db-status-label').textContent='Stok: '+stokDB.length+' · Harga: '+hargaDB.length;
   }catch(e){
     setDbStatus('err','Gagal: '+e.message.substring(0,50));
     showToast('❌ Gagal sync: '+e.message,'err');
@@ -648,9 +649,10 @@ async function loadStokSheet(){
   stokDB=parseStokSheet(parseCSV(await resp.text()));
 }
 function parseStokSheet(rows){
-  if(!rows||rows.length<5)return[];
+  if(!rows||rows.length<3)return[];
+  // Cari baris header ukuran (34,35,36 berurutan) sampai row 20
   var sizeRowIdx=-1;
-  for(var r=0;r<Math.min(6,rows.length);r++){
+  for(var r=0;r<Math.min(20,rows.length);r++){
     for(var c=0;c<rows[r].length;c++){
       if(parseInt(rows[r][c])===34&&parseInt(rows[r][c+1])===35&&parseInt(rows[r][c+2])===36){
         sizeRowIdx=r;break;
@@ -666,7 +668,11 @@ function parseStokSheet(rows){
       var nextNum=parseInt(sizeRow[c+1]);
       if(!isNaN(nextNum)&&nextNum>=30&&nextNum<=50){
         var blk={typeCol:c,sizeMap:{}},cc=c+1;
-        while(cc<sizeRow.length){var sz=parseInt(sizeRow[cc]);if(!isNaN(sz)&&sz>=30&&sz<=50){blk.sizeMap[sz]=cc;cc++;}else break;}
+        while(cc<sizeRow.length){
+          var sz=parseInt(sizeRow[cc]);
+          if(!isNaN(sz)&&sz>=30&&sz<=50){blk.sizeMap[sz]=cc;cc++;}
+          else break;
+        }
         if(Object.keys(blk.sizeMap).length>0)blocks.push(blk);
         c=cc;
       }else c++;
@@ -674,25 +680,40 @@ function parseStokSheet(rows){
   }
   if(blocks.length===0){
     var blk={typeCol:0,sizeMap:{}};
-    for(var ci=1;ci<sizeRow.length;ci++){var sz=parseInt(sizeRow[ci]);if(!isNaN(sz)&&sz>=30&&sz<=50)blk.sizeMap[sz]=ci;}
-    blocks=[blk];
+    for(var ci=1;ci<sizeRow.length;ci++){
+      var sz=parseInt(sizeRow[ci]);
+      if(!isNaN(sz)&&sz>=30&&sz<=50)blk.sizeMap[sz]=ci;
+    }
+    if(Object.keys(blk.sizeMap).length>0)blocks=[blk];
   }
-  var result=[],dataStart=sizeRowIdx+1,maxRow=Math.min(rows.length,200);
-  for(var ri=dataStart;ri<maxRow;ri++){
-    var row=rows[ri];if(!row||row.length===0)continue;
+  if(blocks.length===0)return[];
+  var SKIP=['KODACHI','WARRIOR','VENTELA','SEPATU ANAK','TYPE','TOTAL','BRAND','NAMA','NO','PRODUK','KETERANGAN','SERI'];
+  var result=[],dataStart=sizeRowIdx+1;
+  // Baca SEMUA baris tanpa batas
+  for(var ri=dataStart;ri<rows.length;ri++){
+    var row=rows[ri];
+    if(!row||row.length===0)continue;
     for(var bi=0;bi<blocks.length;bi++){
-      var blk=blocks[bi],name=(row[blk.typeCol]||'').trim();
-      if(!name||name==='0'||name.toUpperCase()==='TYPE')continue;
-      if(['KODACHI','WARRIOR','VENTELA','SEPATU ANAK','TYPE'].indexOf(name.toUpperCase())>=0)continue;
+      var blk=blocks[bi];
+      var name=(row[blk.typeCol]||'').replace(/\r/g,'').trim();
+      if(!name||name==='-'||name==='0')continue;
+      var nameUp=name.toUpperCase();
+      var skip=false;
+      for(var si=0;si<SKIP.length;si++){if(nameUp===SKIP[si]||nameUp.startsWith(SKIP[si]+' ')){skip=true;break;}}
+      if(skip)continue;
       var sizes={},totalQty=0;
       Object.keys(blk.sizeMap).forEach(function(sz){
-        var q=parseInt(row[blk.sizeMap[sz]])||0;if(q<0)q=0;
-        sizes[parseInt(sz)]=q;totalQty+=q;
+        var raw=String(row[blk.sizeMap[sz]]||'').replace(/[^0-9\-]/g,'');
+        var q=parseInt(raw)||0;
+        if(q<0)q=0;
+        sizes[parseInt(sz)]=q;
+        totalQty+=q;
       });
       if(totalQty===0&&name.length<3)continue;
       result.push({name:name,sizes:sizes});
     }
   }
+  console.log('[StokDB] Parsed',result.length,'produk dari',rows.length,'baris,',blocks.length,'blok kolom');
   return result;
 }
 async function loadHargaSheet(){
@@ -707,19 +728,31 @@ async function loadHargaSheet(){
 function parseHargaSheet(rows){
   if(!rows||rows.length<2)return[];
   var result=[],dataStart=0;
-  for(var r=0;r<Math.min(5,rows.length);r++){
+  // Cari baris header — scan sampai row 10
+  for(var r=0;r<Math.min(10,rows.length);r++){
     var c0=(rows[r][0]||'').toUpperCase();
-    if(c0.includes('VARIAN')||c0.includes('TYPE')||c0.includes('NAMA')){dataStart=r+1;break;}
-    if(r===0&&!rows[r][0])dataStart=1;
+    var c1=(rows[r][1]||'').toUpperCase();
+    if(c0.includes('VARIAN')||c0.includes('TYPE')||c0.includes('NAMA')||
+       c1.includes('VARIAN')||c1.includes('TYPE')||c1.includes('NAMA')){
+      dataStart=r+1;break;
+    }
+    if(r===0&&!rows[r][0]&&!rows[r][1])dataStart=1;
   }
-  var maxRow=Math.min(rows.length,300);
-  for(var ri=dataStart;ri<maxRow;ri++){
-    var row=rows[ri];if(!row||!row[1])continue;
-    var varian=(row[1]||'').trim();if(!varian)continue;
+  // Baca SEMUA baris tanpa batas 300
+  for(var ri=dataStart;ri<rows.length;ri++){
+    var row=rows[ri];
+    if(!row)continue;
+    // Coba kolom 0 atau 1 sebagai nama varian
+    var varian=(row[1]||row[0]||'').replace(/\r/g,'').trim();
+    if(!varian||varian==='-')continue;
     var hargaBaru=parsePrice(row[2]),hargaRetail=parsePrice(row[3]);
+    // Juga coba kolom lain kalau harga 0
+    if(!hargaBaru)hargaBaru=parsePrice(row[4]);
+    if(!hargaRetail)hargaRetail=parsePrice(row[5]);
     if(!hargaBaru&&!hargaRetail)continue;
     result.push({varian:varian,hargaBaru:hargaBaru,hargaRetail:hargaRetail});
   }
+  console.log('[HargaDB] Parsed',result.length,'dari',rows.length,'baris');
   return result;
 }
 function parsePrice(s){if(!s)return 0;var n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?0:n;}
